@@ -735,14 +735,25 @@ async function loadSheet(sheetName) {
     // Extract values for table rendering
     let values = sheetDataWithFormat.map(row => row.map(cell => cell.userEnteredValue?.stringValue || cell.userEnteredValue?.numberValue || ""));
 
-    // --- Sort all rows based on Boothcode column ---
+    // Determine the last non-empty column
+    let maxCol = 0;
+    values.forEach(row => {
+      for (let i = 0; i < row.length; i++) {
+        if (row[i] !== "" && i >= maxCol) maxCol = i + 1;
+      }
+    });
+
+    // Trim columns after the first completely empty column
+    values = values.map(row => row.slice(0, maxCol));
+
+    // --- Sort all rows based on Device number column ---
     const headers = values[0];
-    const boothIndex = headers.findIndex(h => h.toLowerCase().includes("boothcode"));
+    const boothIndex = headers.findIndex(h => h.toLowerCase().includes("device number"));
     if (boothIndex !== -1) {
       const dataRows = values.slice(1); // exclude header
       dataRows.sort((a, b) => {
-        const valA = a[boothIndex] || "";
-        const valB = b[boothIndex] || "";
+        const valA = (a[boothIndex] || "").toString();
+        const valB = (b[boothIndex] || "").toString();
         if (!valA && valB) return 1;    // blanks last
         if (valA && !valB) return -1;   // blanks last
         if (!valA && !valB) return 0;
@@ -753,6 +764,7 @@ async function loadSheet(sheetName) {
       values = [headers, ...dataRows]; // reattach header
     }
 
+
     renderTable(values, sheetName);
   } catch (err) {
     console.error("Error loading sheet with formatting:", err);
@@ -760,7 +772,6 @@ async function loadSheet(sheetName) {
     showLoader(false);
   }
 }
-
 
 
 // ---------------------------
@@ -773,13 +784,14 @@ function renderTable(data, sheetName) {
   }
 
   let headers = data[0]; // row 0 is header
-  const firstRowEmpty = headers.every(h => !h || String(h).trim() === "");
-  if (firstRowEmpty) {
-    const columnCount = Math.max(...data.map(r => r.length));
-    headers = Array.from({ length: columnCount }, (_, i) => `Column ${i + 1}`);
-  }
 
-  const validIndexes = headers.map((h, i) => i);
+  // Identify columns that are NOT empty
+  const validIndexes = headers.map((h, i) => i).filter(i => {
+    return data.some(row => row[i] && String(row[i]).trim() !== "");
+  });
+
+  headers = validIndexes.map(i => headers[i]);
+
   const statusIndex = validIndexes.find(i => headers[i].toLowerCase().includes("status"));
 
   // Status counts
@@ -806,9 +818,9 @@ function renderTable(data, sheetName) {
 
   document.getElementById("sheetTitle").innerHTML = `${sheetName} Data <div class="status-info">${statusHTML}</div> ${filterHTML}`;
 
-  // Render table with all background highlights
+  // Render table with highlights
   let html = '<div class="table-wrapper"><table><thead><tr>';
-  validIndexes.forEach(i => html += `<th>${headers[i]}</th>`);
+  headers.forEach(h => html += `<th>${h}</th>`);
   html += "<th>Action</th></tr></thead><tbody>";
 
   data.slice(1).forEach((row, rowIndex) => {
@@ -841,6 +853,7 @@ function renderTable(data, sheetName) {
   html += "</tbody></table></div>";
   document.getElementById("tableContainer").innerHTML = html;
 }
+
 
 // Utility to choose black/white text for contrast
 function getContrastColor(r, g, b) {
