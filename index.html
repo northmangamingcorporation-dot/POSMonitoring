@@ -748,22 +748,21 @@ async function loadSheet(sheetName) {
 
     // --- Sort all rows based on Device number column ---
     const headers = values[0];
-    const boothIndex = headers.findIndex(h => h.toLowerCase().includes("device number"));
-    if (boothIndex !== -1) {
+    const deviceIndex = headers.findIndex(h => h.toLowerCase().includes("device number"));
+    if (deviceIndex !== -1) {
       const dataRows = values.slice(1); // exclude header
       dataRows.sort((a, b) => {
-        const valA = (a[boothIndex] || "").toString();
-        const valB = (b[boothIndex] || "").toString();
-        if (!valA && valB) return 1;    // blanks last
-        if (valA && !valB) return -1;   // blanks last
-        if (!valA && !valB) return 0;
-        const numA = parseInt(valA.split("-")[1] || "0", 10);
-        const numB = parseInt(valB.split("-")[1] || "0", 10);
-        return numA - numB;
+        const valA = parseInt(a[deviceIndex], 10);
+        const valB = parseInt(b[deviceIndex], 10);
+
+        if (isNaN(valA) && !isNaN(valB)) return 1;   // blanks last
+        if (!isNaN(valA) && isNaN(valB)) return -1;  // blanks last
+        if (isNaN(valA) && isNaN(valB)) return 0;
+
+        return valA - valB;
       });
       values = [headers, ...dataRows]; // reattach header
     }
-
 
     renderTable(values, sheetName);
   } catch (err) {
@@ -772,6 +771,7 @@ async function loadSheet(sheetName) {
     showLoader(false);
   }
 }
+
 
 
 // ---------------------------
