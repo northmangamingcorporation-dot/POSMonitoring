@@ -838,35 +838,33 @@ function renderTable(data, sheetName) {
   headers.forEach(h => html += `<th>${h}</th>`);
   html += "<th>Action</th></tr></thead><tbody>";
 
-  data.slice(1).forEach((row, rowIndex) => {
-    // Use the sheet row index as primary key
-    const primaryKey = row._sheetRowIndex || (rowIndex + 2); // fallback if _sheetRowIndex missing
+data.slice(1).forEach((row, rowIndex) => {
+  const primaryKey = row._sheetRowIndex || (rowIndex + 2); // Google Sheet row
 
-    html += "<tr>";
-    validIndexes.forEach((i) => {
-      const cellValue = row[i] || "";
-      let cellStyle = "";
+  html += "<tr>";
+  validIndexes.forEach((i) => {
+    const cellValue = row[i] || "";
+    let cellStyle = "";
 
-      // Apply background color if available
-      const bgColor = sheetDataWithFormat[rowIndex + 1][i]?.effectiveFormat?.backgroundColor;
-      if (bgColor) {
-        const r = Math.round((bgColor.red ?? 0) * 255);
-        const g = Math.round((bgColor.green ?? 0) * 255);
-        const b = Math.round((bgColor.blue ?? 0) * 255);
-        cellStyle = `background-color: rgb(${r},${g},${b}); color: ${getContrastColor(r, g, b)};`;
-      }
+    const bgColor = sheetDataWithFormat[rowIndex + 1][i]?.effectiveFormat?.backgroundColor;
+    if (bgColor) {
+      const r = Math.round((bgColor.red ?? 0) * 255);
+      const g = Math.round((bgColor.green ?? 0) * 255);
+      const b = Math.round((bgColor.blue ?? 0) * 255);
+      cellStyle = `background-color: rgb(${r},${g},${b}); color: ${getContrastColor(r, g, b)};`;
+    }
 
-      html += `<td style="${cellStyle}">${cellValue}</td>`;
-    });
-
-    html += `<td>
-      <div class="action-buttons">
-        <button onclick="editRow(${primaryKey},'${sheetName}')">✏️</button>
-        <button onclick="deleteRowHandler(${primaryKey},'${sheetName}')">🗑️</button>
-      </div>
-    </td>`;
-    html += "</tr>";
+    html += `<td style="${cellStyle}">${cellValue}</td>`;
   });
+
+  html += `<td>
+    <div class="action-buttons">
+      <button onclick="editRow(${primaryKey}, ${rowIndex + 1}, '${sheetName}')">✏️</button>
+      <button onclick="deleteRowHandler(${primaryKey}, '${sheetName}')">🗑️</button>
+    </div>
+  </td>`;
+  html += "</tr>";
+});
 
   html += "</tbody></table></div>";
   document.getElementById("tableContainer").innerHTML = html;
@@ -993,10 +991,10 @@ async function saveNewRow() {
 // ---------------------------
 // Edit row
 // ---------------------------
-function editRow(rowIndex, sheetName) {
-  currentEdit = { rowIndex, sheetName };
+function editRow(primaryKey, tableRowIndex, sheetName) {
+  currentEdit = { primaryKey, tableRowIndex, sheetName };
   const table = document.querySelector("#tableContainer table");
-  const row = table.rows[rowIndex];
+  const row = table.rows[tableRowIndex];
   const headers = Array.from(table.querySelectorAll("thead th")).map(th => th.innerText.toLowerCase());
   const statusColIndex = headers.findIndex(h => h.includes("status"));
 
@@ -1018,7 +1016,6 @@ function editRow(rowIndex, sheetName) {
       cell.contentEditable = true;
       cell.classList.add("editable-cell");
 
-      // Auto trim on paste
       cell.addEventListener("paste", (e) => {
         e.preventDefault();
         const text = (e.clipboardData || window.clipboardData).getData("text");
@@ -1034,23 +1031,28 @@ function editRow(rowIndex, sheetName) {
   </div>`;
 }
 
+
 async function saveRow() {
   showLoader(true);
-  if(!currentEdit) return;
+  if (!currentEdit) return;
+
   const table = document.querySelector("#tableContainer table");
-  const row = table.rows[currentEdit.rowIndex];
-  const newValues=[];
-  for(let i=0;i<row.cells.length-1;i++){
-    const select=row.cells[i].querySelector("select");
-    newValues.push(select?select.value.trim():row.cells[i].innerText.trim());
-    row.cells[i].contentEditable=false;
+  const row = table.rows[currentEdit.tableRowIndex];
+  const newValues = [];
+
+  for (let i = 0; i < row.cells.length - 1; i++) {
+    const select = row.cells[i].querySelector("select");
+    newValues.push(select ? select.value.trim() : row.cells[i].innerText.trim());
+    row.cells[i].contentEditable = false;
     row.cells[i].classList.remove("editable-cell");
   }
-  const data=await updateRow(currentEdit.sheetName, currentEdit.rowIndex, newValues);
+
+  const data = await updateRow(currentEdit.sheetName, currentEdit.primaryKey, newValues);
   renderTable(data, currentEdit.sheetName);
-  currentEdit=null;
+  currentEdit = null;
   showLoader(false);
 }
+
 
 async function cancelEdit(){
   showLoader(true);
@@ -1061,11 +1063,11 @@ async function cancelEdit(){
   showLoader(false);
 }
 
-async function deleteRowHandler(rowIndex, sheetName){
-  if(!confirm(`Are you sure you want to delete row ${rowIndex}?`)) return;
+async function deleteRowHandler(primaryKey, sheetName) {
+  if (!confirm(`Are you sure you want to delete row ${primaryKey}?`)) return;
   showLoader(true);
-  const data = await deleteRow(sheetName,rowIndex);
-  renderTable(data,sheetName);
+  const data = await deleteRow(sheetName, primaryKey);
+  renderTable(data, sheetName);
   showLoader(false);
 }
 
@@ -1073,4 +1075,5 @@ async function deleteRowHandler(rowIndex, sheetName){
 
 </body>
 </html>
+
 
