@@ -444,11 +444,22 @@ let tokenClient;
 let accessToken = null;
 
 function initGIS() {
+  // Check if token is already saved in sessionStorage
+  const savedToken = sessionStorage.getItem("gsheets_access_token");
+  if (savedToken) {
+    accessToken = savedToken;
+    document.getElementById("authModal").style.display = "none"; // hide modal automatically
+    loadSheetsAfterAuth();
+    return; // skip token request
+  }
+
   tokenClient = google.accounts.oauth2.initTokenClient({
     client_id: CLIENT_ID,
     scope: "https://www.googleapis.com/auth/spreadsheets",
     callback: (tokenResponse) => {
       accessToken = tokenResponse.access_token;
+      // Save token in sessionStorage to avoid frequent verification
+      sessionStorage.setItem("gsheets_access_token", accessToken);
       document.getElementById("authModal").style.display = "none"; // hide modal
       loadSheetsAfterAuth();
     },
@@ -463,18 +474,18 @@ async function loadSheetsAfterAuth() {
   try {
     const sheets = await getSheetNames();
     renderMenu(sheets);
-    
+
     // Automatically load "POS" sheet if it exists
     if (sheets.includes("POS")) {
       await loadSheet("POS");
     } else if (sheets.length > 0) {
-      // If "POS" doesn't exist, load the first sheet
       await loadSheet(sheets[0]);
     }
   } catch (err) {
     console.error("Error loading sheets:", err);
   }
 }
+
 
 // ---------------------------
 // Loader
