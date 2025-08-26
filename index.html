@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+  <style>
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Roboto, Arial, sans-serif;
+      background: #f8f9fc;
+      color: #333;
+      display: flex;
+      height: 100vh;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: 250px;
+      background: #1e293b;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      padding: 20px;
+    }
+    .sidebar h2 {
+      font-size: 18px;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    .menu {
+      flex: 1;
+    }
+    .menu button {
+      background: none;
+      border: none;
+      color: white;
+      font-size: 16px;
+      padding: 10px;
+      text-align: left;
+      width: 100%;
+      border-radius: 8px;
+      transition: 0.2s;
+      cursor: pointer;
+    }
+    .menu button:hover {
+      background: #334155;
+    }
+
+    /* Main Content */
+    .main {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+      position: relative;
+    }
+    .card {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      font-size: 14px;
+    }
+    th {
+      background: #f1f5f9;
+    }
+
+    /* Loader */
+    .loader {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      display: none;
+    }
+    .spinner {
+      border: 6px solid #f3f3f3;
+      border-top: 6px solid #1e293b;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .status-info {
+      margin-top: 8px;
+      font-size: 14px;
+      font-weight: 500;
+    }
+    .status-info .badge {
+      background: #eee;
+      border-radius: 6px;
+      padding: 3px 8px;
+      margin-right: 6px;
+      display: inline-block;
+      margin-bottom:10px;
+    }
+
+    .search-box {
+      margin-bottom: 10px;
+      width: 40%;
+    }
+    .search-box input {
+      width: 40%;
+      padding: 8px;
+      font-size: 14px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+
+    .edit-btn {
+      background: #2563eb;
+      color: white;
+      border: none;
+      padding: 4px 8px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    .edit-btn:hover {
+      background: #1e40af;
+    }
+
+    .editable-cell {
+  background-color: #fff8dc; /* light yellow highlight */
+  outline: none;
+  border-bottom: 1px dashed #aaa;
+}
+.editable-cell:focus {
+  background-color: #ffffcc;
+}
+
+.action-buttons {
+      display: flex;
+      align-items: center;
+      gap: 6px; /* spacing between buttons */
+    }
+
+    .btn-save, .btn-cancel {
+      padding: 4px 8px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .btn-save {
+      background: #4caf50;
+      color: white;
+    }
+
+    .btn-save:hover {
+      background: #45a049;
+    }
+
+    .btn-cancel {
+      background: #f44336;
+      color: white;
+    }
+
+    .btn-cancel:hover {
+      background: #e53935;
+    }
+.modal {
+  display: none;
+  position: fixed;
+  inset: 0; /* full screen */
+  z-index: 1000;
+  background: rgba(0,0,0,0.5);
+  margin-top:20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  /* keep modal centered even if page scrolls */
+  overflow: hidden;
+}
+
+.modal-content {
+  background: #fff;
+  border-radius: 12px;
+  width: 500px;
+  max-width: 95%;
+  max-height: 80vh;       /* don't exceed screen */
+  overflow-y: auto;       /* scroll inside modal if content too long */
+  padding: 20px 24px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.25);
+  position: relative;
+  animation: fadeInScale 0.25s ease;
+
+  /* keep it centered */
+  margin: auto;
+}
+
+.close-btn {
+  position: absolute;
+  top: 12px;
+  right: 16px;
+  font-size: 24px;
+  font-weight: bold;
+  color: #666;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.close-btn:hover {
+  color: #000;
+}
+
+.modal h2 {
+  margin-top: 0;
+  font-size: 20px;
+  margin-bottom: 16px;
+  color: #222;
+}
+
+.modal-actions {
+  margin-top: 20px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #eee;
+}
+
+.modal-actions button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.2s ease;
+}
+
+.modal-actions button:first-child {
+  background: #4caf50;
+  color: #fff;
+}
+
+.modal-actions button:first-child:hover {
+  background: #43a047;
+}
+
+.modal-actions button:last-child {
+  background: #f44336;
+  color: #fff;
+}
+
+.modal-actions button:last-child:hover {
+  background: #e53935;
+}
+
+@keyframes fadeInScale {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+#addRowForm {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-field label {
+  font-weight: 600;
+  margin-bottom: 4px;
+  color: #333;
+}
+
+.form-field input,
+.form-field select {
+  padding: 8px 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 14px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.form-field input:focus,
+.form-field select:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 2px rgba(0,123,255,0.2);
+}
+
+.status-dropdown {
+  width: 100%;
+  border: none;
+  background: transparent;
+  font: inherit;       /* use table font */
+  padding: 0;
+  margin: 0;
+  outline: none;
+  cursor: text;
+  appearance: none;    /* hide default arrow */
+  -webkit-appearance: none;
+  -moz-appearance: none;
+}
+
+.status-dropdown:focus {
+  background: #f0f8ff;  /* light highlight like editable cell */
+}
+
+.status-filter {
+  margin-top: 10px;
+  margin-bottom: 10px;
+  font-size: 12px;
+}
+
+.status-filter select {
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+
+
+  </style>
+  <script src="https://apis.google.com/js/api.js"></script>
+</head>
+<body onload='loadSheet("POS")'>
+  <div class="sidebar">
+    <h2>STI Northman Gaming</h2>
+    <div class="menu" id="menu"></div>
+  </div>
+
+  <div class="main">
+  <div class="loader" id="loader">
+    <div class="spinner"></div>
+  </div>
+  <div class="card">
+    <h2 id="sheetTitle">Select a Sheet</h2>
+    <div class="search-box" style="display: flex; gap: 8px;">
+      <input type="text" id="searchInput" placeholder="Search..." style="flex: 1;">
+      <button id="addBtn"
+          style="padding: 8px 16px; border: none; border-radius: 6px; background: #007bff; color: white; cursor: pointer;"
+          onclick="openModal()">
+          ➕ ADD ENTRY
+        </button>
+    </div>
+    <div id="tableContainer"></div>
+  </div>
+</div>
+
+<!-- Add Row Modal -->
+<div id="addModal" class="modal"style="display:none;">
+  <div class="modal-content">
+    <span class="close-btn" onclick="closeModal()">&times;</span>
+    <h2>Add New Row</h2>
+    <form id="addRowForm"></form>
+    <div class="modal-actions">
+      <button type="button" onclick="saveNewRow()">💾 Save</button>
+      <button type="button" onclick="closeModal()">❌ Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const CLIENT_ID = "900901251874-6eap6lan6b2a41gjc2o6fll24i0jai36.apps.googleusercontent.com";
+const SPREADSHEET_ID = "1VWPTrBlRIWOBHHIFttTUZH5mDnbKvieyR_gZOHsrNQQ";
+const SCOPES = "https://www.googleapis.com/auth/spreadsheets";
+
+let sheetpage = "";
+let addSheetName = "";
+let sheetDataCache = {};
+let currentEdit = null;
+
+// ------------------- OAuth2 & Google API Init -------------------
+function handleClientLoad() {
+  gapi.load('client:auth2', initClient);
+}
+
+function initClient() {
+  gapi.client.init({
+    clientId: CLIENT_ID,
+    scope: SCOPES,
+    discoveryDocs: ["https://sheets.googleapis.com/$discovery/rest?version=v4"]
+  }).then(() => {
+    if (!gapi.auth2.getAuthInstance().isSignedIn.get()) {
+      gapi.auth2.getAuthInstance().signIn().then(async () => {
+        const sheets = await getSheetNames();
+        renderMenu(sheets);
+      });
+    } else {
+      getSheetNames().then(renderMenu);
+    }
+  });
+}
+
+// ---------------------------
+// Loader
+// ---------------------------
+function showLoader(show) {
+  document.getElementById("loader").style.display = show ? "block" : "none";
+}
+
+// ---------------------------
+// Sheets API functions using OAuth2
+// ---------------------------
+async function getSheetNames() {
+  const resp = await gapi.client.sheets.spreadsheets.get({
+    spreadsheetId: SPREADSHEET_ID,
+    fields: "sheets.properties.title"
+  });
+  return resp.result.sheets.map(s => s.properties.title).filter(name => name !== "Log");
+}
+
+async function getSheetData(sheetName) {
+  const resp = await gapi.client.sheets.spreadsheets.values.get({
+    spreadsheetId: SPREADSHEET_ID,
+    range: sheetName
+  });
+  const values = resp.result.values || [];
+  sheetDataCache[sheetName] = values;
+  return values;
+}
+
+async function appendRow(sheetName, values) {
+  await gapi.client.sheets.spreadsheets.values.append({
+    spreadsheetId: SPREADSHEET_ID,
+    range: sheetName,
+    valueInputOption: "RAW",
+    resource: { values: [values] }
+  });
+  return getSheetData(sheetName);
+}
+
+async function updateRow(sheetName, rowIndex, values) {
+  const range = `${sheetName}!A${rowIndex+1}`;
+  await gapi.client.sheets.spreadsheets.values.update({
+    spreadsheetId: SPREADSHEET_ID,
+    range: range,
+    valueInputOption: "RAW",
+    resource: { values: [values] }
+  });
+  return getSheetData(sheetName);
+}
+
+async function deleteRow(sheetName, rowIndex) {
+  const data = sheetDataCache[sheetName] || await getSheetData(sheetName);
+  const row = data[rowIndex];
+  if (!row) return data;
+  const emptyValues = row.map(_ => "");
+  await updateRow(sheetName, rowIndex, emptyValues);
+  return getSheetData(sheetName);
+}
+
+// ---------------------------
+// Render menu
+// ---------------------------
+async function renderMenu(sheets) {
+  const menu = document.getElementById("menu");
+  menu.innerHTML = "";
+  sheets.forEach(sheet => {
+    const btn = document.createElement("button");
+    btn.textContent = sheet;
+    btn.onclick = () => loadSheet(sheet);
+    menu.appendChild(btn);
+  });
+}
+
+// ---------------------------
+// Load sheet
+// ---------------------------
+async function loadSheet(sheetName) {
+  document.getElementById("sheetTitle").textContent = sheetName + " Data";
+  sheetpage = sheetName;
+  document.getElementById("tableContainer").innerHTML = "";
+  showLoader(true);
+  const data = await getSheetData(sheetName);
+  renderTable(data, sheetName);
+  showLoader(false);
+}
+
+// ---------------------------
+// Render table
+// ---------------------------
+function renderTable(data, sheetName) {
+  if (!data.length) {
+    document.getElementById("tableContainer").innerHTML = "<p>No data available</p>";
+    return;
+  }
+
+  let headers = data[0]; // row 0 is always header
+  const firstRowEmpty = headers.every(h => !h || String(h).trim() === "");
+  if (firstRowEmpty) {
+    const columnCount = Math.max(...data.map(r => r.length));
+    headers = Array.from({ length: columnCount }, (_, i) => `Column ${i + 1}`);
+  }
+
+  const validIndexes = headers.map((h, i) => i);
+
+  const statusIndex = validIndexes.find(i => headers[i].toLowerCase().includes("status"));
+  let statusCounts = {};
+  let uniqueStatuses = [];
+  if (statusIndex !== undefined) {
+    data.slice(1).forEach(row => {
+      const s = row[statusIndex] ? row[statusIndex] : "Unknown";
+      statusCounts[s] = (statusCounts[s] || 0) + 1;
+    });
+    uniqueStatuses = Object.keys(statusCounts);
+  }
+
+  const statusHTML = Object.entries(statusCounts)
+    .map(([s, c]) => `<span class="badge">${s}: ${c}</span>`)
+    .join(" ");
+
+  const filterHTML = statusIndex !== undefined
+    ? `<div class="status-filter">
+        <label><strong>Filter by Status:</strong></label>
+        <select id="statusFilter" onchange="filterByStatus()">
+          <option value="">All</option>
+          ${uniqueStatuses.map(s => `<option value="${s}">${s}</option>`).join("")}
+        </select>
+      </div>`
+    : "";
+
+  document.getElementById("sheetTitle").innerHTML = `${sheetName} Data <div class="status-info">${statusHTML}</div> ${filterHTML}`;
+
+  let html = "<table><thead><tr>";
+  validIndexes.forEach(i => html += `<th>${headers[i]}</th>`);
+  html += "<th>Action</th></tr></thead><tbody>";
+
+  data.slice(1).forEach((row, rowIndex) => {
+    html += "<tr>";
+    validIndexes.forEach(i => html += `<td>${row[i] || ""}</td>`);
+    html += `<td>
+      <div class="action-buttons">
+        <button onclick="editRow(${rowIndex + 1},'${sheetName}')">✏️</button>
+        <button onclick="deleteRowHandler(${rowIndex + 1},'${sheetName}')">🗑️</button>
+      </div>
+    </td>`;
+    html += "</tr>";
+  });
+
+  html += "</tbody></table>";
+  document.getElementById("tableContainer").innerHTML = html;
+}
+
+// ---------------------------
+// Status filter
+// ---------------------------
+function filterByStatus() {
+  const filterValue = document.getElementById("statusFilter").value.toLowerCase();
+  const table = document.querySelector("#tableContainer table");
+  if (!table) return;
+  const rows = table.querySelectorAll("tbody tr");
+  rows.forEach(row=>{
+    const statusCell = Array.from(row.cells).find(cell=>cell.textContent.toLowerCase()===filterValue);
+    row.style.display = !filterValue || statusCell ? "" : "none";
+  });
+}
+
+// ---------------------------
+// Search filter
+// ---------------------------
+document.getElementById("searchInput").addEventListener("input", ()=>{
+  const filter = document.getElementById("searchInput").value.trim().toLowerCase();
+  const table = document.querySelector("#tableContainer table");
+  if (!table) return;
+  const rows = table.rows;
+  for(let i=1;i<rows.length;i++){
+    let match=false;
+    for(let j=0;j<rows[i].cells.length-1;j++){
+      if(rows[i].cells[j].textContent.toLowerCase().includes(filter)){
+        match=true; break;
+      }
+    }
+    rows[i].style.display=match?"":"none";
+  }
+});
+
+// ---------------------------
+// Add/Edit row modal
+// ---------------------------
+function openModal() {
+  addSheetName = sheetpage;
+  const table = document.querySelector("#tableContainer table");
+  if (!table) return;
+  const headers = Array.from(table.querySelectorAll("thead th")).map(th=>th.innerText).filter(h=>h!=="Action");
+  const rows = Array.from(table.querySelectorAll("tbody tr")).map(tr=>Array.from(tr.cells).map(td=>td.innerText));
+  const form = document.getElementById("addRowForm");
+  form.innerHTML = "";
+
+  headers.forEach((header,colIndex)=>{
+    const field = document.createElement("div"); field.classList.add("form-field");
+    let inputHTML=`<input type="text" name="${header}" placeholder="Enter ${header}">`;
+    const colValues = rows.map(r=>r[colIndex]).filter(v=>v&&v.trim()!=="");
+    const freqMap={}; colValues.forEach(v=>freqMap[v]=(freqMap[v]||0)+1);
+    const sortedUnique = Object.entries(freqMap).sort((a,b)=>b[1]-a[1]).map(([val])=>val);
+
+    if(/date/i.test(header)) inputHTML=`<input type="date" name="${header}">`;
+    else if(/email/i.test(header)) inputHTML=`<input type="email" name="${header}" placeholder="name@example.com">`;
+    else if(/status/i.test(header)) inputHTML=`<select name="${header}" style="width:100%;padding:6px;margin-bottom:10px;">
+      <option value="">Select ${header}</option>${sortedUnique.map(val=>`<option value="${val}">${val}</option>`).join("")}
+    </select>`;
+    else if(/amount|price|total/i.test(header)) inputHTML=`<input type="number" step="0.01" name="${header}" placeholder="0.00">`;
+
+    field.innerHTML=`<label>${header}</label>${inputHTML}`;
+    form.appendChild(field);
+  });
+
+  document.getElementById("addModal").style.display="flex";
+}
+
+function closeModal() { document.getElementById("addModal").style.display="none"; }
+
+async function saveNewRow() {
+  const form = document.getElementById("addRowForm");
+  const inputs = form.querySelectorAll("input, select");
+  const newValues = Array.from(inputs).map(input=>input.value.trim());
+  const data = await appendRow(addSheetName, newValues);
+  renderTable(data, addSheetName);
+  closeModal();
+}
+
+// ---------------------------
+// Edit row
+// ---------------------------
+function editRow(rowIndex, sheetName){
+  currentEdit={rowIndex,sheetName};
+  const table = document.querySelector("#tableContainer table");
+  const row = table.rows[rowIndex];
+  const headers = Array.from(table.querySelectorAll("thead th")).map(th=>th.innerText.toLowerCase());
+  const statusColIndex = headers.findIndex(h=>h.includes("status"));
+
+  let uniqueStatuses=[];
+  if(statusColIndex!==-1){
+    uniqueStatuses=[...new Set(Array.from(table.querySelectorAll("tbody tr")).map(r=>r.cells[statusColIndex]?.innerText.trim()).filter(v=>v))];
+  }
+
+  for(let i=0;i<row.cells.length-1;i++){
+    const cell = row.cells[i];
+    if(i===statusColIndex){
+      const currentValue=cell.innerText.trim();
+      let optionsHTML=uniqueStatuses.map(s=>`<option value="${s}" ${s===currentValue?"selected":""}>${s}</option>`).join("");
+      cell.innerHTML=`<select class="status-dropdown">${optionsHTML}</select>`;
+    } else {
+      cell.contentEditable=true; cell.classList.add("editable-cell");
+    }
+  }
+
+  const actionCell=row.cells[row.cells.length-1];
+  actionCell.innerHTML=`<div class="action-buttons">
+    <button onclick="saveRow()">💾</button>
+    <button onclick="cancelEdit()">✖</button>
+  </div>`;
+}
+
+async function saveRow() {
+  showLoader(true);
+  if(!currentEdit) return;
+  const table = document.querySelector("#tableContainer table");
+  const row = table.rows[currentEdit.rowIndex];
+  const newValues=[];
+  for(let i=0;i<row.cells.length-1;i++){
+    const select=row.cells[i].querySelector("select");
+    newValues.push(select?select.value.trim():row.cells[i].innerText.trim());
+    row.cells[i].contentEditable=false;
+    row.cells[i].classList.remove("editable-cell");
+  }
+  const data=await updateRow(currentEdit.sheetName, currentEdit.rowIndex, newValues);
+  renderTable(data, currentEdit.sheetName);
+  currentEdit=null;
+  showLoader(false);
+}
+
+async function cancelEdit(){
+  showLoader(true);
+  if(!currentEdit) return;
+  const data = await getSheetData(currentEdit.sheetName);
+  renderTable(data, currentEdit.sheetName);
+  currentEdit=null;
+  showLoader(false);
+}
+
+async function deleteRowHandler(rowIndex, sheetName){
+  if(!confirm(`Are you sure you want to delete row ${rowIndex}?`)) return;
+  showLoader(true);
+  const data = await deleteRow(sheetName,rowIndex);
+  renderTable(data,sheetName);
+  showLoader(false);
+}
+
+// ---------------------------
+// Init
+// ---------------------------
+window.onload = handleClientLoad;
+</script>
+
+</body>
+</html>
