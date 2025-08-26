@@ -707,17 +707,34 @@ async function renderMenu(sheets) {
 }
 
 // ---------------------------
-// Load sheet
+// Load sheet with formatting
 // ---------------------------
 async function loadSheet(sheetName) {
   document.getElementById("sheetTitle").textContent = sheetName + " Data";
   sheetpage = sheetName;
   document.getElementById("tableContainer").innerHTML = "";
   showLoader(true);
-  const data = await getSheetData(sheetName);
-  renderTable(data, sheetName);
-  showLoader(false);
+
+  try {
+    // Fetch values + formatting
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}?ranges=${encodeURIComponent(sheetName)}&fields=sheets.data.rowData.values(userEnteredValue,effectiveFormat.backgroundColor)&includeGridData=true`;
+    const res = await fetch(url, { headers: { "Authorization": `Bearer ${accessToken}` } });
+    const data = await res.json();
+    const rows = data.sheets[0].data[0].rowData || [];
+
+    // Store data + formatting
+    sheetDataWithFormat = rows.map(r => r.values || []);
+
+    // Extract values for normal table rendering
+    const values = sheetDataWithFormat.map(row => row.map(cell => cell.userEnteredValue?.stringValue || cell.userEnteredValue?.numberValue || ""));
+    renderTable(values, sheetName);
+  } catch (err) {
+    console.error("Error loading sheet with formatting:", err);
+  } finally {
+    showLoader(false);
+  }
 }
+
 
 // ---------------------------
 // Render table
@@ -728,7 +745,7 @@ function renderTable(data, sheetName) {
     return;
   }
 
-  let headers = data[0]; // row 0 is always header
+  let headers = data[0]; // row 0 is header
   const firstRowEmpty = headers.every(h => !h || String(h).trim() === "");
   if (firstRowEmpty) {
     const columnCount = Math.max(...data.map(r => r.length));
@@ -736,8 +753,9 @@ function renderTable(data, sheetName) {
   }
 
   const validIndexes = headers.map((h, i) => i);
-
   const statusIndex = validIndexes.find(i => headers[i].toLowerCase().includes("status"));
+
+  // Status counts
   let statusCounts = {};
   let uniqueStatuses = [];
   if (statusIndex !== undefined) {
@@ -749,28 +767,41 @@ function renderTable(data, sheetName) {
   }
 
   const statusHTML = Object.entries(statusCounts)
-    .map(([s, c]) => `<span class="badge">${s}: ${c}</span>`)
-    .join(" ");
-
+    .map(([s, c]) => `<span class="badge">${s}: ${c}</span>`).join(" ");
   const filterHTML = statusIndex !== undefined
     ? `<div class="status-filter">
-        <label><strong>Filter by Status:</strong></label>
-        <select id="statusFilter" onchange="filterByStatus()">
-          <option value="">All</option>
-          ${uniqueStatuses.map(s => `<option value="${s}">${s}</option>`).join("")}
-        </select>
-      </div>`
-    : "";
+         <label><strong>Filter by Status:</strong></label>
+         <select id="statusFilter" onchange="filterByStatus()">
+           <option value="">All</option>
+           ${uniqueStatuses.map(s => `<option value="${s}">${s}</option>`).join("")}
+         </select>
+       </div>` : "";
 
   document.getElementById("sheetTitle").innerHTML = `${sheetName} Data <div class="status-info">${statusHTML}</div> ${filterHTML}`;
 
+  // Render table with all background highlights
   let html = '<div class="table-wrapper"><table><thead><tr>';
   validIndexes.forEach(i => html += `<th>${headers[i]}</th>`);
   html += "<th>Action</th></tr></thead><tbody>";
 
   data.slice(1).forEach((row, rowIndex) => {
     html += "<tr>";
-    validIndexes.forEach(i => html += `<td>${row[i] || ""}</td>`);
+    validIndexes.forEach((i) => {
+      const cellValue = row[i] || "";
+      let cellStyle = "";
+
+      // Apply background color if available
+      const bgColor = sheetDataWithFormat[rowIndex + 1][i]?.effectiveFormat?.backgroundColor;
+      if (bgColor) {
+        const r = Math.round((bgColor.red ?? 0) * 255);
+        const g = Math.round((bgColor.green ?? 0) * 255);
+        const b = Math.round((bgColor.blue ?? 0) * 255);
+        cellStyle = `background-color: rgb(${r},${g},${b}); color: ${getContrastColor(r, g, b)};`;
+      }
+
+      html += `<td style="${cellStyle}">${cellValue}</td>`;
+    });
+
     html += `<td>
       <div class="action-buttons">
         <button onclick="editRow(${rowIndex + 1},'${sheetName}')">✏️</button>
@@ -784,6 +815,12 @@ function renderTable(data, sheetName) {
   document.getElementById("tableContainer").innerHTML = html;
 }
 
+// Utility to choose black/white text for contrast
+function getContrastColor(r, g, b) {
+  const brightness = (r*299 + g*587 + b*114)/1000;
+  return brightness > 125 ? "black" : "white";
+}
+
 // ---------------------------
 // Status filter
 // ---------------------------
@@ -792,9 +829,35 @@ function filterByStatus() {
   const table = document.querySelector("#tableContainer table");
   if (!table) return;
   const rows = table.querySelectorAll("tbody tr");
-  rows.forEach(row=>{
-    const statusCell = Array.from(row.cells).find(cell=>cell.textContent.toLowerCase()===filterValue);
+  rows.forEach(row => {
+    const statusCell = Array.from(row.cells).find(cell => cell.textContent.toLowerCase() === filterValue);
     row.style.display = !filterValue || statusCell ? "" : "none";
+  });
+}
+
+// ---------------------------
+// Green Device ID filter
+// ---------------------------
+function filterByGreenDeviceID() {
+  const table = document.querySelector("#tableContainer table");
+  if (!table) return;
+
+  // Assuming Device ID column is already identified in the header
+  const headers = Array.from(table.querySelectorAll("thead th")).map(th => th.innerText.toLowerCase());
+  const deviceColIndex = headers.findIndex(h => h.includes("device id"));
+  if (deviceColIndex === -1) return;
+
+  const rows = table.querySelectorAll("tbody tr");
+  rows.forEach(row => {
+    const cell = row.cells[deviceColIndex];
+    if (!cell) return;
+
+    // Check if cell has dark green background (inline style)
+    const bgColor = window.getComputedStyle(cell).backgroundColor;
+    // Approximate dark green: rgb(0, 128, 0)
+    const isGreen = bgColor === "rgb(0, 128, 0)" || bgColor === "rgb(0, 100, 0)";
+    
+    row.style.display = isGreen ? "" : "none";
   });
 }
 
