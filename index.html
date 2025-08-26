@@ -454,13 +454,16 @@ function showLoader(show) {
 // Sheets API functions using OAuth2
 // ---------------------------
 async function getSheetData(sheetName) {
+  showLoader(true);
   console.log(`Fetching data for sheet: ${sheetName}`);
-  const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${encodeURIComponent(sheetName)}`;
   
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${encodeURIComponent(sheetName)}`;
+
   try {
     const res = await fetch(url, {
       headers: { "Authorization": `Bearer ${accessToken}` }
     });
+
     if (!res.ok) {
       console.error(`Failed to fetch sheet data: ${res.status} ${res.statusText}`);
       return [];
@@ -473,12 +476,17 @@ async function getSheetData(sheetName) {
   } catch (err) {
     console.error("Error fetching sheet data:", err);
     return [];
+  } finally {
+    showLoader(false); // ensure loader hides even on error
   }
 }
 
 async function getSheetNames() {
+  showLoader(true);
+  
   if (!accessToken) {
     console.error("No access token. Call requestAccessToken() first!");
+    showLoader(false);
     return [];
   }
 
@@ -487,9 +495,7 @@ async function getSheetNames() {
 
   try {
     const res = await fetch(url, {
-      headers: {
-        "Authorization": `Bearer ${accessToken}`
-      }
+      headers: { "Authorization": `Bearer ${accessToken}` }
     });
 
     if (!res.ok) {
@@ -499,13 +505,17 @@ async function getSheetNames() {
 
     const data = await res.json();
     console.log("Sheet names received:", data);
+
     if (!data.sheets) return [];
     return data.sheets.map(s => s.properties.title);
   } catch (err) {
     console.error("Error fetching sheet names:", err);
     return [];
+  } finally {
+    showLoader(false); // ensure loader hides even on error
   }
 }
+
 
 // ---------------------------
 // Append row
