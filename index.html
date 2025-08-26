@@ -358,6 +358,19 @@
   </div>
 </div>
 
+<!-- Modal -->
+<div id="authModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; 
+      background:rgba(0,0,0,0.5); justify-content:center; align-items:center;">
+  <div style="background:white; padding:24px; border-radius:8px; max-width:400px; width:90%; text-align:center;">
+    <h2>Sign In</h2>
+    <p>You need to authorize Google Sheets access to continue.</p>
+    <button id="modalAuthorizeBtn" style="padding:8px 16px; border:none; border-radius:6px; 
+            background:#007bff; color:white; cursor:pointer;">
+      Authorize
+    </button>
+  </div>
+</div>
+
 <!-- Add Row Modal -->
 <div id="addModal" class="modal"style="display:none;">
   <div class="modal-content">
@@ -372,10 +385,17 @@
 </div>
 
 <script>
+// Show modal on page load
 window.onload = () => {
-  initGIS();          // sets up the token client
-  requestAccessToken(); // triggers user consent popup
+  document.getElementById("authModal").style.display = "flex";
+  initGIS();
 };
+
+// Trigger token request on modal button click
+document.getElementById("modalAuthorizeBtn").addEventListener("click", () => {
+  tokenClient.requestAccessToken();
+});
+
 
 const CLIENT_ID = "900901251874-tlbsv8ph1rfcmtnk77pqm5dkqptip0ic.apps.googleusercontent.com";
 const SPREADSHEET_ID = "1VWPTrBlRIWOBHHIFttTUZH5mDnbKvieyR_gZOHsrNQQ";
@@ -396,6 +416,7 @@ function initGIS() {
     scope: "https://www.googleapis.com/auth/spreadsheets",
     callback: (tokenResponse) => {
       accessToken = tokenResponse.access_token;
+      document.getElementById("authModal").style.display = "none"; // hide modal
       loadSheetsAfterAuth();
     },
   });
