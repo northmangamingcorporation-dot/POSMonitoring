@@ -725,7 +725,7 @@ async function renderMenu(sheets) {
 }
 
 // ---------------------------
-// Load sheet with formatting
+// Load sheet with formatting + row index as primary key
 // ---------------------------
 async function loadSheet(sheetName) {
   document.getElementById("sheetTitle").textContent = sheetName + " Data";
@@ -743,8 +743,12 @@ async function loadSheet(sheetName) {
     // Store data + formatting
     sheetDataWithFormat = rows.map(r => r.values || []);
 
-    // Extract values for table rendering
-    let values = sheetDataWithFormat.map(row => row.map(cell => cell.userEnteredValue?.stringValue || cell.userEnteredValue?.numberValue || ""));
+    // Extract values for table rendering + attach sheet row index (primary key)
+    let values = sheetDataWithFormat.map((row, idx) => {
+      const rowValues = row.map(cell => cell.userEnteredValue?.stringValue || cell.userEnteredValue?.numberValue || "");
+      rowValues._sheetRowIndex = idx + 1; // Google Sheets row index (1-based)
+      return rowValues;
+    });
 
     // Determine the last non-empty column
     let maxCol = 0;
@@ -835,6 +839,9 @@ function renderTable(data, sheetName) {
   html += "<th>Action</th></tr></thead><tbody>";
 
   data.slice(1).forEach((row, rowIndex) => {
+    // Use the sheet row index as primary key
+    const primaryKey = row._sheetRowIndex || (rowIndex + 2); // fallback if _sheetRowIndex missing
+
     html += "<tr>";
     validIndexes.forEach((i) => {
       const cellValue = row[i] || "";
@@ -854,8 +861,8 @@ function renderTable(data, sheetName) {
 
     html += `<td>
       <div class="action-buttons">
-        <button onclick="editRow(${rowIndex + 1},'${sheetName}')">✏️</button>
-        <button onclick="deleteRowHandler(${rowIndex + 1},'${sheetName}')">🗑️</button>
+        <button onclick="editRow(${primaryKey},'${sheetName}')">✏️</button>
+        <button onclick="deleteRowHandler(${primaryKey},'${sheetName}')">🗑️</button>
       </div>
     </td>`;
     html += "</tr>";
@@ -864,6 +871,7 @@ function renderTable(data, sheetName) {
   html += "</tbody></table></div>";
   document.getElementById("tableContainer").innerHTML = html;
 }
+
 
 
 // Utility to choose black/white text for contrast
@@ -1065,3 +1073,4 @@ async function deleteRowHandler(rowIndex, sheetName){
 
 </body>
 </html>
+
