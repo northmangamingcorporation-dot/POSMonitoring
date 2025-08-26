@@ -838,31 +838,42 @@ async function saveNewRow() {
 // ---------------------------
 // Edit row
 // ---------------------------
-function editRow(rowIndex, sheetName){
-  currentEdit={rowIndex,sheetName};
+function editRow(rowIndex, sheetName) {
+  currentEdit = { rowIndex, sheetName };
   const table = document.querySelector("#tableContainer table");
   const row = table.rows[rowIndex];
-  const headers = Array.from(table.querySelectorAll("thead th")).map(th=>th.innerText.toLowerCase());
-  const statusColIndex = headers.findIndex(h=>h.includes("status"));
+  const headers = Array.from(table.querySelectorAll("thead th")).map(th => th.innerText.toLowerCase());
+  const statusColIndex = headers.findIndex(h => h.includes("status"));
 
-  let uniqueStatuses=[];
-  if(statusColIndex!==-1){
-    uniqueStatuses=[...new Set(Array.from(table.querySelectorAll("tbody tr")).map(r=>r.cells[statusColIndex]?.innerText.trim()).filter(v=>v))];
+  let uniqueStatuses = [];
+  if (statusColIndex !== -1) {
+    uniqueStatuses = [...new Set(Array.from(table.querySelectorAll("tbody tr"))
+      .map(r => r.cells[statusColIndex]?.innerText.trim())
+      .filter(v => v))];
   }
 
-  for(let i=0;i<row.cells.length-1;i++){
+  for (let i = 0; i < row.cells.length - 1; i++) {
     const cell = row.cells[i];
-    if(i===statusColIndex){
-      const currentValue=cell.innerText.trim();
-      let optionsHTML=uniqueStatuses.map(s=>`<option value="${s}" ${s===currentValue?"selected":""}>${s}</option>`).join("");
-      cell.innerHTML=`<select class="status-dropdown">${optionsHTML}</select>`;
+    if (i === statusColIndex) {
+      const currentValue = cell.innerText.trim();
+      let optionsHTML = uniqueStatuses.map(s => 
+        `<option value="${s}" ${s === currentValue ? "selected" : ""}>${s}</option>`).join("");
+      cell.innerHTML = `<select class="status-dropdown">${optionsHTML}</select>`;
     } else {
-      cell.contentEditable=true; cell.classList.add("editable-cell");
+      cell.contentEditable = true;
+      cell.classList.add("editable-cell");
+
+      // Auto trim on paste
+      cell.addEventListener("paste", (e) => {
+        e.preventDefault();
+        const text = (e.clipboardData || window.clipboardData).getData("text");
+        document.execCommand("insertText", false, text.trim());
+      });
     }
   }
 
-  const actionCell=row.cells[row.cells.length-1];
-  actionCell.innerHTML=`<div class="action-buttons">
+  const actionCell = row.cells[row.cells.length - 1];
+  actionCell.innerHTML = `<div class="action-buttons">
     <button onclick="saveRow()">💾</button>
     <button onclick="cancelEdit()">✖</button>
   </div>`;
