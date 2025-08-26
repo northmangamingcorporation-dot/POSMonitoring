@@ -732,8 +732,27 @@ async function loadSheet(sheetName) {
     // Store data + formatting
     sheetDataWithFormat = rows.map(r => r.values || []);
 
-    // Extract values for normal table rendering
-    const values = sheetDataWithFormat.map(row => row.map(cell => cell.userEnteredValue?.stringValue || cell.userEnteredValue?.numberValue || ""));
+    // Extract values for table rendering
+    let values = sheetDataWithFormat.map(row => row.map(cell => cell.userEnteredValue?.stringValue || cell.userEnteredValue?.numberValue || ""));
+
+    // --- Sort all rows based on Boothcode column ---
+    const headers = values[0];
+    const boothIndex = headers.findIndex(h => h.toLowerCase().includes("boothcode"));
+    if (boothIndex !== -1) {
+      const dataRows = values.slice(1); // exclude header
+      dataRows.sort((a, b) => {
+        const valA = a[boothIndex] || "";
+        const valB = b[boothIndex] || "";
+        if (!valA && valB) return 1;    // blanks last
+        if (valA && !valB) return -1;   // blanks last
+        if (!valA && !valB) return 0;
+        const numA = parseInt(valA.split("-")[1] || "0", 10);
+        const numB = parseInt(valB.split("-")[1] || "0", 10);
+        return numA - numB;
+      });
+      values = [headers, ...dataRows]; // reattach header
+    }
+
     renderTable(values, sheetName);
   } catch (err) {
     console.error("Error loading sheet with formatting:", err);
@@ -741,6 +760,7 @@ async function loadSheet(sheetName) {
     showLoader(false);
   }
 }
+
 
 
 // ---------------------------
@@ -906,12 +926,19 @@ function openModal() {
     const freqMap={}; colValues.forEach(v=>freqMap[v]=(freqMap[v]||0)+1);
     const sortedUnique = Object.entries(freqMap).sort((a,b)=>b[1]-a[1]).map(([val])=>val);
 
-    if(/date/i.test(header)) inputHTML=`<input type="date" name="${header}">`;
-    else if(/email/i.test(header)) inputHTML=`<input type="email" name="${header}" placeholder="name@example.com">`;
-    else if(/status/i.test(header)) inputHTML=`<select name="${header}" style="width:100%;padding:6px;margin-bottom:10px;">
-      <option value="">Select ${header}</option>${sortedUnique.map(val=>`<option value="${val}">${val}</option>`).join("")}
-    </select>`;
-    else if(/amount|price|total/i.test(header)) inputHTML=`<input type="number" step="0.01" name="${header}" placeholder="0.00">`;
+    if(/date/i.test(header)) {
+      inputHTML = `<input type="date" name="${header}">`;
+    } else if(/email/i.test(header)) {
+      inputHTML = `<input type="email" name="${header}" placeholder="name@example.com">`;
+    } else if(/status/i.test(header) || /operator code/i.test(header)) {
+      // Dropdown for Status and Operator Code
+      inputHTML = `<select name="${header}" style="width:100%;padding:6px;margin-bottom:10px;">
+        <option value="">Select ${header}</option>
+        ${sortedUnique.map(val => `<option value="${val}">${val}</option>`).join("")}
+      </select>`;
+    } else if(/amount|price|total/i.test(header)) {
+      inputHTML = `<input type="number" step="0.01" name="${header}" placeholder="0.00">`;
+    }
 
     field.innerHTML=`<label>${header}</label>${inputHTML}`;
     form.appendChild(field);
