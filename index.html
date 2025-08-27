@@ -825,15 +825,23 @@ data.slice(1).forEach((row, rowIndex) => {
     let cellStyle = "";
 
     const bgColor = sheetDataWithFormat[rowIndex + 1][i]?.effectiveFormat?.backgroundColor;
-    if (bgColor) {
-      const r = Math.round((bgColor.red ?? 0) * 255);
-      const g = Math.round((bgColor.green ?? 0) * 255);
-      const b = Math.round((bgColor.blue ?? 0) * 255);
-      cellStyle = `background-color: rgb(${r},${g},${b}); color: ${getContrastColor(r, g, b)};`;
-    }
-
-    html += `<td style="${cellStyle}">${cellValue}</td>`;
-  });
+     let bgClass = "";
+      if (bgColor) {
+        const r = Math.round((bgColor.red ?? 0) * 255);
+        const g = Math.round((bgColor.green ?? 0) * 255);
+        const b = Math.round((bgColor.blue ?? 0) * 255);
+        const contrast = getContrastColor(r, g, b);
+      
+        bgClass = `cell-bg-${r}-${g}-${b}-${contrast}`;
+        if (!document.querySelector(`.${bgClass}`)) {
+          const styleEl = document.createElement("style");
+          styleEl.innerHTML = `.${bgClass} { background-color: rgb(${r},${g},${b}); color:${contrast}; }`;
+          document.head.appendChild(styleEl);
+        }
+      }
+      
+      html += `<td class="${bgClass}">${cellValue}</td>`;
+    });
 
   html += `<td>
     <div class="action-buttons">
@@ -971,7 +979,7 @@ function editRow(primaryKey, tableRowIndex, sheetName) {
   const table = document.querySelector("#tableContainer table");
   const row = table.rows[tableRowIndex];
 
-  // Highlight the entire row while editing
+  // Highlight the entire row
   row.classList.add("editing-row");
 
   const headers = Array.from(table.querySelectorAll("thead th")).map(th => th.innerText.toLowerCase());
@@ -986,6 +994,7 @@ function editRow(primaryKey, tableRowIndex, sheetName) {
 
   for (let i = 0; i < row.cells.length - 1; i++) {
     const cell = row.cells[i];
+
     if (i === statusColIndex) {
       const currentValue = cell.innerText.trim();
       let optionsHTML = uniqueStatuses.map(s => 
@@ -994,7 +1003,7 @@ function editRow(primaryKey, tableRowIndex, sheetName) {
     } else {
       cell.contentEditable = true;
       cell.classList.add("editable-cell");
-
+      
       cell.addEventListener("paste", (e) => {
         e.preventDefault();
         const text = (e.clipboardData || window.clipboardData).getData("text");
@@ -1011,9 +1020,10 @@ function editRow(primaryKey, tableRowIndex, sheetName) {
 }
 
 
+
 async function saveRow() {
   showLoader(true);
-  row.classList.remove("editing-row");
+
   if (!currentEdit) return;
 
   const table = document.querySelector("#tableContainer table");
@@ -1036,7 +1046,7 @@ async function saveRow() {
 
 async function cancelEdit(){
   showLoader(true);
-  row.classList.remove("editing-row");
+
   if(!currentEdit) return;
   const data = await getSheetData(currentEdit.sheetName);
   renderTable(data, currentEdit.sheetName);
@@ -1056,6 +1066,7 @@ async function deleteRowHandler(primaryKey, sheetName) {
 
 </body>
 </html>
+
 
 
 
