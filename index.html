@@ -750,9 +750,6 @@ async function loadSheet(sheetName) {
       return rowValues;
     });
 
-    // Trim columns after the first completely empty column
-    values = values.map(row => row.slice(0, maxCol));
-
     renderTable(values, sheetName);
   } catch (err) {
     console.error("Error loading sheet with formatting:", err);
@@ -1049,6 +1046,7 @@ async function deleteRowHandler(primaryKey, sheetName) {
 
 </body>
 </html>
+
 
 
 
