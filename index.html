@@ -595,7 +595,7 @@ async function updateRow(sheetName, rowIndex, values) {
   try {
     if (!accessToken) throw new Error("No access token");
 
-    const range = `${sheetName}!A${rowIndex + 1}`;
+    const range = `${sheetName}!A${rowIndex}`;
     const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${encodeURIComponent(range)}?valueInputOption=RAW`;
 
     const res = await fetch(url, {
@@ -647,8 +647,8 @@ async function deleteRow(sheetName, rowIndex) {
             range: {
               sheetId: sheetId,
               dimension: "ROWS",
-              startIndex: rowIndex,
-              endIndex: rowIndex + 1
+              startIndex: rowIndex - 1,
+              endIndex: rowIndex
             }
           }
         }]
@@ -750,34 +750,8 @@ async function loadSheet(sheetName) {
       return rowValues;
     });
 
-    // Determine the last non-empty column
-    let maxCol = 0;
-    values.forEach(row => {
-      for (let i = 0; i < row.length; i++) {
-        if (row[i] !== "" && i >= maxCol) maxCol = i + 1;
-      }
-    });
-
     // Trim columns after the first completely empty column
     values = values.map(row => row.slice(0, maxCol));
-
-    // --- Sort all rows based on Device number column ---
-    const headers = values[0];
-    const deviceIndex = headers.findIndex(h => h.toLowerCase().includes("device number"));
-    if (deviceIndex !== -1) {
-      const dataRows = values.slice(1); // exclude header
-      dataRows.sort((a, b) => {
-        const valA = parseInt(a[deviceIndex], 10);
-        const valB = parseInt(b[deviceIndex], 10);
-
-        if (isNaN(valA) && !isNaN(valB)) return 1;   // blanks last
-        if (!isNaN(valA) && isNaN(valB)) return -1;  // blanks last
-        if (isNaN(valA) && isNaN(valB)) return 0;
-
-        return valA - valB;
-      });
-      values = [headers, ...dataRows]; // reattach header
-    }
 
     renderTable(values, sheetName);
   } catch (err) {
@@ -1075,5 +1049,6 @@ async function deleteRowHandler(primaryKey, sheetName) {
 
 </body>
 </html>
+
 
 
