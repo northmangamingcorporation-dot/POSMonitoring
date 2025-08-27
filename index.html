@@ -998,8 +998,11 @@ function editRow(primaryKey, tableRowIndex, sheetName) {
     if (i === statusColIndex) {
       const currentValue = cell.innerText.trim();
       let optionsHTML = uniqueStatuses.map(s => 
-        `<option value="${s}" ${s === currentValue ? "selected" : ""}>${s}</option>`).join("");
+        `<option value="${s}" ${s === currentValue ? "selected" : ""}>${s}</option>`
+      ).join("");
+      
       cell.innerHTML = `<select class="status-dropdown">${optionsHTML}</select>`;
+      cell.classList.add("editable-cell"); // 🔑 add highlight class here
     } else {
       cell.contentEditable = true;
       cell.classList.add("editable-cell");
@@ -1019,8 +1022,6 @@ function editRow(primaryKey, tableRowIndex, sheetName) {
   </div>`;
 }
 
-
-
 async function saveRow() {
   showLoader(true);
 
@@ -1037,22 +1038,25 @@ async function saveRow() {
     row.cells[i].classList.remove("editable-cell");
   }
 
-  const data = await updateRow(currentEdit.sheetName, currentEdit.primaryKey, newValues);
+  // ✅ update row then reload sheet with formatting
+  await updateRow(currentEdit.sheetName, currentEdit.primaryKey, newValues);
+  const updatedData = await getSheetData(currentEdit.sheetName);
+  renderTable(updatedData, currentEdit.sheetName);
+
+  currentEdit = null;
+  showLoader(false);
+}
+
+async function cancelEdit() {
+  showLoader(true);
+
+  if (!currentEdit) return;
+  const data = await getSheetData(currentEdit.sheetName); // ✅ already fine
   renderTable(data, currentEdit.sheetName);
   currentEdit = null;
   showLoader(false);
 }
 
-
-async function cancelEdit(){
-  showLoader(true);
-
-  if(!currentEdit) return;
-  const data = await getSheetData(currentEdit.sheetName);
-  renderTable(data, currentEdit.sheetName);
-  currentEdit=null;
-  showLoader(false);
-}
 
 async function deleteRowHandler(primaryKey, sheetName) {
   if (!confirm(`Are you sure you want to delete row ${primaryKey}?`)) return;
@@ -1066,6 +1070,7 @@ async function deleteRowHandler(primaryKey, sheetName) {
 
 </body>
 </html>
+
 
 
 
