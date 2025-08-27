@@ -169,6 +169,13 @@
   background-color: #ffffcc;
 }
 
+    /* Highlight the full row */
+.editing-row {
+  background-color: #fff8c4 !important; /* light yellow */
+  box-shadow: inset 0 0 6px rgba(0,0,0,0.2);
+  transition: background-color 0.3s ease;
+}
+
 .action-buttons {
       display: flex;
       align-items: center;
@@ -959,13 +966,14 @@ async function saveNewRow() {
   closeModal();
 }
 
-// ---------------------------
-// Edit row
-// ---------------------------
 function editRow(primaryKey, tableRowIndex, sheetName) {
   currentEdit = { primaryKey, tableRowIndex, sheetName };
   const table = document.querySelector("#tableContainer table");
   const row = table.rows[tableRowIndex];
+
+  // Highlight the entire row while editing
+  row.classList.add("editing-row");
+
   const headers = Array.from(table.querySelectorAll("thead th")).map(th => th.innerText.toLowerCase());
   const statusColIndex = headers.findIndex(h => h.includes("status"));
 
@@ -1005,6 +1013,7 @@ function editRow(primaryKey, tableRowIndex, sheetName) {
 
 async function saveRow() {
   showLoader(true);
+  row.classList.remove("editing-row");
   if (!currentEdit) return;
 
   const table = document.querySelector("#tableContainer table");
@@ -1027,6 +1036,7 @@ async function saveRow() {
 
 async function cancelEdit(){
   showLoader(true);
+  row.classList.remove("editing-row");
   if(!currentEdit) return;
   const data = await getSheetData(currentEdit.sheetName);
   renderTable(data, currentEdit.sheetName);
@@ -1046,6 +1056,7 @@ async function deleteRowHandler(primaryKey, sheetName) {
 
 </body>
 </html>
+
 
 
 
