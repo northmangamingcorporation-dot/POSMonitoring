@@ -1135,7 +1135,6 @@ function editRow(primaryKey, tableRowIndex, sheetName) {
 }
 
 async function saveRow() {
-  showLoader(true);
   if (!currentEdit) return;
 
   const { primaryKey, tableRowIndex, sheetName } = currentEdit; // ✅ extract properly
@@ -1182,7 +1181,6 @@ async function saveRow() {
     </div>`;
 
   currentEdit = null;
-  showLoader(false);
 }
 
 
