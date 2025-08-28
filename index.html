@@ -843,7 +843,7 @@ async function renderMenu(sheets) {
     menu.appendChild(btn);
   });
 }
-
+sheetDataWithFormat = []; // store formatting info
 // ---------------------------
 // Load sheet (optimized)
 // ---------------------------
@@ -896,7 +896,7 @@ function renderTable(data, sheetName) {
     document.getElementById("tableContainer").innerHTML = "<p>No data available</p>";
     return;
   }
-
+  applyCellFormatting()
   const headers = data[0];
   const tbody = document.createElement("tbody");
 
@@ -915,7 +915,7 @@ function renderTable(data, sheetName) {
     const tdAction = document.createElement("td");
     tdAction.innerHTML = `
       <div class="action-buttons">
-        <button onclick="editRow(${row._sheetRowIndex}, ${rowIndex + 1}, '${sheetName}')">✏️</button>
+        <button onclick="editRow(${row._sheetRowIndex}, ${rowIndex}, '${sheetName}')">✏️</button>
         <button onclick="deleteRowHandler(${row._sheetRowIndex}, '${sheetName}')">🗑️</button>
       </div>`;
     tr.appendChild(tdAction);
@@ -933,6 +933,7 @@ function renderTable(data, sheetName) {
       </table>
     </div>`;
   document.querySelector("#tableContainer table").appendChild(tbody);
+  applyCellFormatting();
 }
 
 // ---------------------------
