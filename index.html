@@ -579,6 +579,18 @@ async function loadUserProfile() {
   }
 }
 
+function isUserAuthorized() {
+  const AUTHORIZED_EMAILS = [
+    "northmangamingcorporation@gmail.com",
+    "it@northman.ph",
+    "kristineamaeng31@gmail.com"
+  ];
+
+  const userEmail = document.getElementById("userEmail")?.innerText?.trim() || "";
+  return AUTHORIZED_EMAILS.includes(userEmail);
+}
+
+
 // ------------------- Sheets Loader -------------------
 async function loadSheetsAfterAuth() {
   try {
@@ -829,8 +841,6 @@ async function logChange(action, sheetName, rowData, rowIndex) {
   }
 }
 
-
-
 // ---------------------------
 // Render menu (skip "Log")
 // ---------------------------
@@ -929,6 +939,7 @@ function renderTable(data, sheetName) {
   // Render toolbar below title
   renderStatusToolbar(statusCounts, uniqueStatuses, statusIndex);
 
+  const authorized = isUserAuthorized();
 
   // Build table rows
   for (let rowIndex = 1; rowIndex < data.length; rowIndex++) {
@@ -943,11 +954,25 @@ function renderTable(data, sheetName) {
 
     // Action buttons
     const tdAction = document.createElement("td");
-    tdAction.innerHTML = `
-      <div class="action-buttons">
-        <button onclick="editRow(${row._sheetRowIndex}, ${rowIndex}, '${sheetName}')">✏️</button>
-        <button onclick="deleteRowHandler(${row._sheetRowIndex}, '${sheetName}')">🗑️</button>
-      </div>`;
+    if (authorized) {
+      tdAction.innerHTML = `
+        <div class="action-buttons">
+          <button onclick="editRow(${row._sheetRowIndex}, ${rowIndex}, '${sheetName}')">✏️</button>
+          <button onclick="deleteRowHandler(${row._sheetRowIndex}, '${sheetName}')">🗑️</button>
+        </div>`;
+    } else {
+      tdAction.innerHTML = `
+        <div class="action-buttons">
+          <button disabled title="Not authorized">✏️</button>
+          <button disabled title="Not authorized">🗑️</button>
+        </div>`;
+      const addBtn = document.getElementById("addBtn");
+      if (!addBtn) return;
+      addBtn.disabled = true;
+      addBtn.style.cursor = "not-allowed";
+      addBtn.style.opacity = "0.6"; // visually show it’s disabled
+    }
+
     tr.appendChild(tdAction);
 
     tr.dataset.key = row._sheetRowIndex;
