@@ -24,48 +24,6 @@ function filterByGreenDeviceID() {
   });
 }
 
-// ---------------------------
-// Search filter
-// ---------------------------
-document.getElementById("searchInput").addEventListener("input", () => {
-  const filter = document.getElementById("searchInput").value.trim().toLowerCase();
-  const table = document.querySelector("#tableContainer table");
-  if (!table) return;
-
-  const rows = table.rows;
-  const authorized = isUserAuthorized();
-
-  for (let i = 1; i < rows.length; i++) { // skip header
-    let match = false;
-
-    // Check all cells except the last (Action)
-    for (let j = 0; j < rows[i].cells.length - 1; j++) {
-      if (rows[i].cells[j].textContent.toLowerCase().includes(filter)) {
-        match = true;
-        break;
-      }
-    }
-
-    rows[i].style.display = match ? "" : "none";
-
-    // Optionally, disable action buttons if unauthorized
-    const actionBtns = rows[i].querySelectorAll(".action-buttons button");
-    if (!authorized) {
-      actionBtns.forEach(btn => {
-        btn.disabled = true;
-        btn.title = "Not authorized";
-      });
-      const addBtn = document.getElementById("addBtn");
-      if (!addBtn) return;
-      addBtn.disabled = true;
-      addBtn.style.cursor = "not-allowed";
-      addBtn.style.opacity = "0.6"; // visually show it’s disabled
-    } else {
-      actionBtns.forEach(btn => btn.disabled = false);
-    }
-  }
-});
-
 function renderStatusToolbar(statusCounts, uniqueStatuses, statusIndex, headers) {
   const sheetTitleEl = document.getElementById("sheetTitle");
 
