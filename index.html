@@ -408,7 +408,7 @@
   </div>
   <div class="card">
     <h2 id="sheetTitle">Select a Sheet</h2>
-    <div class="search-box" style="display: flex; gap: 8px;">
+    <div class="search-box" style="display: flex; gap: 8px; margin-top: 10px;">
       <input type="text" id="searchInput" placeholder="Search..." style="flex: 1;">
       <button id="addBtn"
           style="padding: 8px 16px; border: none; border-radius: 6px; background: #007bff; color: white; cursor: pointer;"
@@ -893,24 +893,49 @@ async function loadSheet(sheetName) {
   }
 }
 
-// ---------------------------
-// Render table
-// ---------------------------
 function renderTable(data, sheetName) {
+  const container = document.getElementById("tableContainer");
+  container.innerHTML = "";
+
   if (!data.length) {
-    document.getElementById("tableContainer").innerHTML = "<p>No data available</p>";
+    container.innerHTML = "<p>No data available</p>";
     return;
   }
-  applyCellFormatting()
-  const headers = data[0];
+
+  const headers = data[0] || [];
   const tbody = document.createElement("tbody");
 
-  // Build rows with DocumentFragment
+  // Determine valid columns
+  const validIndexes = headers.map((h, i) => i).filter(i =>
+    data.some(row => row[i] && String(row[i]).trim() !== "")
+  );
+
+  // Identify status column
+  const statusIndex = validIndexes.find(i =>
+    (headers[i] || "").toLowerCase().includes("status")
+  );
+
+  // Count statuses
+  let statusCounts = {};
+  let uniqueStatuses = [];
+  if (statusIndex !== undefined) {
+    data.slice(1).forEach(row => {
+      const s = row[statusIndex] || "Unknown";
+      statusCounts[s] = (statusCounts[s] || 0) + 1;
+    });
+    uniqueStatuses = Object.keys(statusCounts);
+  }
+
+  // Render toolbar below title
+  renderStatusToolbar(statusCounts, uniqueStatuses, statusIndex);
+
+
+  // Build table rows
   for (let rowIndex = 1; rowIndex < data.length; rowIndex++) {
     const row = data[rowIndex];
     const tr = document.createElement("tr");
 
-    headers.forEach((h, i) => {
+    validIndexes.forEach(i => {
       const td = document.createElement("td");
       td.textContent = row[i] || "";
       tr.appendChild(td);
@@ -920,24 +945,31 @@ function renderTable(data, sheetName) {
     const tdAction = document.createElement("td");
     tdAction.innerHTML = `
       <div class="action-buttons">
-        <button onclick="editRow(${row._sheetRowIndex}, ${rowIndex}, '${sheetName}')">✏️</button>
+        <button onclick="editRow(${row._sheetRowIndex}, '${sheetName}')">✏️</button>
         <button onclick="deleteRowHandler(${row._sheetRowIndex}, '${sheetName}')">🗑️</button>
       </div>`;
     tr.appendChild(tdAction);
 
+    tr.dataset.key = row._sheetRowIndex;
     tbody.appendChild(tr);
   }
 
-  // Replace table
-  document.getElementById("tableContainer").innerHTML = `
+  // Build table header
+  const headerHtml = validIndexes.map(i => `<th>${headers[i] || "Column " + (i+1)}</th>`).join("");
+
+  // Build table
+  container.innerHTML = `
     <div class="table-wrapper">
       <table>
         <thead>
-          <tr>${headers.map(h => `<th>${h}</th>`).join("")}<th>Action</th></tr>
+          <tr>${headerHtml}<th>Action</th></tr>
         </thead>
       </table>
-    </div>`;
+    </div>
+  `;
   document.querySelector("#tableContainer table").appendChild(tbody);
+
+  // Apply formatting
   applyCellFormatting();
 }
 
@@ -997,6 +1029,109 @@ function filterByStatus() {
     row.style.display = !filterValue || statusCell ? "" : "none";
   });
 }
+
+function renderStatusToolbar(statusCounts, uniqueStatuses, statusIndex, headers) {
+  const sheetTitleEl = document.getElementById("sheetTitle");
+
+  // Remove previous toolbar
+  const existingToolbar = document.getElementById("statusToolbar");
+  if (existingToolbar) existingToolbar.remove();
+
+  const toolbar = document.createElement("div");
+  toolbar.id = "statusToolbar";
+  toolbar.style.display = "flex";
+  toolbar.style.flexDirection = "column";
+  toolbar.style.gap = "6px";
+  toolbar.style.marginTop = "8px";
+
+  // --- Status badges row ---
+  const badgesRow = document.createElement("div");
+  badgesRow.className = "status-info"; // your CSS class
+  Object.entries(statusCounts).forEach(([s, c]) => {
+    const badge = document.createElement("span");
+    badge.className = "badge"; // uses your CSS
+    badge.textContent = `${s}: ${c}`;
+    badgesRow.appendChild(badge);
+  });
+  toolbar.appendChild(badgesRow);
+
+  // --- Filter dropdown row ---
+  if (statusIndex !== undefined && uniqueStatuses.length > 0) {
+    const filterRow = document.createElement("div");
+    filterRow.style.display = "flex";
+    filterRow.style.alignItems = "center";
+    filterRow.style.gap = "8px";
+
+    const label = document.createElement("span");
+    label.textContent = "Filter by Status:";
+    label.style.fontWeight = "bold";
+    filterRow.appendChild(label);
+
+    const select = document.createElement("select");
+    select.id = "statusFilter";
+    select.onchange = () => {
+      filterByStatus();
+    };
+
+    const allOption = document.createElement("option");
+    allOption.value = "";
+    allOption.textContent = "All";
+    select.appendChild(allOption);
+
+    uniqueStatuses.forEach(s => {
+      const opt = document.createElement("option");
+      opt.value = s;
+      opt.textContent = s;
+      select.appendChild(opt);
+    });
+
+    filterRow.appendChild(select);
+
+    const filteredByLabel = document.createElement("span");
+    filteredByLabel.id = "filteredByLabel";
+    filteredByLabel.style.fontWeight = "bold";
+    filterRow.appendChild(filteredByLabel);
+
+    toolbar.appendChild(filterRow);
+  }
+
+  // --- Sorting dropdown row ---
+  if (headers && headers.length > 0) {
+    const sortRow = document.createElement("div");
+    sortRow.style.display = "flex";
+    sortRow.style.alignItems = "center";
+    sortRow.style.gap = "8px";
+
+    const sortLabel = document.createElement("span");
+    sortLabel.textContent = "Sort by:";
+    sortLabel.style.fontWeight = "bold";
+    sortRow.appendChild(sortLabel);
+
+    const sortSelect = document.createElement("select");
+    sortSelect.id = "sortSelect";
+    sortSelect.className = "status-filter";
+    sortSelect.onchange = () => sortTableByColumn(sortSelect.value);
+
+    const sortDefault = document.createElement("option");
+    sortDefault.value = "";
+    sortDefault.textContent = "None";
+    sortSelect.appendChild(sortDefault);
+
+    headers.forEach((h, idx) => {
+      const opt = document.createElement("option");
+      opt.value = idx;
+      opt.textContent = h || `Column ${idx + 1}`;
+      sortSelect.appendChild(opt);
+    });
+
+    sortRow.appendChild(sortSelect);
+    toolbar.appendChild(sortRow);
+  }
+
+  // Insert toolbar after the title
+  sheetTitleEl.insertAdjacentElement("afterend", toolbar);
+}
+
 
 // ---------------------------
 // Green Device ID filter
