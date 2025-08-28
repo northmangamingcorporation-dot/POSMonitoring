@@ -945,7 +945,7 @@ function renderTable(data, sheetName) {
     const tdAction = document.createElement("td");
     tdAction.innerHTML = `
       <div class="action-buttons">
-        <button onclick="editRow(${row._sheetRowIndex}, '${sheetName}')">✏️</button>
+        <button onclick="editRow(${row._sheetRowIndex}, ${rowIndex}, '${sheetName}')">✏️</button>
         <button onclick="deleteRowHandler(${row._sheetRowIndex}, '${sheetName}')">🗑️</button>
       </div>`;
     tr.appendChild(tdAction);
@@ -1231,15 +1231,22 @@ async function saveNewRow() {
 
 function editRow(primaryKey, tableRowIndex, sheetName) {
   currentEdit = { primaryKey, tableRowIndex, sheetName };
+
   const table = document.querySelector("#tableContainer table");
-  const row = table.rows[tableRowIndex];
+  const tbody = table.querySelector("tbody");
+  const row = tbody.rows[tableRowIndex - 1]; // <-- map to tbody
+
+  if (!row) {
+    console.error("Row not found for editing:", tableRowIndex);
+    return;
+  }
 
   const headers = Array.from(table.querySelectorAll("thead th")).map(th => th.innerText.toLowerCase());
   const statusColIndex = headers.findIndex(h => h.includes("status"));
 
   let uniqueStatuses = [];
   if (statusColIndex !== -1) {
-    uniqueStatuses = [...new Set(Array.from(table.querySelectorAll("tbody tr"))
+    uniqueStatuses = [...new Set(Array.from(tbody.rows)
       .map(r => r.cells[statusColIndex]?.innerText.trim())
       .filter(v => v))];
   }
@@ -1249,15 +1256,14 @@ function editRow(primaryKey, tableRowIndex, sheetName) {
 
     if (i === statusColIndex) {
       const currentValue = cell.innerText.trim();
-      let optionsHTML = uniqueStatuses.map(s => 
+      const optionsHTML = uniqueStatuses.map(s => 
         `<option value="${s}" ${s === currentValue ? "selected" : ""}>${s}</option>`
       ).join("");
-      
       cell.innerHTML = `<select class="status-dropdown">${optionsHTML}</select>`;
 
     } else {
       cell.contentEditable = true;
-      
+
       cell.addEventListener("paste", (e) => {
         e.preventDefault();
         const text = (e.clipboardData || window.clipboardData).getData("text");
