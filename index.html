@@ -456,13 +456,16 @@ let accessToken = null;
 let tokenExpiry = 0;
 let checkInterval = null;
 
+let sheetpage = "";
+let addSheetName = "";
+let sheetDataCache = {};
+let currentEdit = null;
+
 // ------------------- Init -------------------
 window.onload = () => {
-  document.getElementById("authModal").style.display = "flex";
   initGIS();
 };
 
-// Trigger token request on modal button click
 document.getElementById("modalAuthorizeBtn").addEventListener("click", () => {
   tokenClient.requestAccessToken({ prompt: "consent" });
 });
@@ -473,30 +476,46 @@ function initGIS() {
     client_id: CLIENT_ID,
     scope: SCOPES,
     callback: (tokenResponse) => {
-      accessToken = tokenResponse.access_token;
-      tokenExpiry = Date.now() + (tokenResponse.expires_in * 1000);
-
-      document.getElementById("authModal").style.display = "none";
-      loadUserProfile();
-      loadSheetsAfterAuth();
-
-      // Start periodic check every 30s
-      if (checkInterval) clearInterval(checkInterval);
-      checkInterval = setInterval(checkTokenValidity, 30 * 1000);
+      handleNewToken(tokenResponse);
     },
   });
 
-  // If we had a valid token saved from sessionStorage, reuse it
+  // Try to reuse token from sessionStorage
   const savedToken = sessionStorage.getItem("gsheets_access_token");
   const savedExpiry = sessionStorage.getItem("gsheets_token_expiry");
+
   if (savedToken && savedExpiry && Date.now() < parseInt(savedExpiry, 10)) {
     accessToken = savedToken;
     tokenExpiry = parseInt(savedExpiry, 10);
-    document.getElementById("authModal").style.display = "none";
+    hideAuthModal();
     loadUserProfile();
     loadSheetsAfterAuth();
     checkInterval = setInterval(checkTokenValidity, 30 * 1000);
+  } else {
+    showAuthModal();
   }
+}
+
+// ------------------- Handle new tokens -------------------
+function handleNewToken(tokenResponse) {
+  if (tokenResponse.error) {
+    console.error("Auth error:", tokenResponse);
+    showAuthModal();
+    return;
+  }
+
+  accessToken = tokenResponse.access_token;
+  tokenExpiry = Date.now() + (tokenResponse.expires_in * 1000);
+
+  sessionStorage.setItem("gsheets_access_token", accessToken);
+  sessionStorage.setItem("gsheets_token_expiry", tokenExpiry);
+
+  hideAuthModal();
+  loadUserProfile();
+  loadSheetsAfterAuth();
+
+  if (checkInterval) clearInterval(checkInterval);
+  checkInterval = setInterval(checkTokenValidity, 30 * 1000);
 }
 
 // ------------------- Token Refresh -------------------
@@ -507,6 +526,41 @@ function checkTokenValidity() {
   }
 }
 
+// ------------------- Auth Modal Helpers -------------------
+function showAuthModal() {
+  document.getElementById("authModal").style.display = "flex";
+}
+
+function hideAuthModal() {
+  document.getElementById("authModal").style.display = "none";
+}
+
+// ------------------- Token Utils -------------------
+function isTokenExpired() {
+  return !accessToken || Date.now() >= tokenExpiry - 5000;
+}
+
+async function ensureAccessToken() {
+  if (!accessToken) {
+    console.log("No access token, showing login modal...");
+    showAuthModal();
+    throw new Error("No access token");
+  }
+
+  if (isTokenExpired()) {
+    console.log("Token expired, refreshing silently...");
+    tokenClient.requestAccessToken({ prompt: "" });
+    await new Promise((resolve) => setTimeout(resolve, 1000)); // small wait
+    if (isTokenExpired()) {
+      console.log("Silent refresh failed, showing login modal...");
+      showAuthModal();
+      throw new Error("Silent refresh failed");
+    }
+  }
+
+  return accessToken;
+}
+
 // ------------------- User Profile -------------------
 async function loadUserProfile() {
   try {
@@ -515,7 +569,6 @@ async function loadUserProfile() {
     });
     const user = await res.json();
 
-    // Show profile in sidebar
     document.getElementById("userProfile").style.display = "flex";
     document.getElementById("userPic").src = user.picture || "https://www.gravatar.com/avatar?d=mp&s=200";
     document.getElementById("userName").innerText = user.name || "Unknown User";
@@ -540,11 +593,6 @@ async function loadSheetsAfterAuth() {
     console.error("Error loading sheets:", err);
   }
 }
-
-
-// ---------------------------
-// Loader
-// ---------------------------
 function showLoader(show) {
   document.getElementById("loader").style.display = show ? "block" : "none";
 }
@@ -555,13 +603,23 @@ function showLoader(show) {
 async function getSheetData(sheetName) {
   showLoader(true);
   console.log(`Fetching data for sheet: ${sheetName}`);
-  
-  const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${encodeURIComponent(sheetName)}`;
 
   try {
-    const res = await fetch(url, {
-      headers: { "Authorization": `Bearer ${accessToken}` }
-    });
+    const token = await ensureAccessToken(); // ✅ always valid
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${encodeURIComponent(sheetName)}`;
+
+    let res = await fetch(url, { headers: { "Authorization": `Bearer ${token}` } });
+
+    // If unauthorized, try silent refresh once more
+    if (res.status === 401) {
+      console.warn("Access token invalid, retrying with silent refresh...");
+      const refreshed = await attemptSilentAuth();
+      if (!refreshed) {
+        showAuthModal();
+        return [];
+      }
+      res = await fetch(url, { headers: { "Authorization": `Bearer ${accessToken}` } });
+    }
 
     if (!res.ok) {
       console.error(`Failed to fetch sheet data: ${res.status} ${res.statusText}`);
@@ -576,26 +634,29 @@ async function getSheetData(sheetName) {
     console.error("Error fetching sheet data:", err);
     return [];
   } finally {
-    showLoader(false); // ensure loader hides even on error
+    showLoader(false);
   }
 }
 
 async function getSheetNames() {
   showLoader(true);
-  
-  if (!accessToken) {
-    console.error("No access token. Call requestAccessToken() first!");
-    showLoader(false);
-    return [];
-  }
-
   console.log("Fetching sheet names...");
-  const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}?fields=sheets.properties.title`;
 
   try {
-    const res = await fetch(url, {
-      headers: { "Authorization": `Bearer ${accessToken}` }
-    });
+    const token = await ensureAccessToken(); // ✅ always valid
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}?fields=sheets.properties.title`;
+
+    let res = await fetch(url, { headers: { "Authorization": `Bearer ${token}` } });
+
+    if (res.status === 401) {
+      console.warn("Access token invalid, retrying with silent refresh...");
+      const refreshed = await attemptSilentAuth();
+      if (!refreshed) {
+        showAuthModal();
+        return [];
+      }
+      res = await fetch(url, { headers: { "Authorization": `Bearer ${accessToken}` } });
+    }
 
     if (!res.ok) {
       console.error(`Failed to fetch sheet names: ${res.status} ${res.statusText}`);
@@ -604,16 +665,16 @@ async function getSheetNames() {
 
     const data = await res.json();
     console.log("Sheet names received:", data);
-
     if (!data.sheets) return [];
     return data.sheets.map(s => s.properties.title);
   } catch (err) {
     console.error("Error fetching sheet names:", err);
     return [];
   } finally {
-    showLoader(false); // ensure loader hides even on error
+    showLoader(false);
   }
 }
+
 
 
 // ---------------------------
@@ -735,19 +796,6 @@ async function logChange(action, sheetName, rowData, rowIndex) {
 
     const deviceInfo = navigator.userAgent || "Unknown Device";
 
-    // Location info (optional, requires user permission)
-    let locationInfo = "Unknown Location";
-    if (navigator.geolocation) {
-      try {
-        const position = await new Promise((resolve, reject) => {
-          navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 5000 });
-        });
-        locationInfo = `Lat:${position.coords.latitude}, Lng:${position.coords.longitude}`;
-      } catch (err) {
-        console.warn("Location not available:", err);
-      }
-    }
-
     const dataString = JSON.stringify(rowData);
 
     // Add userName and userEmail separately in the log for clarity
@@ -756,7 +804,6 @@ async function logChange(action, sheetName, rowData, rowIndex) {
       userName,
       userEmail,
       deviceInfo,
-      locationInfo,
       action,
       sheetName,
       rowIndex ?? "",
@@ -798,7 +845,7 @@ async function renderMenu(sheets) {
 }
 
 // ---------------------------
-// Load sheet with formatting + row index as primary key
+// Load sheet (optimized)
 // ---------------------------
 async function loadSheet(sheetName) {
   document.getElementById("sheetTitle").textContent = sheetName + " Data";
@@ -807,31 +854,39 @@ async function loadSheet(sheetName) {
   showLoader(true);
 
   try {
-    // Fetch values + formatting
-    const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}?ranges=${encodeURIComponent(sheetName)}&fields=sheets.data.rowData.values(userEnteredValue,effectiveFormat.backgroundColor)&includeGridData=true`;
-    const res = await fetch(url, { headers: { "Authorization": `Bearer ${accessToken}` } });
-    const data = await res.json();
-    const rows = data.sheets[0].data[0].rowData || [];
+    // ✅ Load values only first (much faster)
+    const urlValues = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${encodeURIComponent(sheetName)}?majorDimension=ROWS`;
+    const resValues = await fetch(urlValues, {
+      headers: { "Authorization": `Bearer ${accessToken}` }
+    });
+    const valuesData = await resValues.json();
+    let values = valuesData.values || [];
 
-    // Store data + formatting
-    sheetDataWithFormat = rows.map(r => r.values || []);
-
-    // Extract values for table rendering + attach sheet row index (primary key)
-    let values = sheetDataWithFormat.map((row, idx) => {
-      const rowValues = row.map(cell => cell.userEnteredValue?.stringValue || cell.userEnteredValue?.numberValue || "");
-      rowValues._sheetRowIndex = idx + 1; // Google Sheets row index (1-based)
-      return rowValues;
+    // Attach Google Sheets row index
+    values = values.map((row, idx) => {
+      row._sheetRowIndex = idx + 1;
+      return row;
     });
 
+    // Render table immediately (no styles yet)
     renderTable(values, sheetName);
+
+    // ✅ Load formatting in background (optional)
+    const urlFormat = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}?ranges=${encodeURIComponent(sheetName)}&fields=sheets.data.rowData.values.effectiveFormat.backgroundColor&includeGridData=true`;
+    const resFormat = await fetch(urlFormat, {
+      headers: { "Authorization": `Bearer ${accessToken}` }
+    });
+    const formatData = await resFormat.json();
+    sheetDataWithFormat = (formatData.sheets?.[0]?.data?.[0]?.rowData || []).map(r => r.values || []);
+
+    // Apply formatting asynchronously
+    applyCellFormatting();
   } catch (err) {
-    console.error("Error loading sheet with formatting:", err);
+    console.error("Error loading sheet:", err);
   } finally {
     showLoader(false);
   }
 }
-
-
 
 // ---------------------------
 // Render table
@@ -842,91 +897,84 @@ function renderTable(data, sheetName) {
     return;
   }
 
-  let headers = data[0]; // row 0 is header
+  const headers = data[0];
+  const tbody = document.createElement("tbody");
 
-  // Identify columns that are NOT empty
-  const validIndexes = headers.map((h, i) => i).filter(i => {
-    return data.some(row => row[i] && String(row[i]).trim() !== "");
-  });
+  // Build rows with DocumentFragment
+  for (let rowIndex = 1; rowIndex < data.length; rowIndex++) {
+    const row = data[rowIndex];
+    const tr = document.createElement("tr");
 
-  headers = validIndexes.map(i => headers[i]);
-
-  const statusIndex = validIndexes.find(i => headers[i].toLowerCase().includes("status"));
-
-  // Status counts
-  let statusCounts = {};
-  let uniqueStatuses = [];
-  if (statusIndex !== undefined) {
-    data.slice(1).forEach(row => {
-      const s = row[statusIndex] ? row[statusIndex] : "Unknown";
-      statusCounts[s] = (statusCounts[s] || 0) + 1;
+    headers.forEach((h, i) => {
+      const td = document.createElement("td");
+      td.textContent = row[i] || "";
+      tr.appendChild(td);
     });
-    uniqueStatuses = Object.keys(statusCounts);
+
+    // Action buttons
+    const tdAction = document.createElement("td");
+    tdAction.innerHTML = `
+      <div class="action-buttons">
+        <button onclick="editRow(${row._sheetRowIndex}, ${rowIndex + 1}, '${sheetName}')">✏️</button>
+        <button onclick="deleteRowHandler(${row._sheetRowIndex}, '${sheetName}')">🗑️</button>
+      </div>`;
+    tr.appendChild(tdAction);
+
+    tbody.appendChild(tr);
   }
 
-  const statusHTML = Object.entries(statusCounts)
-    .map(([s, c]) => `<span class="badge">${s}: ${c}</span>`).join(" ");
-  const filterHTML = statusIndex !== undefined
-    ? `<div class="status-filter">
-         <label><strong>Filter by Status:</strong></label>
-         <select id="statusFilter" onchange="filterByStatus()">
-           <option value="">All</option>
-           ${uniqueStatuses.map(s => `<option value="${s}">${s}</option>`).join("")}
-         </select>
-       </div>` : "";
-
-  document.getElementById("sheetTitle").innerHTML = `${sheetName} Data <div class="status-info">${statusHTML}</div> ${filterHTML}`;
-
-  // Render table with highlights
-  let html = '<div class="table-wrapper"><table><thead><tr>';
-  headers.forEach(h => html += `<th>${h}</th>`);
-  html += "<th>Action</th></tr></thead><tbody>";
-
-data.slice(1).forEach((row, rowIndex) => {
-  const primaryKey = row._sheetRowIndex || (rowIndex + 2); // Google Sheet row
-
-  html += "<tr>";
-  validIndexes.forEach((i) => {
-    const cellValue = row[i] || "";
-    let cellStyle = "";
-
-    const bgColor = sheetDataWithFormat[rowIndex + 1][i]?.effectiveFormat?.backgroundColor;
-     let bgClass = "";
-      if (bgColor) {
-        const r = Math.round((bgColor.red ?? 0) * 255);
-        const g = Math.round((bgColor.green ?? 0) * 255);
-        const b = Math.round((bgColor.blue ?? 0) * 255);
-        const contrast = getContrastColor(r, g, b);
-      
-        bgClass = `cell-bg-${r}-${g}-${b}-${contrast}`;
-        if (!document.querySelector(`.${bgClass}`)) {
-          const styleEl = document.createElement("style");
-          styleEl.innerHTML = `.${bgClass} { background-color: rgb(${r},${g},${b}); color:${contrast}; }`;
-          document.head.appendChild(styleEl);
-        }
-      }
-      
-      html += `<td class="${bgClass}">${cellValue}</td>`;
-    });
-
-  html += `<td>
-    <div class="action-buttons">
-      <button onclick="editRow(${primaryKey}, ${rowIndex + 1}, '${sheetName}')">✏️</button>
-      <button onclick="deleteRowHandler(${primaryKey}, '${sheetName}')">🗑️</button>
-    </div>
-  </td>`;
-  html += "</tr>";
-});
-
-  html += "</tbody></table></div>";
-  document.getElementById("tableContainer").innerHTML = html;
+  // Replace table
+  document.getElementById("tableContainer").innerHTML = `
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>${headers.map(h => `<th>${h}</th>`).join("")}<th>Action</th></tr>
+        </thead>
+      </table>
+    </div>`;
+  document.querySelector("#tableContainer table").appendChild(tbody);
 }
 
+// ---------------------------
+// Apply formatting (deferred)
+// ---------------------------
+function applyCellFormatting() {
+  if (!sheetDataWithFormat) return;
 
+  const rows = document.querySelectorAll("#tableContainer tbody tr");
+  const cssRules = [];
+  const usedClasses = new Set();
 
-// Utility to choose black/white text for contrast
+  rows.forEach((tr, rowIndex) => {
+    const formatRow = sheetDataWithFormat[rowIndex + 1] || [];
+    [...tr.children].forEach((td, colIndex) => {
+      const bg = formatRow[colIndex]?.effectiveFormat?.backgroundColor;
+      if (bg) {
+        const r = Math.round((bg.red ?? 0) * 255);
+        const g = Math.round((bg.green ?? 0) * 255);
+        const b = Math.round((bg.blue ?? 0) * 255);
+        const contrast = getContrastColor(r, g, b);
+        const cls = `cell-bg-${r}-${g}-${b}-${contrast}`;
+        td.classList.add(cls);
+
+        if (!usedClasses.has(cls)) {
+          cssRules.push(`.${cls}{background-color:rgb(${r},${g},${b});color:${contrast};}`);
+          usedClasses.add(cls);
+        }
+      }
+    });
+  });
+
+  if (cssRules.length) {
+    const styleEl = document.createElement("style");
+    styleEl.textContent = cssRules.join("\n");
+    document.head.appendChild(styleEl);
+  }
+}
+
+// Utility for text contrast
 function getContrastColor(r, g, b) {
-  const brightness = (r*299 + g*587 + b*114)/1000;
+  const brightness = (r * 299 + g * 587 + b * 114) / 1000;
   return brightness > 125 ? "black" : "white";
 }
 
@@ -1045,9 +1093,6 @@ function editRow(primaryKey, tableRowIndex, sheetName) {
   const table = document.querySelector("#tableContainer table");
   const row = table.rows[tableRowIndex];
 
-  // Highlight the entire row
-  row.classList.add("editing-row");
-
   const headers = Array.from(table.querySelectorAll("thead th")).map(th => th.innerText.toLowerCase());
   const statusColIndex = headers.findIndex(h => h.includes("status"));
 
@@ -1068,10 +1113,9 @@ function editRow(primaryKey, tableRowIndex, sheetName) {
       ).join("");
       
       cell.innerHTML = `<select class="status-dropdown">${optionsHTML}</select>`;
-      cell.classList.add("editable-cell"); // 🔑 add highlight class here
+
     } else {
       cell.contentEditable = true;
-      cell.classList.add("editable-cell");
       
       cell.addEventListener("paste", (e) => {
         e.preventDefault();
@@ -1090,28 +1134,55 @@ function editRow(primaryKey, tableRowIndex, sheetName) {
 
 async function saveRow() {
   showLoader(true);
-
   if (!currentEdit) return;
 
+  const { primaryKey, tableRowIndex, sheetName } = currentEdit; // ✅ extract properly
   const table = document.querySelector("#tableContainer table");
-  const row = table.rows[currentEdit.tableRowIndex];
+  const row = table.rows[tableRowIndex];
   const newValues = [];
 
   for (let i = 0; i < row.cells.length - 1; i++) {
     const select = row.cells[i].querySelector("select");
-    newValues.push(select ? select.value.trim() : row.cells[i].innerText.trim());
+    const value = select ? select.value.trim() : row.cells[i].innerText.trim();
+    newValues.push(value);
+
     row.cells[i].contentEditable = false;
-    row.cells[i].classList.remove("editable-cell");
+    row.cells[i].innerText = value; // ✅ write back final value
   }
 
-  // ✅ update row then reload sheet with formatting
-  await updateRow(currentEdit.sheetName, currentEdit.primaryKey, newValues);
-  const updatedData = await getSheetData(currentEdit.sheetName);
-  renderTable(updatedData, currentEdit.sheetName);
+  // ✅ fast UI update done — now sync in background
+  updateRow(sheetName, primaryKey, newValues).then(async () => {
+    // background re-sync with sheet
+    const latestData = await getSheetData(sheetName);
+
+    // find the row we just updated
+    const updatedRow = latestData.find(r => r.primaryKey === primaryKey);
+    if (updatedRow) {
+      // only re-render if data differs
+      for (let i = 0; i < newValues.length; i++) {
+        if (row.cells[i].innerText.trim() !== updatedRow.values[i].trim()) {
+          renderTable(sheetName, latestData);
+          break;
+        }
+      }
+    }
+  }).catch(err => {
+    console.error("Save failed:", err);
+    // optionally show modal if auth expired
+    showAuthModal();
+  });
+
+  // ✅ restore action buttons immediately
+  const actionCell = row.cells[row.cells.length - 1];
+  actionCell.innerHTML = `<div class="action-buttons">
+      <button onclick="editRow(${primaryKey}, ${tableRowIndex}, '${sheetName}')">✏️</button>
+      <button onclick="deleteRowHandler(${primaryKey}, '${sheetName}')">🗑️</button>
+    </div>`;
 
   currentEdit = null;
   showLoader(false);
 }
+
 
 async function cancelEdit() {
   showLoader(true);
