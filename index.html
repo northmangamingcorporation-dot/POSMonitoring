@@ -514,7 +514,6 @@ function handleNewToken(tokenResponse) {
   hideAuthModal();
   loadUserProfile();
   loadSheetsAfterAuth();
-  logChange("handleNewToken", "accessToken", accessToken + "-" + tokenExpiry, "");
   if (checkInterval) clearInterval(checkInterval);
   checkInterval = setInterval(checkTokenValidity, 30 * 1000);
 }
@@ -574,7 +573,7 @@ async function loadUserProfile() {
     document.getElementById("userPic").src = user.picture || "https://www.gravatar.com/avatar?d=mp&s=200";
     document.getElementById("userName").innerText = user.name || "Unknown User";
     document.getElementById("userEmail").innerText = user.email || "";
-    
+    logChange("LOGIN", "", null, "");
   } catch (err) {
     console.error("Error fetching user profile:", err);
   }
