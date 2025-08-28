@@ -372,13 +372,34 @@
   <h2>STI Northman Gaming</h2>
   <div class="menu" id="menu"></div>
   
-  <!-- Redirect button -->
-  <button 
-    style="margin-top: 16px; padding: 8px 16px; border: none; border-radius: 6px; background: #28a745; color: white; cursor: pointer;"
-    onclick="window.location.href='https://networkmonitoring.vercel.app/'">
-    Go to Network Monitoring
-  </button>
+<!-- User Profile -->
+<div id="userProfile" 
+    style="display: none; display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+           margin-top: 16px; padding: 12px; border-radius: 12px; max-width: 320px;
+           color: white; box-shadow: 0 4px 12px rgba(0,0,0,0.2); overflow: hidden;">
+
+    <!-- Profile Picture -->
+    <img id="userPic" src="" alt="Profile Picture" 
+        style="width: 55px; height: 55px; border-radius: 50%; border: 3px solid white; flex-shrink: 0;">
+
+    <div style="text-align: left; min-width: 0; flex: 1;">
+    <div id="userName" 
+    style="font-weight: bold; font-size: 16px; letter-spacing: 0.3px;
+           line-height: 1.0; word-wrap: break-word; overflow-wrap: anywhere; margin-bottom: 4px;"></div>
+
+    <div id="userEmail" 
+        style="font-size: 13px; opacity: 0.9; font-style: italic;
+               white-space: normal; word-wrap: break-word; overflow-wrap: anywhere;"></div>
+  </div>
 </div>
+
+    <!-- Redirect button -->
+    <button 
+      style="margin-top: 16px; padding: 8px 16px; border: none; border-radius: 6px; background: #28a745; color: white; cursor: pointer;"
+      onclick="window.location.href='https://networkmonitoring.vercel.app/'">
+      Go to Network Monitoring
+    </button>
+  </div>
 
   <div class="main">
   <div class="loader" id="loader">
@@ -425,7 +446,17 @@
 </div>
 
 <script>
-// Show modal on page load
+// ------------------- Auth Config -------------------
+const CLIENT_ID = "900901251874-tlbsv8ph1rfcmtnk77pqm5dkqptip0ic.apps.googleusercontent.com";
+const SPREADSHEET_ID = "1VWPTrBlRIWOBHHIFttTUZH5mDnbKvieyR_gZOHsrNQQ";
+const SCOPES = "https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email";
+
+let tokenClient;
+let accessToken = null;
+let tokenExpiry = 0;
+let checkInterval = null;
+
+// ------------------- Init -------------------
 window.onload = () => {
   document.getElementById("authModal").style.display = "flex";
   initGIS();
@@ -433,56 +464,73 @@ window.onload = () => {
 
 // Trigger token request on modal button click
 document.getElementById("modalAuthorizeBtn").addEventListener("click", () => {
-  tokenClient.requestAccessToken();
+  tokenClient.requestAccessToken({ prompt: "consent" });
 });
 
-
-const CLIENT_ID = "900901251874-tlbsv8ph1rfcmtnk77pqm5dkqptip0ic.apps.googleusercontent.com";
-const SPREADSHEET_ID = "1VWPTrBlRIWOBHHIFttTUZH5mDnbKvieyR_gZOHsrNQQ";
-const SCOPES = "https://www.googleapis.com/auth/spreadsheets";
-
-let sheetpage = "";
-let addSheetName = "";
-let sheetDataCache = {};
-let currentEdit = null;
-
-// ------------------- OAuth2 & Google API Init -------------------
-let tokenClient;
-let accessToken = null;
-
+// ------------------- GIS Setup -------------------
 function initGIS() {
-  // Check if token is already saved in sessionStorage
-  const savedToken = sessionStorage.getItem("gsheets_access_token");
-  if (savedToken) {
-    accessToken = savedToken;
-    document.getElementById("authModal").style.display = "none"; // hide modal automatically
-    loadSheetsAfterAuth();
-    return; // skip token request
-  }
-
   tokenClient = google.accounts.oauth2.initTokenClient({
     client_id: CLIENT_ID,
-    scope: "https://www.googleapis.com/auth/spreadsheets",
+    scope: SCOPES,
     callback: (tokenResponse) => {
       accessToken = tokenResponse.access_token;
-      // Save token in sessionStorage to avoid frequent verification
-      sessionStorage.setItem("gsheets_access_token", accessToken);
-      document.getElementById("authModal").style.display = "none"; // hide modal
+      tokenExpiry = Date.now() + (tokenResponse.expires_in * 1000);
+
+      document.getElementById("authModal").style.display = "none";
+      loadUserProfile();
       loadSheetsAfterAuth();
+
+      // Start periodic check every 30s
+      if (checkInterval) clearInterval(checkInterval);
+      checkInterval = setInterval(checkTokenValidity, 30 * 1000);
     },
   });
+
+  // If we had a valid token saved from sessionStorage, reuse it
+  const savedToken = sessionStorage.getItem("gsheets_access_token");
+  const savedExpiry = sessionStorage.getItem("gsheets_token_expiry");
+  if (savedToken && savedExpiry && Date.now() < parseInt(savedExpiry, 10)) {
+    accessToken = savedToken;
+    tokenExpiry = parseInt(savedExpiry, 10);
+    document.getElementById("authModal").style.display = "none";
+    loadUserProfile();
+    loadSheetsAfterAuth();
+    checkInterval = setInterval(checkTokenValidity, 30 * 1000);
+  }
 }
 
-function requestAccessToken() {
-  tokenClient.requestAccessToken();
+// ------------------- Token Refresh -------------------
+function checkTokenValidity() {
+  if (!accessToken || Date.now() >= tokenExpiry - 5000) {
+    console.warn("Token expired or near expiry, refreshing...");
+    tokenClient.requestAccessToken({ prompt: "" }); // silent refresh
+  }
 }
 
+// ------------------- User Profile -------------------
+async function loadUserProfile() {
+  try {
+    const res = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
+      headers: { Authorization: `Bearer ${accessToken}` }
+    });
+    const user = await res.json();
+
+    // Show profile in sidebar
+    document.getElementById("userProfile").style.display = "flex";
+    document.getElementById("userPic").src = user.picture || "https://www.gravatar.com/avatar?d=mp&s=200";
+    document.getElementById("userName").innerText = user.name || "Unknown User";
+    document.getElementById("userEmail").innerText = user.email || "";
+  } catch (err) {
+    console.error("Error fetching user profile:", err);
+  }
+}
+
+// ------------------- Sheets Loader -------------------
 async function loadSheetsAfterAuth() {
   try {
     const sheets = await getSheetNames();
     renderMenu(sheets);
 
-    // Automatically load "POS" sheet if it exists
     if (sheets.includes("POS")) {
       await loadSheet("POS");
     } else if (sheets.length > 0) {
@@ -672,14 +720,19 @@ async function deleteRow(sheetName, rowIndex) {
 }
 
 // ---------------------------
-// Log changes with location & device info
+// Log changes with location, device info, username & email
 // ---------------------------
 async function logChange(action, sheetName, rowData, rowIndex) {
   try {
     if (!accessToken) throw new Error("No access token");
 
     const timestamp = new Date().toISOString();
-    const user = "Current User"; // Replace with actual user email if available
+
+    // Get username and email from your page (or replace with auth info)
+    const userName = document.getElementById("userName")?.innerText || "Unknown User";
+    const userEmail = document.getElementById("userEmail")?.innerText || "Unknown Email";
+    const user = `${userName} (${userEmail})`;
+
     const deviceInfo = navigator.userAgent || "Unknown Device";
 
     // Location info (optional, requires user permission)
@@ -696,7 +749,19 @@ async function logChange(action, sheetName, rowData, rowIndex) {
     }
 
     const dataString = JSON.stringify(rowData);
-    const logValues = [[timestamp, user, deviceInfo, locationInfo, action, sheetName, rowIndex ?? "", dataString]];
+
+    // Add userName and userEmail separately in the log for clarity
+    const logValues = [[
+      timestamp,
+      userName,
+      userEmail,
+      deviceInfo,
+      locationInfo,
+      action,
+      sheetName,
+      rowIndex ?? "",
+      dataString
+    ]];
 
     const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/Log:append?valueInputOption=RAW`;
 
@@ -715,6 +780,7 @@ async function logChange(action, sheetName, rowData, rowIndex) {
     console.error("Error logging change:", err);
   }
 }
+
 
 
 // ---------------------------
@@ -1070,6 +1136,7 @@ async function deleteRowHandler(primaryKey, sheetName) {
 
 </body>
 </html>
+
 
 
 
