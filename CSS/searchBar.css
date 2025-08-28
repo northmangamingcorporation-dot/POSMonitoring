@@ -1,0 +1,11 @@
+.search-box {
+      margin-bottom: 10px;
+      width: 40%;
+    }
+    .search-box input {
+      width: 40%;
+      padding: 8px;
+      font-size: 14px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }

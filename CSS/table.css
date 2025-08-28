@@ -1,0 +1,142 @@
+table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+
+.table-wrapper {
+  max-height: 700px; /* adjust as needed */
+  overflow-y: auto;
+  border: 1px solid #ccc;
+}
+
+.table-wrapper table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.table-wrapper th, .table-wrapper td {
+  padding: 8px;
+  border: 1px solid #ccc;
+  text-align: left;
+}
+
+.table-wrapper thead th {
+  position: sticky;
+  top: 0;
+  background: #f5f5f5; /* header background */
+  z-index: 2;
+}
+
+    th, td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      font-size: 14px;
+    }
+    th {
+      background: #f1f5f9;
+    }
+
+    .status-info {
+      margin-top: 8px;
+      font-size: 14px;
+      font-weight: 500;
+    }
+    .status-info .badge {
+      background: #eee;
+      border-radius: 6px;
+      padding: 3px 8px;
+      margin-right: 6px;
+      display: inline-block;
+      margin-bottom:10px;
+    }
+
+    .edit-btn {
+      background: #2563eb;
+      color: white;
+      border: none;
+      padding: 4px 8px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    .edit-btn:hover {
+      background: #1e40af;
+    }
+
+    .editable-cell {
+  background-color: #fff8dc; /* light yellow highlight */
+  outline: none;
+  border-bottom: 1px dashed #aaa;
+}
+.editable-cell:focus {
+  background-color: #ffffcc;
+}
+
+    /* Highlight the full row */
+.editing-row {
+  background-color: #fff8c4 !important; /* light yellow */
+  box-shadow: inset 0 0 6px rgba(0,0,0,0.2);
+  transition: background-color 0.3s ease;
+}
+
+.action-buttons {
+      display: flex;
+      align-items: center;
+      gap: 6px; /* spacing between buttons */
+    }
+
+    .btn-save, .btn-cancel {
+      padding: 4px 8px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .btn-save {
+      background: #4caf50;
+      color: white;
+    }
+
+    .btn-save:hover {
+      background: #45a049;
+    }
+
+    .btn-cancel {
+      background: #f44336;
+      color: white;
+    }
+
+    .btn-cancel:hover {
+      background: #e53935;
+    }
+    
+    .status-dropdown {
+  width: 100%;
+  border: none;
+  background: transparent;
+  font: inherit;       /* use table font */
+  padding: 0;
+  margin: 0;
+  outline: none;
+  cursor: text;
+  appearance: none;    /* hide default arrow */
+  -webkit-appearance: none;
+  -moz-appearance: none;
+}
+
+.status-dropdown:focus {
+  background: #f0f8ff;  /* light highlight like editable cell */
+}
+
+.status-filter {
+  margin-top: 10px;
+  margin-bottom: 10px;
+  font-size: 12px;
+}
+
+.status-filter select {
+  padding: 4px 8px;
+  border-radius: 6px;
+}
