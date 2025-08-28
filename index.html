@@ -832,18 +832,22 @@ async function logChange(action, sheetName, rowData, rowIndex) {
 
 
 // ---------------------------
-// Render menu
+// Render menu (skip "Log")
 // ---------------------------
 async function renderMenu(sheets) {
   const menu = document.getElementById("menu");
   menu.innerHTML = "";
-  sheets.forEach(sheet => {
-    const btn = document.createElement("button");
-    btn.textContent = sheet;
-    btn.onclick = () => loadSheet(sheet);
-    menu.appendChild(btn);
-  });
+
+  sheets
+    .filter(sheet => sheet !== "Log") // skip "Log"
+    .forEach(sheet => {
+      const btn = document.createElement("button");
+      btn.textContent = sheet;
+      btn.onclick = () => loadSheet(sheet);
+      menu.appendChild(btn);
+    });
 }
+
 sheetDataWithFormat = []; // store formatting info
 // ---------------------------
 // Load sheet (optimized)
