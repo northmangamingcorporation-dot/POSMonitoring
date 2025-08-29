@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dasher Dashboard</title>
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <div class="sidebar">
+    <div class="logo">Dasher</div>
+    <nav>
+      <a href="#" class="active">Project</a>
+      <a href="#">Ecommerce</a>
+      <a href="#">Blog</a>
+      <a href="#">Auth</a>
+    </nav>
+    <div class="profile">
+      <img src="images/avatar1.jpg" alt="User Avatar">
+      <div class="profile-info">
+        <div class="name">Jitu Chauhan</div>
+        <div class="status">Free Version – 1 Month</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="header-cards">
+      <div class="card">
+        <div class="title">Total Projects</div>
+        <div class="stat">6</div>
+        <div class="sub">2 Completed</div>
+      </div>
+      <div class="card">
+        <div class="title">Task</div>
+        <div class="stat">132</div>
+        <div class="sub">28 Completed</div>
+      </div>
+      <div class="card">
+        <div class="title">Members</div>
+        <div class="stat">8</div>
+        <div class="sub">2 Completed</div>
+      </div>
+      <div class="card">
+        <div class="title">Productivity</div>
+        <div class="stat">76%</div>
+        <div class="sub">26% Increased</div>
+      </div>
+    </div>
+
+    <div class="projects">
+      <h2>Active Projects</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Progress</th>
+            <th>Status</th>
+            <th>Assigned</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Sample row -->
+          <tr>
+            <td>Website Redesign <span class="date">Jan 30, 2025</span></td>
+            <td><div class="progress"><div style="width:65%"></div></div></td>
+            <td><span class="status on-track">On Track</span></td>
+            <td>
+              <div class="avatars">
+                <img src="images/avatar1.jpg" alt="">
+                <img src="images/avatar2.jpg" alt="">
+                <span class="more">+5</span>
+              </div>
+            </td>
+          </tr>
+          <!-- Repeat for other rows -->
+        </tbody>
+      </table>
+      <div class="view-all">View All Projects</div>
+    </div>
+
+    <div class="side-info">
+      <div class="task-progress">
+        <h3>Task Progress</h3>
+        <div class="progress-chart">
+          <span>64%</span>
+          <div class="bar">
+            <div style="width:24%"></div>
+            <div style="width:35%"></div>
+            <div style="width:41%"></div>
+          </div>
+          <div class="labels">
+            <div><strong>8</strong><br>Completed</div>
+            <div><strong>12</strong><br>In Progress</div>
+            <div><strong>14</strong><br>Upcoming</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="ai-widget">
+        <h3>How AI assist will help you?</h3>
+        <button>Start AI</button>
+      </div>
+
+      <div class="budget">
+        <h3>Project Budget</h3>
+        <p>Budget Allocation Overview:</p>
+        <p><strong>$50,000</strong> Spent: <strong>$35,000</strong> Remaining: <strong>$15,000</strong></p>
+        <button>View Details</button>
+      </div>
+
+      <div class="meetings">
+        <h3>Upcoming Meetings</h3>
+        <div class="meeting">
+          <div>Project Kickoff</div>
+          <div class="time">Jan 25, 2025 – 10:00 AM</div>
+          <button>Join</button>
+        </div>
+        <!-- Repeat for others -->
+      </div>
+    </div>
+  </div>
+</body>
+</html>

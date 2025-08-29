@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>IT Monitoring Dashboard</title>
+  <link rel="icon" type="image/jpeg" href="../image/can.jpg">
+  <link rel="stylesheet" href="assets/style.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+
+</head>
+<body>
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="logo">IT Monitoring</div>
+    <nav>
+      <a href="#" class="active">Dashboard</a>
+      <a href="#">Transactions</a>
+      <a href="#">Reports</a>
+      <a href="#">Settings</a>
+    </nav>
+  </aside>
+
+  <!-- Main -->
+  <main class="main-content">
+    <!-- Top Bar -->
+    <header class="topbar">
+      <h2>Dashboard</h2>
+      <div class="user-info">
+        <img src="images/avatar1.png" alt="User Avatar" class="avatar"/>
+        <span>Admin</span>
+      </div>
+    </header>
+
+    <!-- Cards -->
+    <section class="cards">
+      <div class="card green">
+        <h3>Recent Cancellations</h3>
+        <p id="recentCount">3</p>
+      </div>
+      <div class="card blue">
+        <h3>Approved</h3>
+        <p id="approvedCount">7</p>
+      </div>
+      <div class="card red">
+        <h3>Denied</h3>
+        <p id="deniedCount">2</p>
+      </div>
+    </section>
+
+    <!-- Chart + Tables in 2 columns -->
+<section class="dashboard-grid">
+  
+  <!-- Chart -->
+  <div class="chart-section">
+    <h3>Transaction Overview</h3>
+    <canvas id="statusChart"></canvas>
+  </div>
+
+  <!-- Tables -->
+  <div class="tables">
+    <div class="table-card">
+      <h3>Recent Cancellation Request</h3>
+      <table id="cancelTable">
+        <thead>
+          <tr>
+            <th>Booth Code</th>
+            <th>Device ID</th>
+            <th>Transaction</th>
+            <th>Coordinates</th>
+            <th>Address</th>
+            <th>Total Amount</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <div class="table-card">
+      <h3>Recent Approved</h3>
+      <table id="approvedTable">
+        <thead>
+          <tr>
+            <th>IT Name</th>
+            <th>Booth Code</th>
+            <th>Transaction</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <div class="table-card">
+      <h3>Recent Denied</h3>
+      <table id="deniedTable">
+        <thead>
+          <tr>
+            <th>IT Name</th>
+            <th>Booth Code</th>
+            <th>Transaction</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+</section>
+
+  </main>
+
+  <script src="assets/script.js"></script>
+</body>
+</html>

@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>POS Dashboard</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: #f4f6f9;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 30px;
+      color: #333;
+    }
+    .dashboard {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+    }
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      padding: 20px;
+      overflow-y: auto;
+      max-height: 400px;
+    }
+    .card h2 {
+      font-size: 18px;
+      margin-bottom: 15px;
+      color: #444;
+    }
+    .item {
+      border-bottom: 1px solid #eee;
+      padding: 10px 0;
+    }
+    .item:last-child {
+      border-bottom: none;
+    }
+    .label {
+      font-weight: bold;
+      color: #222;
+    }
+    .value {
+      margin-left: 5px;
+      color: #555;
+    }
+  </style>
+</head>
+<body>
+  <h1>POS Dashboard</h1>
+  
+  <div class="dashboard">
+    
+    <!-- Recent Cancellation Request -->
+    <div class="card">
+      <h2>Recent Cancellation Request</h2>
+      <div class="item">
+        <p><span class="label">Booth Code:</span><span class="value">BTH-001</span></p>
+        <p><span class="label">Device ID:</span><span class="value">DEV-1234</span></p>
+        <p><span class="label">Transaction:</span><span class="value">TXN-001 | CODE-ABC</span></p>
+        <p><span class="label">Coordinates:</span><span class="value">7.4478, 125.8096</span></p>
+        <p><span class="label">Address:</span><span class="value">UM Tagum Main Booth</span></p>
+        <p><span class="label">Amount:</span><span class="value">₱1,200.00</span></p>
+      </div>
+    </div>
+    
+    <!-- Recent Approved Cancellation -->
+    <div class="card">
+      <h2>Recent Approved Cancellation</h2>
+      <div class="item">
+        <p><span class="label">IT Name:</span><span class="value">Mark Santos</span></p>
+        <p><span class="label">Booth Code:</span><span class="value">BTH-002</span></p>
+        <p><span class="label">Transaction:</span><span class="value">TXN-002 | CODE-XYZ</span></p>
+      </div>
+    </div>
+    
+    <!-- Recent Denied Cancellation -->
+    <div class="card">
+      <h2>Recent Denied Cancellation</h2>
+      <div class="item">
+        <p><span class="label">IT Name:</span><span class="value">Anna Cruz</span></p>
+        <p><span class="label">Booth Code:</span><span class="value">BTH-003</span></p>
+        <p><span class="label">Transaction:</span><span class="value">TXN-003 | CODE-JKL</span></p>
+      </div>
+    </div>
+    
+  </div>
+</body>
+</html>

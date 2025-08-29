@@ -38,6 +38,12 @@
                white-space: normal; word-wrap: break-word; overflow-wrap: anywhere;"></div>
   </div>
 </div>
+    <!-- Redirect button -->
+    <button 
+      style="margin-top: 16px; padding: 8px 16px; border: none; border-radius: 6px; background: #007bff; color: white; cursor: pointer;"
+      onclick="window.location.href='/itMonitor/index.html'">
+      Go to IT Monitor
+    </button>
 
     <!-- Redirect button -->
     <button 
@@ -147,10 +153,12 @@ async function loadUserProfile() {
     });
     const user = await res.json();
 
-    document.getElementById("userProfile").style.display = "flex";
-    document.getElementById("userPic").src = user.picture || "https://www.gravatar.com/avatar?d=mp&s=200";
-    document.getElementById("userName").innerText = user.name || "Unknown User";
-    document.getElementById("userEmail").innerText = user.email || "";
+   // Existing user profile rendering
+  document.getElementById("userProfile").style.display = "flex";
+  document.getElementById("userPic").src = user.picture || "https://www.gravatar.com/avatar?d=mp&s=200";
+  document.getElementById("userName").innerText = user.name || "Unknown User";
+  document.getElementById("userEmail").innerText = user.email || "";
+
     logChange("LOGIN", "", null, "");
   } catch (err) {
     console.error("Error fetching user profile:", err);

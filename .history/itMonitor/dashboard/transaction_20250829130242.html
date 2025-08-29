@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>POS Home</title>
+  <link rel="stylesheet" href="../assets/style.css">
+  <link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+  <header>
+    <h1>POS Home</h1>
+    <nav>
+      <button onclick="window.location.href='../index.html'">Back to Dashboard</button>
+    </nav>
+  </header>
+
+  <main class="content">
+    <!-- Tables -->
+  <div class="tables">
+    <div class="table-card">
+      <h3>Recent Cancellation Request</h3>
+      <table id="cancelTable">
+        <thead>
+          <tr>
+            <th>Booth Code</th>
+            <th>Device ID</th>
+            <th>Transaction</th>
+            <th>Coordinates</th>
+            <th>Address</th>
+            <th>Total Amount</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <div class="table-card">
+      <h3>Recent Approved</h3>
+      <table id="approvedTable">
+        <thead>
+          <tr>
+            <th>IT Name</th>
+            <th>Booth Code</th>
+            <th>Transaction</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <div class="table-card">
+      <h3>Recent Denied</h3>
+      <table id="deniedTable">
+        <thead>
+          <tr>
+            <th>IT Name</th>
+            <th>Booth Code</th>
+            <th>Transaction</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+  </main>
+</body>
+</html>

@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>IT Monitoring Dashboard</title>
+  <link rel="icon" type="image/jpeg" href="../image/ITdeptDP.jpg">
+  <link rel="stylesheet" href="assets/style.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+
+
+</head>
+<body>
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="logo">IT Monitoring</div>
+    <nav>
+      <a href="#" class="active">Dashboard</a>
+      <a href="../itMonitor/dashboard/transaction.html">Transactions</a>
+      <a href="#">Reports</a>
+      <a href="#">Settings</a>
+      <!-- Redirect button -->
+    <button 
+      style="margin-top: 16px; padding: 8px 16px; border: none; border-radius: 6px; background: #007bff; color: white; cursor: pointer; width:100%;"
+      onclick="window.location.href='../index.html'">
+      Go to IT Monitor
+    </button>
+
+    </nav>
+  </aside>
+
+  <!-- Main -->
+  <main class="main-content">
+    <!-- Top Bar -->
+    <header class="topbar">
+      <h2>Dashboard</h2>
+      <div class="user-info">
+        <img src="images/avatar1.png" alt="User Avatar" class="avatar"/>
+        <span>Admin</span>
+      </div>
+    </header>
+
+    <!-- Cards -->
+    <section class="cards">
+      <div class="card green">
+        <h3>Recent Cancellations</h3>
+        <p id="recentCount">3</p>
+      </div>
+      <div class="card blue">
+        <h3>Approved</h3>
+        <p id="approvedCount">7</p>
+      </div>
+      <div class="card red">
+        <h3>Denied</h3>
+        <p id="deniedCount">2</p>
+      </div>
+    </section>
+
+<section class="dashboard-grid">
+  <!-- Pie Chart -->
+  <div class="chart-section">
+    <h3>Transaction Overview</h3>
+    <canvas id="statusChart"></canvas>
+  </div>
+
+  <!-- Line Chart + Metrics -->
+  <div class="card">
+    <div class="controls">
+      <label for="limit">Show last</label>
+      <select id="limit">
+        <option value="50">50 rows</option>
+        <option value="100" selected>100 rows</option>
+        <option value="200">200 rows</option>
+        <option value="500">500 rows</option>
+        <option value="0">All</option>
+    </select>
+      <button id="refresh">Refresh</button>
+    </div>
+    <div class="metrics">
+      <div class="metric">
+        <div class="label">Latest Download</div>
+        <div class="value" id="mDown">—</div>
+      </div>
+      <div class="metric">
+        <div class="label">Latest Upload</div>
+        <div class="value" id="mUp">—</div>
+      </div>
+      <div class="metric">
+        <div class="label">Latest Ping</div>
+        <div class="value" id="mPing">—</div>
+      </div>
+    </div>
+    <div style="margin-top:12px">
+      <canvas id="chartLine"></canvas>
+    </div>
+  </div>
+</section>
+
+  </main>
+  <script src="assets/script.js"></script>
+  <script src="assets/network_monitoring.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tabletop.js/1.5.1/tabletop.min.js"></script>
+</body>
+</html>

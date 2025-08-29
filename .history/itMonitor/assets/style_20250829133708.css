@@ -1,0 +1,195 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: "Segoe UI", Arial, sans-serif;
+  display: flex;
+  height: 100vh;
+  background: #000;        /* Black background */
+  color: #fff;             /* White text */
+  line-height: 1.4;
+}
+
+/* Sidebar */
+.sidebar {
+  width: 200px;
+  background: #111;        /* Darker sidebar */
+  color: #fff;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar .logo {
+  font-size: 1.2rem;
+  font-weight: bold;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.sidebar nav a {
+  color: #aaa;
+  text-decoration: none;
+  display: block;
+  padding: 10px;
+  border-radius: 6px;
+  margin-bottom: 8px;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.sidebar nav a.active,
+.sidebar nav a:hover {
+  background: #2563eb;
+  color: #fff;
+}
+
+/* Main */
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  gap: 16px;               /* compact spacing */
+}
+
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.topbar h2 {
+  font-size: 18px;
+}
+
+.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+}
+
+/* Cards */
+.cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.card {
+  padding: 12px;
+  border-radius: 10px;
+  text-align: center;
+  font-weight: bold;
+  color: #fff;
+}
+
+.card.green { background: #16a34a; }
+.card.blue  { background: #2563eb; }
+.card.red   { background: #dc2626; }
+
+.card p {
+  font-size: 1.5rem;
+  margin-top: 6px;
+}
+
+/* Dashboard Grid */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  align-items: stretch;
+}
+
+/* Chart + Metric Cards */
+.card, .chart-section {
+  background: #111;
+  padding: 16px;
+  border-radius: 10px;
+  box-shadow: 0 2px 6px rgba(255, 255, 255, 0.05);
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;W
+}
+
+.card:hover, .chart-section:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.1);
+}
+
+/* Controls */
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  font-size: 13px;
+}
+
+.controls select,
+.controls button {
+  padding: 4px 8px;
+  border: 1px solid #333;
+  border-radius: 6px;
+  background: #222;
+  color: #fff;
+  font-size: 13px;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.controls select:focus,
+.controls button:hover {
+  border-color: #2563eb;
+  background: #333;
+}
+
+/* Metrics */
+.metrics {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  gap: 8px;
+}
+
+.metric {
+  flex: 1;
+  text-align: center;
+  background: #1a1a1a;
+  padding: 10px;
+  border-radius: 8px;
+}
+
+.metric .label {
+  font-size: 12px;
+  color: #aaa;
+  margin-bottom: 2px;
+}
+
+.metric .value {
+  font-size: 16px;
+  font-weight: 600;
+  color: #fff;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+  .cards {
+    grid-template-columns: 1fr;
+  }
+}

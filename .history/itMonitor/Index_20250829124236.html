@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>POS Dashboard</title>
+  <link rel="stylesheet" href="assets/style.css" />
+</head>
+<body>
+  <header>
+    <h1>POS Monitoring Dashboard</h1>
+    <nav>
+      <button onclick="window.location.href='https://networkmonitoring.vercel.app/'">Go to Network Monitoring</button>
+      <button onclick="window.location.href='dashboard/home.html'">Go to Home</button>
+    </nav>
+  </header>
+
+  <main class="dashboard">
+    <section class="card">
+      <h2>Recent Cancellation Request</h2>
+      <ul id="recentRequest"></ul>
+    </section>
+
+    <section class="card">
+      <h2>Recent Approved Cancellation</h2>
+      <ul id="recentApproved"></ul>
+    </section>
+
+    <section class="card">
+      <h2>Recent Denied Cancellation Request</h2>
+      <ul id="recentDenied"></ul>
+    </section>
+  </main>
+
+  <script src="assets/script.js"></script>
+</body>
+</html>
