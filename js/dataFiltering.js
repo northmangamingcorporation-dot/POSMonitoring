@@ -61,7 +61,7 @@ function renderStatusToolbar(
     filterRow.style.gap = "8px";
 
     const label = document.createElement("span");
-    label.textContent = "Filter by Status:";
+    label.textContent = "";
     label.style.fontWeight = "bold";
     filterRow.appendChild(label);
 
@@ -128,34 +128,34 @@ function renderStatusToolbar(
   }
 
 
-  // --- Sorting dropdown row ---
-  if (headers && headers.length > 0) {
-    const sortRow = document.createElement("div");
-    sortRow.style.display = "flex";
-    sortRow.style.alignItems = "center";
-    sortRow.style.gap = "8px";
+  // // --- Sorting dropdown row ---
+  // if (headers && headers.length > 0) {
+  //   const sortRow = document.createElement("div");
+  //   sortRow.style.display = "flex";
+  //   sortRow.style.alignItems = "center";
+  //   sortRow.style.gap = "8px";
 
-    const sortLabel = document.createElement("span");
-    sortLabel.textContent = "Sort by:";
-    sortLabel.style.fontWeight = "bold";
-    sortRow.appendChild(sortLabel);
+  //   const sortLabel = document.createElement("span");
+  //   sortLabel.textContent = "Sort by:";
+  //   sortLabel.style.fontWeight = "bold";
+  //   sortRow.appendChild(sortLabel);
 
-    const sortSelect = document.createElement("select");
-    sortSelect.id = "sortSelect";
-    sortSelect.className = "status-filter";
-    sortSelect.onchange = () => sortTableByColumn(sortSelect.value);
+  //   const sortSelect = document.createElement("select");
+  //   sortSelect.id = "sortSelect";
+  //   sortSelect.className = "status-filter";
+  //   sortSelect.onchange = () => sortTableByColumn(sortSelect.value);
 
-    const sortDefault = document.createElement("option");
-    sortDefault.value = "";
-    sortDefault.textContent = "None";
-    sortSelect.appendChild(sortDefault);
+  //   const sortDefault = document.createElement("option");
+  //   sortDefault.value = "";
+  //   sortDefault.textContent = "None";
+  //   sortSelect.appendChild(sortDefault);
 
-    headers.forEach((h, idx) => {
-      const opt = document.createElement("option");
-      opt.value = idx;
-      opt.textContent = h || `Column ${idx + 1}`;
-      sortSelect.appendChild(opt);
-    });
+  //   headers.forEach((h, idx) => {
+  //     const opt = document.createElement("option");
+  //     opt.value = idx;
+  //     opt.textContent = h || `Column ${idx + 1}`;
+  //     sortSelect.appendChild(opt);
+  //   });
 
     sortRow.appendChild(sortSelect);
     toolbar.appendChild(sortRow);
@@ -187,5 +187,6 @@ function filterByStatusAndOperator() {
     row.style.display = (statusMatch && operatorMatch) ? "" : "none";
   });
 }
+
 
 
