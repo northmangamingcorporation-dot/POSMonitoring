@@ -407,8 +407,32 @@ function renderTable(data, sheetName) {
     uniqueStatuses = Object.keys(statusCounts);
   }
 
+  // Identify operator column
+  const operatorIndex = validIndexes.find(i =>
+    (headers[i] || "").toLowerCase().includes("operator")
+  );
+  
+  // Count operators
+  let operatorCounts = {};
+  let uniqueOperators = [];
+  if (operatorIndex !== undefined) {
+    data.slice(1).forEach(row => {
+      const op = row[operatorIndex] || "Unknown";
+      operatorCounts[op] = (operatorCounts[op] || 0) + 1;
+    });
+    uniqueOperators = Object.keys(operatorCounts);
+  }
+
   // Render toolbar below title
-  renderStatusToolbar(statusCounts, uniqueStatuses, statusIndex);
+  renderStatusToolbar(
+    statusCounts,
+    uniqueStatuses,
+    statusIndex,
+    headers,
+    operatorCounts,
+    uniqueOperators,
+    operatorIndex
+  );
 
   const authorized = isUserAuthorized();
 
@@ -515,16 +539,16 @@ function getContrastColor(r, g, b) {
 // ---------------------------
 // Status filter
 // ---------------------------
-function filterByStatus() {
-  const filterValue = document.getElementById("statusFilter").value.toLowerCase();
-  const table = document.querySelector("#tableContainer table");
-  if (!table) return;
-  const rows = table.querySelectorAll("tbody tr");
-  rows.forEach(row => {
-    const statusCell = Array.from(row.cells).find(cell => cell.textContent.toLowerCase() === filterValue);
-    row.style.display = !filterValue || statusCell ? "" : "none";
-  });
-}
+// function filterByStatus() {
+//   const filterValue = document.getElementById("statusFilter").value.toLowerCase();
+//   const table = document.querySelector("#tableContainer table");
+//   if (!table) return;
+//   const rows = table.querySelectorAll("tbody tr");
+//   rows.forEach(row => {
+//     const statusCell = Array.from(row.cells).find(cell => cell.textContent.toLowerCase() === filterValue);
+//     row.style.display = !filterValue || statusCell ? "" : "none";
+//   });
+// }
 
 // ---------------------------
 // Add/Edit row modal
@@ -734,6 +758,7 @@ async function deleteRowHandler(primaryKey, sheetName) {
 
 </body>
 </html>
+
 
 
 
