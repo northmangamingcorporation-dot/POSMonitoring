@@ -539,16 +539,16 @@ function getContrastColor(r, g, b) {
 // ---------------------------
 // Status filter
 // ---------------------------
-// function filterByStatus() {
-//   const filterValue = document.getElementById("statusFilter").value.toLowerCase();
-//   const table = document.querySelector("#tableContainer table");
-//   if (!table) return;
-//   const rows = table.querySelectorAll("tbody tr");
-//   rows.forEach(row => {
-//     const statusCell = Array.from(row.cells).find(cell => cell.textContent.toLowerCase() === filterValue);
-//     row.style.display = !filterValue || statusCell ? "" : "none";
-//   });
-// }
+function filterByStatus() {
+  const filterValue = document.getElementById("statusFilter").value.toLowerCase();
+  const table = document.querySelector("#tableContainer table");
+  if (!table) return;
+  const rows = table.querySelectorAll("tbody tr");
+  rows.forEach(row => {
+    const statusCell = Array.from(row.cells).find(cell => cell.textContent.toLowerCase() === filterValue);
+    row.style.display = !filterValue || statusCell ? "" : "none";
+  });
+}
 
 // ---------------------------
 // Add/Edit row modal
@@ -758,6 +758,7 @@ async function deleteRowHandler(primaryKey, sheetName) {
 
 </body>
 </html>
+
 
 
 
