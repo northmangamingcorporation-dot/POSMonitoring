@@ -24,7 +24,11 @@ function filterByGreenDeviceID() {
   });
 }
 
-function renderStatusToolbar(statusCounts, uniqueStatuses, statusIndex, headers) {
+function renderStatusToolbar(
+  statusCounts, uniqueStatuses, statusIndex, headers,
+  operatorCounts, uniqueOperators, operatorIndex
+) {
+
   const sheetTitleEl = document.getElementById("sheetTitle");
 
   // Remove previous toolbar
@@ -183,3 +187,4 @@ function filterByStatusAndOperator() {
     row.style.display = (statusMatch && operatorMatch) ? "" : "none";
   });
 }
+
