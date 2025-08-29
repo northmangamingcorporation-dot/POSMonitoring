@@ -89,6 +89,41 @@ function renderStatusToolbar(statusCounts, uniqueStatuses, statusIndex, headers)
     toolbar.appendChild(filterRow);
   }
 
+  // --- Operator filter dropdown row ---
+  if (operatorIndex !== undefined && uniqueOperators.length > 0) {
+    const filterRow = document.createElement("div");
+    filterRow.style.display = "flex";
+    filterRow.style.alignItems = "center";
+    filterRow.style.gap = "8px";
+
+    const label = document.createElement("span");
+    label.textContent = "Filter by Operator:";
+    label.style.fontWeight = "bold";
+    filterRow.appendChild(label);
+
+    const select = document.createElement("select");
+    select.id = "operatorFilter";
+    select.onchange = () => {
+      filterByStatusAndOperator();
+    };
+
+    const allOption = document.createElement("option");
+    allOption.value = "";
+    allOption.textContent = "All";
+    select.appendChild(allOption);
+
+    uniqueOperators.forEach(op => {
+      const opt = document.createElement("option");
+      opt.value = op;
+      opt.textContent = op;
+      select.appendChild(opt);
+    });
+
+    filterRow.appendChild(select);
+    toolbar.appendChild(filterRow);
+  }
+
+
   // --- Sorting dropdown row ---
   if (headers && headers.length > 0) {
     const sortRow = document.createElement("div");
@@ -124,4 +159,27 @@ function renderStatusToolbar(statusCounts, uniqueStatuses, statusIndex, headers)
 
   // Insert toolbar after the title
   sheetTitleEl.insertAdjacentElement("afterend", toolbar);
+
+}
+
+function filterByStatusAndOperator() {
+  const table = document.querySelector("#tableContainer table");
+  const tbody = table.querySelector("tbody");
+
+  const statusFilter = document.getElementById("statusFilter")?.value || "";
+  const operatorFilter = document.getElementById("operatorFilter")?.value || "";
+
+  const headers = Array.from(table.querySelectorAll("thead th")).map(th => th.innerText.toLowerCase());
+  const statusColIndex = headers.findIndex(h => h.includes("status"));
+  const operatorColIndex = headers.findIndex(h => h.includes("operator"));
+
+  Array.from(tbody.rows).forEach(row => {
+    const statusCell = statusColIndex !== -1 ? row.cells[statusColIndex]?.innerText.trim() : "";
+    const operatorCell = operatorColIndex !== -1 ? row.cells[operatorColIndex]?.innerText.trim() : "";
+
+    const statusMatch = !statusFilter || statusCell === statusFilter;
+    const operatorMatch = !operatorFilter || operatorCell === operatorFilter;
+
+    row.style.display = (statusMatch && operatorMatch) ? "" : "none";
+  });
 }
