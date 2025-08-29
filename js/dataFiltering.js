@@ -68,7 +68,7 @@ function renderStatusToolbar(
     const select = document.createElement("select");
     select.id = "statusFilter";
     select.onchange = () => {
-      filterByStatus();
+      filterByStatusAndOperator();
     };
 
     const allOption = document.createElement("option");
@@ -187,4 +187,5 @@ function filterByStatusAndOperator() {
     row.style.display = (statusMatch && operatorMatch) ? "" : "none";
   });
 }
+
 
