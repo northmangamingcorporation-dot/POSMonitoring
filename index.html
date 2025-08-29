@@ -583,35 +583,66 @@ function editRow(primaryKey, tableRowIndex, sheetName) {
   const table = document.querySelector("#tableContainer table");
   const tbody = table.querySelector("tbody");
   const row = tbody.rows[tableRowIndex - 1]; // <-- map to tbody
-
   if (!row) {
     console.error("Row not found for editing:", tableRowIndex);
     return;
   }
 
-  const headers = Array.from(table.querySelectorAll("thead th")).map(th => th.innerText.toLowerCase());
-  const statusColIndex = headers.findIndex(h => h.includes("status"));
+  const headers = Array.from(table.querySelectorAll("thead th")).map(th =>
+    th.innerText.toLowerCase()
+  );
 
+  const statusColIndex = headers.findIndex(h => h.includes("status"));
+  const operatorColIndex = headers.findIndex(h => h.includes("operator"));
+
+  // collect unique statuses
   let uniqueStatuses = [];
   if (statusColIndex !== -1) {
-    uniqueStatuses = [...new Set(Array.from(tbody.rows)
-      .map(r => r.cells[statusColIndex]?.innerText.trim())
-      .filter(v => v))];
+    uniqueStatuses = [...new Set(
+      Array.from(tbody.rows)
+        .map(r => r.cells[statusColIndex]?.innerText.trim())
+        .filter(v => v)
+    )];
+  }
+
+  // collect unique operators
+  let uniqueOperators = [];
+  if (operatorColIndex !== -1) {
+    uniqueOperators = [...new Set(
+      Array.from(tbody.rows)
+        .map(r => r.cells[operatorColIndex]?.innerText.trim())
+        .filter(v => v)
+    )];
   }
 
   for (let i = 0; i < row.cells.length - 1; i++) {
     const cell = row.cells[i];
 
+    // status dropdown
     if (i === statusColIndex) {
       const currentValue = cell.innerText.trim();
-      const optionsHTML = uniqueStatuses.map(s => 
-        `<option value="${s}" ${s === currentValue ? "selected" : ""}>${s}</option>`
-      ).join("");
+      const optionsHTML = uniqueStatuses
+        .map(
+          s =>
+            `<option value="${s}" ${s === currentValue ? "selected" : ""}>${s}</option>`
+        )
+        .join("");
       cell.innerHTML = `<select class="status-dropdown">${optionsHTML}</select>`;
 
+    // operator dropdown
+    } else if (i === operatorColIndex) {
+      const currentValue = cell.innerText.trim();
+      const optionsHTML = uniqueOperators
+        .map(
+          op =>
+            `<option value="${op}" ${op === currentValue ? "selected" : ""}>${op}</option>`
+        )
+        .join("");
+      cell.innerHTML = `<select class="operator-dropdown">${optionsHTML}</select>`;
+
+    // other cells editable
     } else {
       cell.contentEditable = true;
-
       cell.addEventListener("paste", (e) => {
         e.preventDefault();
         const text = (e.clipboardData || window.clipboardData).getData("text");
@@ -620,11 +651,14 @@ function editRow(primaryKey, tableRowIndex, sheetName) {
     }
   }
 
+  // action buttons
   const actionCell = row.cells[row.cells.length - 1];
-  actionCell.innerHTML = `<div class="action-buttons">
-    <button onclick="saveRow()">💾</button>
-    <button onclick="cancelEdit()">✖</button>
-  </div>`;
+  actionCell.innerHTML = `
+    <div class="action-buttons">
+      <button onclick="saveRow()">💾</button>
+      <button onclick="cancelEdit()">✖</button>
+    </div>
+  `;
 }
 
 async function saveRow() {
@@ -700,6 +734,7 @@ async function deleteRowHandler(primaryKey, sheetName) {
 
 </body>
 </html>
+
 
 
 
