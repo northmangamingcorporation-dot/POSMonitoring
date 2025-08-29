@@ -157,9 +157,9 @@ function renderStatusToolbar(
   //     sortSelect.appendChild(opt);
   //   });
 
-    sortRow.appendChild(sortSelect);
-    toolbar.appendChild(sortRow);
-  }
+  //   sortRow.appendChild(sortSelect);
+  //   toolbar.appendChild(sortRow);
+  // }
 
   // Insert toolbar after the title
   sheetTitleEl.insertAdjacentElement("afterend", toolbar);
@@ -187,6 +187,7 @@ function filterByStatusAndOperator() {
     row.style.display = (statusMatch && operatorMatch) ? "" : "none";
   });
 }
+
 
 
 
