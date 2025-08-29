@@ -61,7 +61,7 @@ function renderStatusToolbar(
     filterRow.style.gap = "8px";
 
     const label = document.createElement("span");
-    label.textContent = "";
+    label.textContent = "Filter by Status";
     label.style.fontWeight = "bold";
     filterRow.appendChild(label);
 
