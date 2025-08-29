@@ -112,7 +112,7 @@ table {
       background: #e53935;
     }
     
-   .operator-dropdown .status-dropdown {
+   .operator-dropdown, .status-dropdown {
   width: 100%;
   border: none;
   background: transparent;
@@ -126,18 +126,19 @@ table {
   -moz-appearance: none;
 }
 
-.operator-dropdown .status-dropdown:focus {
+.operator-dropdown, .status-dropdown:focus {
   background: #f0f8ff;  /* light highlight like editable cell */
 }
 
-.operator-dropdown .status-filter {
+.operator-dropdown, .status-filter {
   margin-top: 10px;
   margin-bottom: 10px;
   font-size: 12px;
 }
 
-.status-filter select {
+.operator-dropdown, .status-filter select {
   padding: 4px 8px;
   border-radius: 6px;
 }
+
 
