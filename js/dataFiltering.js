@@ -24,11 +24,9 @@ function filterByGreenDeviceID() {
   });
 }
 
-function renderStatusToolbar(
-  statusCounts, uniqueStatuses, statusIndex, headers,
-  operatorCounts, uniqueOperators, operatorIndex
-) {
-
+function renderStatusToolbar(statusIndex, operatorIndex) {
+  const table = document.querySelector("#tableContainer table");
+  const tbody = table.querySelector("tbody");
   const sheetTitleEl = document.getElementById("sheetTitle");
 
   // Remove previous toolbar
@@ -44,43 +42,48 @@ function renderStatusToolbar(
 
   // --- Recalculate status counts based on visible rows ---
   const filteredStatusCounts = {};
+  const uniqueStatuses = new Set();
+  const uniqueOperators = new Set();
+
   Array.from(tbody.rows).forEach(row => {
     if (row.style.display !== "none") { // only visible rows
       const statusVal = row.cells[statusIndex]?.innerText.trim();
+      const operatorVal = row.cells[operatorIndex]?.innerText.trim();
+
       if (statusVal) {
         filteredStatusCounts[statusVal] = (filteredStatusCounts[statusVal] || 0) + 1;
+        uniqueStatuses.add(statusVal);
       }
+      if (operatorVal) uniqueOperators.add(operatorVal);
     }
   });
 
   // --- Status badges row ---
   const badgesRow = document.createElement("div");
-  badgesRow.className = "status-info"; // your CSS class
-  Object.entries(statusCounts).forEach(([s, c]) => {
+  badgesRow.className = "status-info";
+  Object.entries(filteredStatusCounts).forEach(([s, c]) => {
     const badge = document.createElement("span");
-    badge.className = "badge"; // uses your CSS
+    badge.className = "badge";
     badge.textContent = `${s}: ${c}`;
     badgesRow.appendChild(badge);
   });
   toolbar.appendChild(badgesRow);
 
-  // --- Filter dropdown row ---
-  if (statusIndex !== undefined && uniqueStatuses.length > 0) {
+  // --- Status filter dropdown ---
+  if (uniqueStatuses.size > 0) {
     const filterRow = document.createElement("div");
     filterRow.style.display = "flex";
     filterRow.style.alignItems = "center";
     filterRow.style.gap = "8px";
 
     const label = document.createElement("span");
-    label.textContent = "Filter by Status";
+    label.textContent = "Filter by Status:";
     label.style.fontWeight = "bold";
     filterRow.appendChild(label);
 
     const select = document.createElement("select");
     select.id = "statusFilter";
-    select.onchange = () => {
-      filterByStatusAndOperator();
-    };
+    select.onchange = filterByStatusAndOperator;
 
     const allOption = document.createElement("option");
     allOption.value = "";
@@ -95,17 +98,11 @@ function renderStatusToolbar(
     });
 
     filterRow.appendChild(select);
-
-    const filteredByLabel = document.createElement("span");
-    filteredByLabel.id = "filteredByLabel";
-    filteredByLabel.style.fontWeight = "bold";
-    filterRow.appendChild(filteredByLabel);
-
     toolbar.appendChild(filterRow);
   }
 
-  // --- Operator filter dropdown row ---
-  if (operatorIndex !== undefined && uniqueOperators.length > 0) {
+  // --- Operator filter dropdown ---
+  if (uniqueOperators.size > 0) {
     const filterRow = document.createElement("div");
     filterRow.style.display = "flex";
     filterRow.style.alignItems = "center";
@@ -118,9 +115,7 @@ function renderStatusToolbar(
 
     const select = document.createElement("select");
     select.id = "operatorFilter";
-    select.onchange = () => {
-      filterByStatusAndOperator();
-    };
+    select.onchange = filterByStatusAndOperator;
 
     const allOption = document.createElement("option");
     allOption.value = "";
@@ -138,115 +133,35 @@ function renderStatusToolbar(
     toolbar.appendChild(filterRow);
   }
 
-
-  // // --- Sorting dropdown row ---
-  // if (headers && headers.length > 0) {
-  //   const sortRow = document.createElement("div");
-  //   sortRow.style.display = "flex";
-  //   sortRow.style.alignItems = "center";
-  //   sortRow.style.gap = "8px";
-
-  //   const sortLabel = document.createElement("span");
-  //   sortLabel.textContent = "Sort by:";
-  //   sortLabel.style.fontWeight = "bold";
-  //   sortRow.appendChild(sortLabel);
-
-  //   const sortSelect = document.createElement("select");
-  //   sortSelect.id = "sortSelect";
-  //   sortSelect.className = "status-filter";
-  //   sortSelect.onchange = () => sortTableByColumn(sortSelect.value);
-
-  //   const sortDefault = document.createElement("option");
-  //   sortDefault.value = "";
-  //   sortDefault.textContent = "None";
-  //   sortSelect.appendChild(sortDefault);
-
-  //   headers.forEach((h, idx) => {
-  //     const opt = document.createElement("option");
-  //     opt.value = idx;
-  //     opt.textContent = h || `Column ${idx + 1}`;
-  //     sortSelect.appendChild(opt);
-  //   });
-
-  //   sortRow.appendChild(sortSelect);
-  //   toolbar.appendChild(sortRow);
-  // }
-
-  // Insert toolbar after the title
+  // Insert toolbar after title
   sheetTitleEl.insertAdjacentElement("afterend", toolbar);
-
 }
 
 function filterByStatusAndOperator() {
   const table = document.querySelector("#tableContainer table");
   const tbody = table.querySelector("tbody");
-
   const headers = Array.from(table.querySelectorAll("thead th")).map(th => th.innerText.toLowerCase());
   const statusColIndex = headers.findIndex(h => h.includes("status"));
   const operatorColIndex = headers.findIndex(h => h.includes("operator"));
 
-  // Collect unique values for dropdowns
-  const statuses = new Set();
-  const operators = new Set();
+  const statusValue = document.getElementById("statusFilter")?.value || "";
+  const operatorValue = document.getElementById("operatorFilter")?.value || "";
+
   Array.from(tbody.rows).forEach(row => {
-    if (statusColIndex !== -1) statuses.add(row.cells[statusColIndex].innerText.trim());
-    if (operatorColIndex !== -1) operators.add(row.cells[operatorColIndex].innerText.trim());
+    const statusCell = row.cells[statusColIndex]?.innerText.trim();
+    const operatorCell = row.cells[operatorColIndex]?.innerText.trim();
+
+    const statusMatch = !statusValue || statusCell === statusValue;
+    const operatorMatch = !operatorValue || operatorCell === operatorValue;
+
+    row.style.display = (statusMatch && operatorMatch) ? "" : "none";
   });
 
-  // Remove previous toolbar
-  const existingToolbar = document.getElementById("statusToolbar");
-  if (existingToolbar) existingToolbar.remove();
-
-  // Create new toolbar
-  const toolbar = document.createElement("div");
-  toolbar.id = "statusToolbar";
-  toolbar.style.display = "flex";
-  toolbar.style.gap = "10px";
-  toolbar.style.marginTop = "8px";
-
-  // Create status filter dropdown
-  const statusFilter = document.createElement("select");
-  statusFilter.id = "statusFilter";
-  statusFilter.innerHTML = `<option value="">-- Filter by Status --</option>`;
-  statuses.forEach(status => {
-    statusFilter.innerHTML += `<option value="${status}">${status}</option>`;
-  });
-
-  // Create operator filter dropdown
-  const operatorFilter = document.createElement("select");
-  operatorFilter.id = "operatorFilter";
-  operatorFilter.innerHTML = `<option value="">-- Filter by Operator --</option>`;
-  operators.forEach(op => {
-    operatorFilter.innerHTML += `<option value="${op}">${op}</option>`;
-  });
-
-  // Re-filter when dropdowns change
-  statusFilter.addEventListener("change", applyFilters);
-  operatorFilter.addEventListener("change", applyFilters);
-
-  // Add to toolbar
-  toolbar.appendChild(statusFilter);
-  toolbar.appendChild(operatorFilter);
-
-  // Insert toolbar above the table
-  table.parentNode.insertBefore(toolbar, table);
-
-  // Apply filtering logic
-  function applyFilters() {
-    const statusValue = statusFilter.value;
-    const operatorValue = operatorFilter.value;
-
-    Array.from(tbody.rows).forEach(row => {
-      const statusCell = row.cells[statusColIndex]?.innerText.trim();
-      const operatorCell = row.cells[operatorColIndex]?.innerText.trim();
-
-      const statusMatch = !statusValue || statusCell === statusValue;
-      const operatorMatch = !operatorValue || operatorCell === operatorValue;
-
-      row.style.display = (statusMatch && operatorMatch) ? "" : "none";
-    });
-  }
+  // 🔑 Refresh toolbar badges after filtering
+  renderStatusToolbar(statusColIndex, operatorColIndex);
 }
+
+
 
 
 
