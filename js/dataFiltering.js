@@ -131,12 +131,15 @@ function renderStatusToolbar(
 }
 
 function filterByStatusAndOperator() {
+  showLoader(true); // show loader
+
   const table = document.querySelector("#tableContainer table");
   const tbody = table.querySelector("tbody");
   const headers = Array.from(table.querySelectorAll("thead th")).map(th => th.innerText.toLowerCase());
   const statusColIndex = headers.findIndex(h => h.includes("status"));
   const operatorColIndex = headers.findIndex(h => h.includes("operator"));
 
+  // ✅ Save current filter values
   const statusValue = document.getElementById("statusFilter")?.value || "";
   const operatorValue = document.getElementById("operatorFilter")?.value || "";
 
@@ -151,7 +154,7 @@ function filterByStatusAndOperator() {
     row.style.display = (statusMatch && operatorMatch) ? "" : "none";
   });
 
-  // ✅ Recompute counts after filtering
+  // ✅ Recompute counts
   const statusCounts = {};
   const operatorCounts = {};
   const uniqueStatuses = new Set();
@@ -173,7 +176,7 @@ function filterByStatusAndOperator() {
     }
   });
 
-  // ✅ Refresh toolbar with new counts
+  // ✅ Refresh toolbar
   renderStatusToolbar(
     statusCounts,
     Array.from(uniqueStatuses),
@@ -183,7 +186,16 @@ function filterByStatusAndOperator() {
     Array.from(uniqueOperators),
     operatorColIndex
   );
+
+  // ✅ Restore dropdown selections
+  if (document.getElementById("statusFilter"))
+    document.getElementById("statusFilter").value = statusValue;
+  if (document.getElementById("operatorFilter"))
+    document.getElementById("operatorFilter").value = operatorValue;
+
+  showLoader(false); // hide loader
 }
+
 
 
 
