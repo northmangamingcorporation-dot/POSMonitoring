@@ -30,6 +30,10 @@ function renderStatusToolbar(
 ) {
   const sheetTitleEl = document.getElementById("sheetTitle");
 
+  // Keep previous selections
+  const prevStatusValue = document.getElementById("statusFilter")?.value || "";
+  const prevOperatorValue = document.getElementById("operatorFilter")?.value || "";
+
   // Remove previous toolbar
   const existingToolbar = document.getElementById("statusToolbar");
   if (existingToolbar) existingToolbar.remove();
@@ -80,6 +84,9 @@ function renderStatusToolbar(
       select.appendChild(opt);
     });
 
+    // restore previous selection
+    select.value = prevStatusValue;
+
     filterRow.appendChild(select);
     toolbar.appendChild(filterRow);
   }
@@ -111,6 +118,9 @@ function renderStatusToolbar(
       opt.textContent = op;
       select.appendChild(opt);
     });
+
+    // restore previous selection
+    select.value = prevOperatorValue;
 
     filterRow.appendChild(select);
     toolbar.appendChild(filterRow);
@@ -174,8 +184,6 @@ function filterByStatusAndOperator() {
     operatorColIndex
   );
 }
-
-
 
 
 
