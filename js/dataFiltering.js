@@ -143,7 +143,13 @@ function filterByStatusAndOperator() {
   const statusValue = document.getElementById("statusFilter")?.value || "";
   const operatorValue = document.getElementById("operatorFilter")?.value || "";
 
-  // Apply filtering
+  // ✅ Prepare counts
+  const statusCounts = {};
+  const operatorCounts = {};
+  const uniqueStatuses = new Set();
+  const uniqueOperators = new Set();
+
+  // ✅ Single loop for filtering + counting
   Array.from(tbody.rows).forEach(row => {
     const statusCell = row.cells[statusColIndex]?.innerText.trim();
     const operatorCell = row.cells[operatorColIndex]?.innerText.trim();
@@ -151,28 +157,20 @@ function filterByStatusAndOperator() {
     const statusMatch = !statusValue || statusCell === statusValue;
     const operatorMatch = !operatorValue || operatorCell === operatorValue;
 
-    row.style.display = (statusMatch && operatorMatch) ? "" : "none";
-  });
+    if (statusMatch && operatorMatch) {
+      row.style.display = "";
 
-  // ✅ Recompute counts
-  const statusCounts = {};
-  const operatorCounts = {};
-  const uniqueStatuses = new Set();
-  const uniqueOperators = new Set();
-
-  Array.from(tbody.rows).forEach(row => {
-    if (row.style.display !== "none") {
-      const statusVal = row.cells[statusColIndex]?.innerText.trim();
-      const operatorVal = row.cells[operatorColIndex]?.innerText.trim();
-
-      if (statusVal) {
-        statusCounts[statusVal] = (statusCounts[statusVal] || 0) + 1;
-        uniqueStatuses.add(statusVal);
+      // Count visible rows only
+      if (statusCell) {
+        statusCounts[statusCell] = (statusCounts[statusCell] || 0) + 1;
+        uniqueStatuses.add(statusCell);
       }
-      if (operatorVal) {
-        operatorCounts[operatorVal] = (operatorCounts[operatorVal] || 0) + 1;
-        uniqueOperators.add(operatorVal);
+      if (operatorCell) {
+        operatorCounts[operatorCell] = (operatorCounts[operatorCell] || 0) + 1;
+        uniqueOperators.add(operatorCell);
       }
+    } else {
+      row.style.display = "none";
     }
   });
 
@@ -187,7 +185,7 @@ function filterByStatusAndOperator() {
     operatorColIndex
   );
 
-  // ✅ Restore dropdown selections
+  // ✅ Restore dropdown selections (since re-render resets them)
   if (document.getElementById("statusFilter"))
     document.getElementById("statusFilter").value = statusValue;
   if (document.getElementById("operatorFilter"))
@@ -195,6 +193,8 @@ function filterByStatusAndOperator() {
 
   showLoader(false); // hide loader
 }
+
+
 
 
 
