@@ -42,6 +42,17 @@ function renderStatusToolbar(
   toolbar.style.gap = "6px";
   toolbar.style.marginTop = "8px";
 
+  // --- Recalculate status counts based on visible rows ---
+  const filteredStatusCounts = {};
+  Array.from(tbody.rows).forEach(row => {
+    if (row.style.display !== "none") { // only visible rows
+      const statusVal = row.cells[statusIndex]?.innerText.trim();
+      if (statusVal) {
+        filteredStatusCounts[statusVal] = (filteredStatusCounts[statusVal] || 0) + 1;
+      }
+    }
+  });
+
   // --- Status badges row ---
   const badgesRow = document.createElement("div");
   badgesRow.className = "status-info"; // your CSS class
@@ -236,6 +247,7 @@ function filterByStatusAndOperator() {
     });
   }
 }
+
 
 
 
