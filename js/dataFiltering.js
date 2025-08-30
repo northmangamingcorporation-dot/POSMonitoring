@@ -168,31 +168,76 @@ function renderStatusToolbar(
 
 function filterByStatusAndOperator() {
   const table = document.querySelector("#tableContainer table");
-  if (!table) return;
-
   const tbody = table.querySelector("tbody");
-  if (!tbody) return;
 
-  const statusFilter = document.getElementById("statusFilter")?.value?.trim() || "";
-  const operatorFilter = document.getElementById("operatorFilter")?.value?.trim() || "";
-
-  const headers = Array.from(table.querySelectorAll("thead th")).map(th =>
-    th.innerText.toLowerCase().trim()
-  );
-
+  const headers = Array.from(table.querySelectorAll("thead th")).map(th => th.innerText.toLowerCase());
   const statusColIndex = headers.findIndex(h => h.includes("status"));
   const operatorColIndex = headers.findIndex(h => h.includes("operator"));
 
+  // Collect unique values for dropdowns
+  const statuses = new Set();
+  const operators = new Set();
   Array.from(tbody.rows).forEach(row => {
-    const statusCell = statusColIndex !== -1 ? row.cells[statusColIndex]?.innerText.trim() : "";
-    const operatorCell = operatorColIndex !== -1 ? row.cells[operatorColIndex]?.innerText.trim() : "";
-
-    const statusMatch = !statusFilter || statusCell === statusFilter;
-    const operatorMatch = !operatorFilter || operatorCell === operatorFilter;
-
-    row.style.display = (statusMatch && operatorMatch) ? "" : "none";
+    if (statusColIndex !== -1) statuses.add(row.cells[statusColIndex].innerText.trim());
+    if (operatorColIndex !== -1) operators.add(row.cells[operatorColIndex].innerText.trim());
   });
+
+  // Remove previous toolbar
+  const existingToolbar = document.getElementById("statusToolbar");
+  if (existingToolbar) existingToolbar.remove();
+
+  // Create new toolbar
+  const toolbar = document.createElement("div");
+  toolbar.id = "statusToolbar";
+  toolbar.style.display = "flex";
+  toolbar.style.gap = "10px";
+  toolbar.style.marginTop = "8px";
+
+  // Create status filter dropdown
+  const statusFilter = document.createElement("select");
+  statusFilter.id = "statusFilter";
+  statusFilter.innerHTML = `<option value="">-- Filter by Status --</option>`;
+  statuses.forEach(status => {
+    statusFilter.innerHTML += `<option value="${status}">${status}</option>`;
+  });
+
+  // Create operator filter dropdown
+  const operatorFilter = document.createElement("select");
+  operatorFilter.id = "operatorFilter";
+  operatorFilter.innerHTML = `<option value="">-- Filter by Operator --</option>`;
+  operators.forEach(op => {
+    operatorFilter.innerHTML += `<option value="${op}">${op}</option>`;
+  });
+
+  // Re-filter when dropdowns change
+  statusFilter.addEventListener("change", applyFilters);
+  operatorFilter.addEventListener("change", applyFilters);
+
+  // Add to toolbar
+  toolbar.appendChild(statusFilter);
+  toolbar.appendChild(operatorFilter);
+
+  // Insert toolbar above the table
+  table.parentNode.insertBefore(toolbar, table);
+
+  // Apply filtering logic
+  function applyFilters() {
+    const statusValue = statusFilter.value;
+    const operatorValue = operatorFilter.value;
+
+    Array.from(tbody.rows).forEach(row => {
+      const statusCell = row.cells[statusColIndex]?.innerText.trim();
+      const operatorCell = row.cells[operatorColIndex]?.innerText.trim();
+
+      const statusMatch = !statusValue || statusCell === statusValue;
+      const operatorMatch = !operatorValue || operatorCell === operatorValue;
+
+      row.style.display = (statusMatch && operatorMatch) ? "" : "none";
+    });
+  }
 }
+
+
 
 
 
