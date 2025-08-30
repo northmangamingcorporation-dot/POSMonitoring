@@ -24,9 +24,10 @@ function filterByGreenDeviceID() {
   });
 }
 
-function renderStatusToolbar(statusIndex, operatorIndex) {
-  const table = document.querySelector("#tableContainer table");
-  const tbody = table.querySelector("tbody");
+function renderStatusToolbar(
+  statusCounts, uniqueStatuses, statusIndex, headers,
+  operatorCounts, uniqueOperators, operatorIndex
+) {
   const sheetTitleEl = document.getElementById("sheetTitle");
 
   // Remove previous toolbar
@@ -40,28 +41,10 @@ function renderStatusToolbar(statusIndex, operatorIndex) {
   toolbar.style.gap = "6px";
   toolbar.style.marginTop = "8px";
 
-  // --- Recalculate status counts based on visible rows ---
-  const filteredStatusCounts = {};
-  const uniqueStatuses = new Set();
-  const uniqueOperators = new Set();
-
-  Array.from(tbody.rows).forEach(row => {
-    if (row.style.display !== "none") { // only visible rows
-      const statusVal = row.cells[statusIndex]?.innerText.trim();
-      const operatorVal = row.cells[operatorIndex]?.innerText.trim();
-
-      if (statusVal) {
-        filteredStatusCounts[statusVal] = (filteredStatusCounts[statusVal] || 0) + 1;
-        uniqueStatuses.add(statusVal);
-      }
-      if (operatorVal) uniqueOperators.add(operatorVal);
-    }
-  });
-
-  // --- Status badges row ---
+  // --- Status badges row (use passed statusCounts) ---
   const badgesRow = document.createElement("div");
   badgesRow.className = "status-info";
-  Object.entries(filteredStatusCounts).forEach(([s, c]) => {
+  Object.entries(statusCounts).forEach(([s, c]) => {
     const badge = document.createElement("span");
     badge.className = "badge";
     badge.textContent = `${s}: ${c}`;
@@ -70,7 +53,7 @@ function renderStatusToolbar(statusIndex, operatorIndex) {
   toolbar.appendChild(badgesRow);
 
   // --- Status filter dropdown ---
-  if (uniqueStatuses.size > 0) {
+  if (statusIndex !== undefined && uniqueStatuses.length > 0) {
     const filterRow = document.createElement("div");
     filterRow.style.display = "flex";
     filterRow.style.alignItems = "center";
@@ -83,7 +66,7 @@ function renderStatusToolbar(statusIndex, operatorIndex) {
 
     const select = document.createElement("select");
     select.id = "statusFilter";
-    select.onchange = filterByStatusAndOperator;
+    select.onchange = () => filterByStatusAndOperator();
 
     const allOption = document.createElement("option");
     allOption.value = "";
@@ -102,7 +85,7 @@ function renderStatusToolbar(statusIndex, operatorIndex) {
   }
 
   // --- Operator filter dropdown ---
-  if (uniqueOperators.size > 0) {
+  if (operatorIndex !== undefined && uniqueOperators.length > 0) {
     const filterRow = document.createElement("div");
     filterRow.style.display = "flex";
     filterRow.style.alignItems = "center";
@@ -115,7 +98,7 @@ function renderStatusToolbar(statusIndex, operatorIndex) {
 
     const select = document.createElement("select");
     select.id = "operatorFilter";
-    select.onchange = filterByStatusAndOperator;
+    select.onchange = () => filterByStatusAndOperator();
 
     const allOption = document.createElement("option");
     allOption.value = "";
@@ -133,7 +116,7 @@ function renderStatusToolbar(statusIndex, operatorIndex) {
     toolbar.appendChild(filterRow);
   }
 
-  // Insert toolbar after title
+  // Insert toolbar after the title
   sheetTitleEl.insertAdjacentElement("afterend", toolbar);
 }
 
@@ -147,6 +130,7 @@ function filterByStatusAndOperator() {
   const statusValue = document.getElementById("statusFilter")?.value || "";
   const operatorValue = document.getElementById("operatorFilter")?.value || "";
 
+  // Apply filtering
   Array.from(tbody.rows).forEach(row => {
     const statusCell = row.cells[statusColIndex]?.innerText.trim();
     const operatorCell = row.cells[operatorColIndex]?.innerText.trim();
@@ -157,9 +141,40 @@ function filterByStatusAndOperator() {
     row.style.display = (statusMatch && operatorMatch) ? "" : "none";
   });
 
-  // 🔑 Refresh toolbar badges after filtering
-  renderStatusToolbar(statusColIndex, operatorColIndex);
+  // ✅ Recompute counts after filtering
+  const statusCounts = {};
+  const operatorCounts = {};
+  const uniqueStatuses = new Set();
+  const uniqueOperators = new Set();
+
+  Array.from(tbody.rows).forEach(row => {
+    if (row.style.display !== "none") {
+      const statusVal = row.cells[statusColIndex]?.innerText.trim();
+      const operatorVal = row.cells[operatorColIndex]?.innerText.trim();
+
+      if (statusVal) {
+        statusCounts[statusVal] = (statusCounts[statusVal] || 0) + 1;
+        uniqueStatuses.add(statusVal);
+      }
+      if (operatorVal) {
+        operatorCounts[operatorVal] = (operatorCounts[operatorVal] || 0) + 1;
+        uniqueOperators.add(operatorVal);
+      }
+    }
+  });
+
+  // ✅ Refresh toolbar with new counts
+  renderStatusToolbar(
+    statusCounts,
+    Array.from(uniqueStatuses),
+    statusColIndex,
+    headers,
+    operatorCounts,
+    Array.from(uniqueOperators),
+    operatorColIndex
+  );
 }
+
 
 
 
