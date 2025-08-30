@@ -169,17 +169,19 @@ function renderStatusToolbar(
 function filterByStatusAndOperator() {
   const table = document.querySelector("#tableContainer table");
   if (!table) return;
+
   const tbody = table.querySelector("tbody");
+  if (!tbody) return;
 
-  const statusFilter = document.getElementById("statusFilter")?.value || "";
-  const operatorFilter = document.getElementById("operatorFilter")?.value || "";
+  const statusFilter = document.getElementById("statusFilter")?.value?.trim() || "";
+  const operatorFilter = document.getElementById("operatorFilter")?.value?.trim() || "";
 
-  const headers = Array.from(table.querySelectorAll("thead th")).map(th => th.innerText.toLowerCase());
+  const headers = Array.from(table.querySelectorAll("thead th")).map(th =>
+    th.innerText.toLowerCase().trim()
+  );
+
   const statusColIndex = headers.findIndex(h => h.includes("status"));
   const operatorColIndex = headers.findIndex(h => h.includes("operator"));
-
-  // reset status counts
-  const statusCounts = {};
 
   Array.from(tbody.rows).forEach(row => {
     const statusCell = statusColIndex !== -1 ? row.cells[statusColIndex]?.innerText.trim() : "";
@@ -188,42 +190,10 @@ function filterByStatusAndOperator() {
     const statusMatch = !statusFilter || statusCell === statusFilter;
     const operatorMatch = !operatorFilter || operatorCell === operatorFilter;
 
-    if (statusMatch && operatorMatch) {
-      row.style.display = "";
-      // count only visible rows
-      if (statusCell) {
-        statusCounts[statusCell] = (statusCounts[statusCell] || 0) + 1;
-      }
-    } else {
-      row.style.display = "none";
-    }
+    row.style.display = (statusMatch && operatorMatch) ? "" : "none";
   });
-
-  // Remove previous toolbar
-  const existingToolbar = document.getElementById("statusToolbar");
-  if (existingToolbar) existingToolbar.remove();
-
-  // Create toolbar
-  const toolbar = document.createElement("div");
-  toolbar.id = "statusToolbar";
-  toolbar.style.display = "flex";
-  toolbar.style.flexDirection = "column";
-  toolbar.style.gap = "6px";
-  toolbar.style.marginTop = "8px";
-
-  // --- Status badges row ---
-  const badgesRow = document.createElement("div");
-  badgesRow.className = "status-info"; // your CSS class
-  Object.entries(statusCounts).forEach(([s, c]) => {
-    const badge = document.createElement("span");
-    badge.className = "badge"; // uses your CSS
-    badge.textContent = `${s}: ${c}`;
-    badgesRow.appendChild(badge);
-  });
-  toolbar.appendChild(badgesRow);
-
-  table.parentElement.appendChild(toolbar);
 }
+
 
 
 
