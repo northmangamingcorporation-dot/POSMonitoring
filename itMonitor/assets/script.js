@@ -88,44 +88,57 @@ async function populateTables() {
   document.getElementById("approvedCount").innerHTML = approved;
   document.getElementById("deniedCount").innerHTML = denied;
 
-  // Populate Recent Cancellation Table
+// Populate Recent Cancellation Table
+try {
   const cancelTbody = document.querySelector("#cancelTable tbody");
   cancelTbody.innerHTML = ""; // clear old rows
-  data.recentCancellation.forEach(item => {
+  (data.recentCancellation || []).forEach(item => {
     const row = `<tr>
-      <td>${item.boothCode}</td>
-      <td>${item.deviceId}</td>
-      <td>${item.transaction}</td>
-      <td>${item.coords}</td>
-      <td>${item.address}</td>
-      <td>${item.total}</td>
+      <td>${item.boothCode || ""}</td>
+      <td>${item.deviceId || ""}</td>
+      <td>${item.transaction || ""}</td>
+      <td>${item.coords || ""}</td>
+      <td>${item.address || ""}</td>
+      <td>${item.total || ""}</td>
     </tr>`;
     cancelTbody.innerHTML += row;
   });
+} catch(e) {
+  console.warn("Failed to populate Recent Cancellation Table:", e);
+}
 
-  // Populate Approved Table
+// Populate Approved Table
+try {
   const approvedTbody = document.querySelector("#approvedTable tbody");
   approvedTbody.innerHTML = "";
-  data.approved.forEach(item => {
+  (data.approved || []).forEach(item => {
     const row = `<tr>
-      <td>${item.itName}</td>
-      <td>${item.boothCode}</td>
-      <td>${item.transaction}</td>
+      <td>${item.itName || ""}</td>
+      <td>${item.boothCode || ""}</td>
+      <td>${item.transaction || ""}</td>
     </tr>`;
     approvedTbody.innerHTML += row;
   });
+} catch(e) {
+  console.warn("Failed to populate Approved Table:", e);
+}
 
-  // Populate Denied Table
+// Populate Denied Table
+try {
   const deniedTbody = document.querySelector("#deniedTable tbody");
   deniedTbody.innerHTML = "";
-  data.denied.forEach(item => {
+  (data.denied || []).forEach(item => {
     const row = `<tr>
-      <td>${item.itName}</td>
-      <td>${item.boothCode}</td>
-      <td>${item.transaction}</td>
+      <td>${item.itName || ""}</td>
+      <td>${item.boothCode || ""}</td>
+      <td>${item.transaction || ""}</td>
     </tr>`;
     deniedTbody.innerHTML += row;
   });
+} catch(e) {
+  console.warn("Failed to populate Denied Table:", e);
+}
+
 
   // Merge all for chart
   const allItems = [
