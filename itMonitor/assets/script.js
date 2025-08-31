@@ -19,6 +19,7 @@
   const db = getFirestore(app);
 
   // Fetch documents from Firestore
+// Fetch documents from Firestore
 async function fetchFirestoreData() {
   const snapshot = await getDocs(collection(db, "webhooks"));
   const data = {
@@ -30,32 +31,45 @@ async function fetchFirestoreData() {
   snapshot.forEach(doc => {
     const f = doc.data();
 
-    if (!f.rawData) return; // skip if no rawData
+    if (!f.rawData) return;
 
     try {
       const parsed = JSON.parse(f.rawData);
 
       if (parsed.RecentCancellationRequest) {
+        const r = parsed.RecentCancellationRequest;
         data.recentCancellation.push({
-          ...parsed.RecentCancellationRequest,
-          status: "request"
+          boothCode: r.BoothCode || "",
+          deviceId: r.DeviceID || "",
+          transaction: r.TransactionNumber || "",
+          coords: r.Coordinates || "",
+          address: r.BoothAddress || "",
+          total: r.TotalAmount || ""
         });
-      } else if (parsed.RecentApprovedCancellationRequest) {
+      } 
+      else if (parsed.RecentApprovedCancellation) {
+        const r = parsed.RecentApprovedCancellation;
         data.approved.push({
-          ...parsed.RecentApprovedCancellationRequest,
-          status: "approved"
+          itName: r.ITName || "",
+          boothCode: r.BoothCode || "",
+          transaction: r.TransactionNumber || ""
         });
-      } else if (parsed.RecentDeniedCancellationRequest) {
+      } 
+      else if (parsed.RecentDeniedCancellationRequest) {
+        const r = parsed.RecentDeniedCancellationRequest;
         data.denied.push({
-          ...parsed.RecentDeniedCancellationRequest,
-          status: "denied"
+          itName: r.ITName || "",
+          boothCode: r.BoothCode || "",
+          transaction: r.TransactionNumber || ""
         });
       }
-    } catch (e) {
-      console.error("Invalid JSON in rawData", f.rawData);
+
+    } catch (err) {
+      console.error("❌ Failed to parse rawData:", f.rawData, err);
     }
   });
 
+  console.log("✅ Processed Firestore data:", data);
   return data;
 }
 
@@ -85,8 +99,6 @@ async function populateTables() {
 
   renderChart(allItems);
 }
-
-
 
   function renderChart(data) {
     const ctx = document.getElementById("statusChart").getContext("2d");
