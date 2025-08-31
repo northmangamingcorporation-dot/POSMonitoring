@@ -194,6 +194,10 @@ function renderChart(allItems) {
 // Function to refresh dashboard and tables
 async function refreshDashboard() {
   try {
+     // Update dashboard cards
+    document.getElementById("recentCount").innerHTML = "...";
+    document.getElementById("approvedCount").innerHTML = "...";
+    document.getElementById("deniedCount").innerHTML = "...";
     await populateTables();
   } catch (e) {
     console.error("Error updating dashboard:", e);
