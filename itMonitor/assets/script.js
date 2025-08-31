@@ -191,10 +191,23 @@ function renderChart(allItems) {
   });
 }
 
+// Function to refresh dashboard and tables
+async function refreshDashboard() {
+  try {
+    await populateTables();
+  } catch (e) {
+    console.error("Error updating dashboard:", e);
+  }
+}
 
+// Start background updates
+const REFRESH_INTERVAL = 5000; // 5000ms = 5 seconds
 
- document.addEventListener("DOMContentLoaded", function () {
-  populateTables();
-});
+// Initial load
+refreshDashboard();
+
+// Run repeatedly in the background
+setInterval(refreshDashboard, REFRESH_INTERVAL);
+
 
 
