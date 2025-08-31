@@ -278,6 +278,7 @@ async function renderMenu(sheets) {
 
   sheets
     .filter(sheet => sheet !== "Log") // skip "Log"
+    .filter(sheet => sheet !== "WebhookLogs") // skip "WebhookLogs"
     .forEach(sheet => {
       const btn = document.createElement("button");
       btn.textContent = sheet;
@@ -758,6 +759,7 @@ async function deleteRowHandler(primaryKey, sheetName) {
 
 </body>
 </html>
+
 
 
 
