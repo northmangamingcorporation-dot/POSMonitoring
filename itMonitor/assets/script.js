@@ -151,14 +151,22 @@ try {
   renderChart(allItems);
 }
 
- function renderChart(allItems) {
+let lineChartInstance = null; // global reference
+
+function renderChart(allItems) {
   const canceled = allItems.filter(d => d.type === "request").length;
   const approved = allItems.filter(d => d.type === "approved").length;
   const denied   = allItems.filter(d => d.type === "denied").length;
 
   const ctx = document.getElementById("chartLine").getContext("2d");
 
-  new Chart(ctx, {
+  // Destroy previous chart if it exists
+  if (lineChartInstance) {
+    lineChartInstance.destroy();
+  }
+
+  // Store the new chart instance
+  lineChartInstance = new Chart(ctx, {
     type: "pie",
     data: {
       labels: ["Recent Cancellations", "Approved", "Denied"],
@@ -182,6 +190,7 @@ try {
     plugins: [ChartDataLabels]
   });
 }
+
 
 
  document.addEventListener("DOMContentLoaded", function () {
