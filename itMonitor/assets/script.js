@@ -59,28 +59,33 @@ async function fetchFirestoreData() {
   return data;
 }
 
-  // Update dashboard cards + chart
-    async function populateTables() {
-      const data = await fetchFirestoreData();
+// Update dashboard cards + chart
+async function populateTables() {
+  const data = await fetchFirestoreData();
+  console.log("📥 Raw data from Firestore:", data);
 
-      const canceled = data.recentCancellation.length;
-      const approved = data.approved.length;
-      const denied   = data.denied.length;
+  const canceled = data.recentCancellation.length;
+  const approved = data.approved.length;
+  const denied   = data.denied.length;
 
-      // Update dashboard cards
-      document.getElementById("recentCount").innerHTML = canceled;
-      document.getElementById("approvedCount").innerHTML = approved;
-      document.getElementById("deniedCount").innerHTML = denied;
+  console.log("🔢 Counts ->", { canceled, approved, denied });
 
-      // ✅ Merge all for chart
-      const allItems = [
-        ...data.recentCancellation,
-        ...data.approved,
-        ...data.denied,
-      ];
+  // Update dashboard cards
+  document.getElementById("recentCount").innerHTML = canceled;
+  document.getElementById("approvedCount").innerHTML = approved;
+  document.getElementById("deniedCount").innerHTML = denied;
 
-      renderChart(allItems);
-    }
+  // ✅ Merge all for chart
+  const allItems = [
+    ...data.recentCancellation,
+    ...data.approved,
+    ...data.denied,
+  ];
+  console.log("📊 All items merged for chart:", allItems);
+
+  renderChart(allItems);
+}
+
 
 
   function renderChart(data) {
