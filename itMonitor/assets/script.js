@@ -60,27 +60,28 @@ async function fetchFirestoreData() {
 }
 
   // Update dashboard cards + chart
-  async function populateTables() {
-  const data = await fetchFirestoreData();
+    async function populateTables() {
+      const data = await fetchFirestoreData();
 
-  const canceled = data.recentCancellation.length;
-  const approved = data.approved.length;
-  const denied   = data.denied.length;
+      const canceled = data.recentCancellation.length;
+      const approved = data.approved.length;
+      const denied   = data.denied.length;
 
-  // Update dashboard cards
-  document.getElementById("recentCount").innerHTML = canceled;
-  document.getElementById("approvedCount").innerHTML = approved;
-  document.getElementById("deniedCount").innerHTML = denied;
+      // Update dashboard cards
+      document.getElementById("recentCount").innerHTML = canceled;
+      document.getElementById("approvedCount").innerHTML = approved;
+      document.getElementById("deniedCount").innerHTML = denied;
 
-  // Merge into one array if chart needs it
-  const allItems = [
-    ...data.recentCancellation,
-    ...data.approved,
-    ...data.denied,
-  ];
+      // ✅ Merge all for chart
+      const allItems = [
+        ...data.recentCancellation,
+        ...data.approved,
+        ...data.denied,
+      ];
 
-  renderChart(allItems);
-}
+      renderChart(allItems);
+    }
+
 
   function renderChart(data) {
     const ctx = document.getElementById("statusChart").getContext("2d");
