@@ -1,96 +1,140 @@
-// Example dummy JSON
-const data = {
-  recentCancellation: [
-    { boothCode:"B01", deviceId:"D123", transaction:"T001-ABC", coords:"7.07,125.61", address:"Tagum City", total:"₱500" },
-    { boothCode:"B02", deviceId:"D124", transaction:"T002-XYZ", coords:"7.10,125.62", address:"Davao City", total:"₱750" }
-  ],
-  approved: [
-    { itName:"Mark D", boothCode:"B03", transaction:"T003-OK" }
-  ],
-  denied: [
-    { itName:"Jane S", boothCode:"B04", transaction:"T004-NO" }
-  ]
-};
+  // Import from Firebase CDN
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+  import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-analytics.js";
 
-// Fill tables
-function populateTables(){
-  const cancelBody = document.querySelector("#cancelTable tbody");
-  const approvedBody = document.querySelector("#approvedTable tbody");
-  const deniedBody = document.querySelector("#deniedTable tbody");
+  const firebaseConfig = {
+    apiKey: "AIzaSyC1MXd3FcLv_Ta00hzv7CU6skJPw4H1w7M",
+    authDomain: "northmancorpdatabase.firebaseapp.com",
+    projectId: "northmancorpdatabase",
+    storageBucket: "northmancorpdatabase.appspot.com",
+    messagingSenderId: "843208612876",
+    appId: "1:843208612876:web:d4249a28702e62010ae229",
+    measurementId: "G-3P6XCFX2SK"
+  };
 
-  data.recentCancellation.forEach(item=>{
-    cancelBody.innerHTML += `
-      <tr>
-        <td>${item.boothCode}</td>
-        <td>${item.deviceId}</td>
-        <td>${item.transaction}</td>
-        <td>${item.coords}</td>
-        <td>${item.address}</td>
-        <td>${item.total}</td>
-      </tr>`;
-  });
+  // Initialize Firebase + Firestore
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
 
-  data.approved.forEach(item=>{
-    approvedBody.innerHTML += `
-      <tr>
-        <td>${item.itName}</td>
-        <td>${item.boothCode}</td>
-        <td>${item.transaction}</td>
-      </tr>`;
-  });
+  // Fetch documents from Firestore
+  async function fetchFirestoreData() {
+    const snapshot = await getDocs(collection(db, "webhooks"));
+    const data = {
+      recentCancellation: [],
+      approved: [],
+      denied: []
+    };
 
-  data.denied.forEach(item=>{
-    deniedBody.innerHTML += `
-      <tr>
-        <td>${item.itName}</td>
-        <td>${item.boothCode}</td>
-        <td>${item.transaction}</td>
-      </tr>`;
-  });
-
-  // Update counts
-  document.getElementById("recentCount").textContent = data.recentCancellation.length;
-  document.getElementById("approvedCount").textContent = data.approved.length;
-  document.getElementById("deniedCount").textContent = data.denied.length;
-}
-
-document.addEventListener("DOMContentLoaded", populateTables);
-
-document.addEventListener("DOMContentLoaded", () => {
-  const recentCount = parseInt(document.getElementById("recentCount").textContent);
-  const approvedCount = parseInt(document.getElementById("approvedCount").textContent);
-  const deniedCount = parseInt(document.getElementById("deniedCount").textContent);
-
-  const ctx = document.getElementById("statusChart").getContext("2d");
-  new Chart(ctx, {
-    type: "pie",
-    data: {
-      labels: ["Recent Cancellations", "Approved", "Denied"],
-      datasets: [{
-        data: [recentCount, approvedCount, deniedCount],
-        backgroundColor: ["#4caf50", "#2196f3", "#f44336"], // green, blue, red
-      }]
-    },
-    options: {
-      responsive: true,
-      plugins: {
-        legend: {
-          position: "bottom",
-        },
-        title: {
-          display: true,
-          text: "Transaction Status Distribution"
-        },
-        datalabels: {
-          color: "#fff",
-          font: {
-            weight: "bold",
-            size: 14
-          },
-          formatter: (value) => value // show raw numbers
-        }
+    snapshot.forEach(doc => {
+      const f = doc.data();
+      if (f.type === "request") {
+        data.recentCancellation.push({
+          boothCode: f.boothcode || "",
+          deviceId: f.deviceid || "",
+          transaction: f.transactionnumber || "",
+          coords: f.coordinates || "",
+          address: f.boothaddress || "",
+          total: f.totalamount || ""
+        });
+      } else if (f.type === "approved") {
+        data.approved.push({
+          itName: f.itname || "",
+          boothCode: f.boothcode || "",
+          transaction: f.transactionnumber || ""
+        });
+      } else if (f.type === "denied") {
+        data.denied.push({
+          itName: f.itname || "",
+          boothCode: f.boothcode || "",
+          transaction: f.transactionnumber || ""
+        });
       }
-    },
-    plugins: [ChartDataLabels] // enable datalabels plugin
-  });
-});
+    });
+
+    return data;
+  }
+
+  // Then reuse your populateTables code:
+  async function populateTables() {
+    const data = await fetchFirestoreData();
+
+    const cancelBody = document.querySelector("#cancelTable tbody");
+    const approvedBody = document.querySelector("#approvedTable tbody");
+    const deniedBody = document.querySelector("#deniedTable tbody");
+
+    cancelBody.innerHTML = "";
+    approvedBody.innerHTML = "";
+    deniedBody.innerHTML = "";
+
+    data.recentCancellation.forEach(item => {
+      cancelBody.innerHTML += `
+        <tr>
+          <td>${item.boothCode}</td>
+          <td>${item.deviceId}</td>
+          <td>${item.transaction}</td>
+          <td>${item.coords}</td>
+          <td>${item.address}</td>
+          <td>${item.total}</td>
+        </tr>`;
+    });
+
+    data.approved.forEach(item => {
+      approvedBody.innerHTML += `
+        <tr>
+          <td>${item.itName}</td>
+          <td>${item.boothCode}</td>
+          <td>${item.transaction}</td>
+        </tr>`;
+    });
+
+    data.denied.forEach(item => {
+      deniedBody.innerHTML += `
+        <tr>
+          <td>${item.itName}</td>
+          <td>${item.boothCode}</td>
+          <td>${item.transaction}</td>
+        </tr>`;
+    });
+
+    document.getElementById("recentCount").textContent = data.recentCancellation.length;
+    document.getElementById("approvedCount").textContent = data.approved.length;
+    document.getElementById("deniedCount").textContent = data.denied.length;
+
+    renderChart(data);
+  }
+
+  function renderChart(data) {
+    const ctx = document.getElementById("statusChart").getContext("2d");
+
+    new Chart(ctx, {
+      type: "pie",
+      data: {
+        labels: ["Recent Cancellations", "Approved", "Denied"],
+        datasets: [{
+          data: [
+            data.recentCancellation.length,
+            data.approved.length,
+            data.denied.length
+          ],
+          backgroundColor: ["#4caf50", "#2196f3", "#f44336"],
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { position: "bottom" },
+          title: { display: true, text: "Transaction Status Distribution" },
+          datalabels: {
+            color: "#fff",
+            font: { weight: "bold", size: 14 },
+            formatter: (value) => value
+          }
+        }
+      },
+      plugins: [ChartDataLabels]
+    });
+  }
+
+  document.addEventListener("DOMContentLoaded", populateTables);
+
