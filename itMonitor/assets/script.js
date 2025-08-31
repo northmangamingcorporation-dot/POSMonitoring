@@ -60,47 +60,15 @@
   async function populateTables() {
     const data = await fetchFirestoreData();
 
-    const cancelBody = document.querySelector("#cancelTable tbody");
-    const approvedBody = document.querySelector("#approvedTable tbody");
-    const deniedBody = document.querySelector("#deniedTable tbody");
+    // Count items by status
+    const canceled = data.filter(d => d.status === "canceled").length;
+    const approved = data.filter(d => d.status === "approved").length;
+    const denied   = data.filter(d => d.status === "denied").length;
 
-    cancelBody.innerHTML = "";
-    approvedBody.innerHTML = "";
-    deniedBody.innerHTML = "";
-
-    data.recentCancellation.forEach(item => {
-      cancelBody.innerHTML += `
-        <tr>
-          <td>${item.boothCode}</td>
-          <td>${item.deviceId}</td>
-          <td>${item.transaction}</td>
-          <td>${item.coords}</td>
-          <td>${item.address}</td>
-          <td>${item.total}</td>
-        </tr>`;
-    });
-
-    data.approved.forEach(item => {
-      approvedBody.innerHTML += `
-        <tr>
-          <td>${item.itName}</td>
-          <td>${item.boothCode}</td>
-          <td>${item.transaction}</td>
-        </tr>`;
-    });
-
-    data.denied.forEach(item => {
-      deniedBody.innerHTML += `
-        <tr>
-          <td>${item.itName}</td>
-          <td>${item.boothCode}</td>
-          <td>${item.transaction}</td>
-        </tr>`;
-    });
-
-    document.getElementById("recentCount").textContent = data.recentCancellation.length;
-    document.getElementById("approvedCount").textContent = data.approved.length;
-    document.getElementById("deniedCount").textContent = data.denied.length;
+    // Update the cards in your HTML
+    document.getElementById("recentCount").innerHTML = canceled;
+    document.getElementById("approvedCount").innerHTML = approved;
+    document.getElementById("deniedCount").innerHTML = denied;
 
     renderChart(data);
   }
