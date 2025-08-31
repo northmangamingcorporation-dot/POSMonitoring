@@ -58,19 +58,20 @@
 
   // Then reuse your populateTables code:
   async function populateTables() {
-    const data = await fetchFirestoreData();
+    // Ensure data is always an array
+    const items = Array.isArray(data) ? data : Object.values(data);
 
-    // Count items by status
-    const canceled = data.filter(d => d.status === "canceled").length;
-    const approved = data.filter(d => d.status === "approved").length;
-    const denied   = data.filter(d => d.status === "denied").length;
+    // Count by status
+    const canceled = items.filter(d => d.status === "pending" || d.status === "request").length;
+    const approved = items.filter(d => d.status === "approved").length;
+    const denied   = items.filter(d => d.status === "denied").length;
 
-    // Update the cards in your HTML
+    // Update dashboard cards
     document.getElementById("recentCount").innerHTML = canceled;
     document.getElementById("approvedCount").innerHTML = approved;
     document.getElementById("deniedCount").innerHTML = denied;
 
-    renderChart(data);
+    renderChart(items);
   }
 
   function renderChart(data) {
