@@ -194,16 +194,6 @@ function renderChart(allItems) {
 // Function to refresh dashboard and tables
 async function refreshDashboard() {
   try {
-    // Show "..." for 1 second before updating counts
-    document.getElementById("recentCount").innerHTML = "...";
-    document.getElementById("approvedCount").innerHTML = "...";
-    document.getElementById("deniedCount").innerHTML = "...";
-
-    setTimeout(() => {
-      document.getElementById("recentCount").innerHTML = canceled;
-      document.getElementById("approvedCount").innerHTML = approved;
-      document.getElementById("deniedCount").innerHTML = denied;
-    }, 1000); // 1000ms = 1 second
     await populateTables();
   } catch (e) {
     console.error("Error updating dashboard:", e);
