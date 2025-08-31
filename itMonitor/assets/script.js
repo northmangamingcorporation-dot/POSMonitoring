@@ -19,66 +19,69 @@
   const db = getFirestore(app);
 
   // Fetch documents from Firestore
-  async function fetchFirestoreData() {
-    const snapshot = await getDocs(collection(db, "webhooks"));
-    const data = {
-      recentCancellation: [],
-      approved: [],
-      denied: []
-    };
+async function fetchFirestoreData() {
+  const snapshot = await getDocs(collection(db, "webhooks"));
+  const data = {
+    recentCancellation: [],
+    approved: [],
+    denied: []
+  };
 
-    snapshot.forEach(doc => {
-      const f = doc.data();
-      if (f.type === "request") {
+  snapshot.forEach(doc => {
+    const f = doc.data();
+
+    if (!f.rawData) return; // skip if no rawData
+
+    try {
+      const parsed = JSON.parse(f.rawData);
+
+      if (parsed.RecentCancellationRequest) {
         data.recentCancellation.push({
-          boothCode: f.boothcode || "",
-          deviceId: f.deviceid || "",
-          transaction: f.transactionnumber || "",
-          coords: f.coordinates || "",
-          address: f.boothaddress || "",
-          total: f.totalamount || ""
+          ...parsed.RecentCancellationRequest,
+          status: "request"
         });
-      } else if (f.type === "approved") {
+      } else if (parsed.RecentApprovedCancellationRequest) {
         data.approved.push({
-          itName: f.itname || "",
-          boothCode: f.boothcode || "",
-          transaction: f.transactionnumber || ""
+          ...parsed.RecentApprovedCancellationRequest,
+          status: "approved"
         });
-      } else if (f.type === "denied") {
+      } else if (parsed.RecentDeniedCancellationRequest) {
         data.denied.push({
-          itName: f.itname || "",
-          boothCode: f.boothcode || "",
-          transaction: f.transactionnumber || ""
+          ...parsed.RecentDeniedCancellationRequest,
+          status: "denied"
         });
       }
-    });
+    } catch (e) {
+      console.error("Invalid JSON in rawData", f.rawData);
+    }
+  });
 
-    return data;
-  }
+  return data;
+}
 
   // Update dashboard cards + chart
   async function populateTables() {
-    const data = await fetchFirestoreData();
+  const data = await fetchFirestoreData();
 
-    const canceled = data.recentCancellation.length;
-    const approved = data.approved.length;
-    const denied   = data.denied.length;
+  const canceled = data.recentCancellation.length;
+  const approved = data.approved.length;
+  const denied   = data.denied.length;
 
-    // Update dashboard cards
-    document.getElementById("recentCount").innerHTML = canceled;
-    document.getElementById("approvedCount").innerHTML = approved;
-    document.getElementById("deniedCount").innerHTML = denied;
+  // Update dashboard cards
+  document.getElementById("recentCount").innerHTML = canceled;
+  document.getElementById("approvedCount").innerHTML = approved;
+  document.getElementById("deniedCount").innerHTML = denied;
 
-    // Pass flat list into chart (optional)
-    const allItems = [
-      ...data.recentCancellation.map(d => ({ status: "request", ...d })),
-      ...data.approved.map(d => ({ status: "approved", ...d })),
-      ...data.denied.map(d => ({ status: "denied", ...d })),
-    ];
+  // Merge into one array if chart needs it
+  const allItems = [
+    ...data.recentCancellation,
+    ...data.approved,
+    ...data.denied,
+  ];
 
-    renderChart(allItems);
-  }
-  
+  renderChart(allItems);
+}
+
   function renderChart(data) {
     const ctx = document.getElementById("statusChart").getContext("2d");
 
