@@ -143,7 +143,7 @@ async function populateTables() {
   const approved = allItems.filter(d => d.type === "approved").length;
   const denied   = allItems.filter(d => d.type === "denied").length;
 
-  const ctx = document.getElementById("statusChart").getContext("2d");
+  const ctx = document.getElementById("chartLine").getContext("2d");
 
   new Chart(ctx, {
     type: "pie",
