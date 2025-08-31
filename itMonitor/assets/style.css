@@ -272,21 +272,22 @@ body {
 
 /* Table card styling */
 .table-card {
-  background-color: #fff;
+  background-color: #1a1a1a; /* dark card background */
   border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
   padding: 16px;
-  transition: transform 0.2s;
+  transition: transform 0.2s, box-shadow 0.2s;
 }
 
 .table-card:hover {
   transform: translateY(-4px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.7);
 }
 
 .table-card h3 {
   margin-bottom: 12px;
   font-size: 1.1rem;
-  color: #333;
+  color: #fff;
 }
 
 /* Table styling */
@@ -296,18 +297,19 @@ table {
 }
 
 thead {
-  background-color: #f0f0f0;
+  background-color: #333;
 }
 
 th, td {
   text-align: left;
   padding: 10px 12px;
   font-size: 0.95rem;
-  border-bottom: 1px solid #e0e0e0;
+  border-bottom: 1px solid #555;
+  color: #fff;
 }
 
 tbody tr:hover {
-  background-color: #f9f9f9;
+  background-color: #2a2a2a;
 }
 
 /* Responsive for small screens */
@@ -317,5 +319,6 @@ tbody tr:hover {
     font-size: 0.85rem;
   }
 }
+
 
 
