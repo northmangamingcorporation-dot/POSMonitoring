@@ -73,7 +73,6 @@ async function fetchFirestoreData() {
   return data;
 }
 
-// Update dashboard cards + chart
 async function populateTables() {
   const data = await fetchFirestoreData();
   console.log("📥 Raw data from Firestore:", data);
@@ -89,7 +88,46 @@ async function populateTables() {
   document.getElementById("approvedCount").innerHTML = approved;
   document.getElementById("deniedCount").innerHTML = denied;
 
-  // ✅ Merge all for chart
+  // Populate Recent Cancellation Table
+  const cancelTbody = document.querySelector("#cancelTable tbody");
+  cancelTbody.innerHTML = ""; // clear old rows
+  data.recentCancellation.forEach(item => {
+    const row = `<tr>
+      <td>${item.boothCode}</td>
+      <td>${item.deviceId}</td>
+      <td>${item.transaction}</td>
+      <td>${item.coords}</td>
+      <td>${item.address}</td>
+      <td>${item.total}</td>
+    </tr>`;
+    cancelTbody.innerHTML += row;
+  });
+
+  // Populate Approved Table
+  const approvedTbody = document.querySelector("#approvedTable tbody");
+  approvedTbody.innerHTML = "";
+  data.approved.forEach(item => {
+    const row = `<tr>
+      <td>${item.itName}</td>
+      <td>${item.boothCode}</td>
+      <td>${item.transaction}</td>
+    </tr>`;
+    approvedTbody.innerHTML += row;
+  });
+
+  // Populate Denied Table
+  const deniedTbody = document.querySelector("#deniedTable tbody");
+  deniedTbody.innerHTML = "";
+  data.denied.forEach(item => {
+    const row = `<tr>
+      <td>${item.itName}</td>
+      <td>${item.boothCode}</td>
+      <td>${item.transaction}</td>
+    </tr>`;
+    deniedTbody.innerHTML += row;
+  });
+
+  // Merge all for chart
   const allItems = [
     ...data.recentCancellation,
     ...data.approved,
