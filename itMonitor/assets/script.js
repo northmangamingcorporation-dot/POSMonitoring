@@ -158,7 +158,7 @@ function renderChart(allItems) {
   const approved = allItems.filter(d => d.type === "approved").length;
   const denied   = allItems.filter(d => d.type === "denied").length;
 
-  const ctx = document.getElementById("chartLine").getContext("2d");
+  const ctx = document.getElementById("statusChart").getContext("2d");
 
   // Destroy previous chart if it exists
   if (lineChartInstance) {
