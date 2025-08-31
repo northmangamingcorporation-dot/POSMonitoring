@@ -138,37 +138,38 @@ async function populateTables() {
   renderChart(allItems);
 }
 
-  function renderChart(data) {
-    const ctx = document.getElementById("statusChart").getContext("2d");
+ function renderChart(allItems) {
+  const canceled = allItems.filter(d => d.type === "request").length;
+  const approved = allItems.filter(d => d.type === "approved").length;
+  const denied   = allItems.filter(d => d.type === "denied").length;
 
-    new Chart(ctx, {
-      type: "pie",
-      data: {
-        labels: ["Recent Cancellations", "Approved", "Denied"],
-        datasets: [{
-          data: [
-            data.recentCancellation.length,
-            data.approved.length,
-            data.denied.length
-          ],
-          backgroundColor: ["#4caf50", "#2196f3", "#f44336"],
-        }]
-      },
-      options: {
-        responsive: true,
-        plugins: {
-          legend: { position: "bottom" },
-          title: { display: true, text: "Transaction Status Distribution" },
-          datalabels: {
-            color: "#fff",
-            font: { weight: "bold", size: 14 },
-            formatter: (value) => value
-          }
+  const ctx = document.getElementById("statusChart").getContext("2d");
+
+  new Chart(ctx, {
+    type: "pie",
+    data: {
+      labels: ["Recent Cancellations", "Approved", "Denied"],
+      datasets: [{
+        data: [canceled, approved, denied],
+        backgroundColor: ["#4caf50", "#2196f3", "#f44336"],
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { position: "bottom" },
+        title: { display: true, text: "Transaction Status Distribution" },
+        datalabels: {
+          color: "#fff",
+          font: { weight: "bold", size: 14 },
+          formatter: (value) => value
         }
-      },
-      plugins: [ChartDataLabels]
-    });
-  }
+      }
+    },
+    plugins: [ChartDataLabels]
+  });
+}
+
 
  document.addEventListener("DOMContentLoaded", function () {
   populateTables();
