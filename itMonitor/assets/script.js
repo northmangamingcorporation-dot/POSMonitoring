@@ -56,24 +56,29 @@
     return data;
   }
 
-  // Then reuse your populateTables code:
+  // Update dashboard cards + chart
   async function populateTables() {
-    // Ensure data is always an array
-    const items = Array.isArray(data) ? data : Object.values(data);
+    const data = await fetchFirestoreData();
 
-    // Count by status
-    const canceled = items.filter(d => d.status === "pending" || d.status === "request").length;
-    const approved = items.filter(d => d.status === "approved").length;
-    const denied   = items.filter(d => d.status === "denied").length;
+    const canceled = data.recentCancellation.length;
+    const approved = data.approved.length;
+    const denied   = data.denied.length;
 
     // Update dashboard cards
     document.getElementById("recentCount").innerHTML = canceled;
     document.getElementById("approvedCount").innerHTML = approved;
     document.getElementById("deniedCount").innerHTML = denied;
 
-    renderChart(items);
-  }
+    // Pass flat list into chart (optional)
+    const allItems = [
+      ...data.recentCancellation.map(d => ({ status: "request", ...d })),
+      ...data.approved.map(d => ({ status: "approved", ...d })),
+      ...data.denied.map(d => ({ status: "denied", ...d })),
+    ];
 
+    renderChart(allItems);
+  }
+  
   function renderChart(data) {
     const ctx = document.getElementById("statusChart").getContext("2d");
 
