@@ -136,5 +136,8 @@
     });
   }
 
-  document.addEventListener("DOMContentLoaded", populateTables);
+ document.addEventListener("DOMContentLoaded", function () {
+  populateTables();
+});
+
 
