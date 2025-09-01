@@ -155,7 +155,7 @@ function renderChart(allItems = []) {
       labels: ["Recent Cancellations", "Approved", "Denied"],
       datasets: [{
         data: [canceled, approved, denied],
-        backgroundColor: [ "#4caf50", "#2196f3","#f44336"], // red, green, blue
+        backgroundColor: [ "#4caf50", "#2196f3"], // red, green, blue
       }]
     },
     options: {
