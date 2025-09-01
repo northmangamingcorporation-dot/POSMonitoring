@@ -28,7 +28,7 @@ async function fetchSheetData() {
     // Map based on "status" column
     if (rowObj.status === "pending") {
       data.recentCancellation.push({
-        boothCode: rowObj.boothCode,
+        boothCode: rowObj.boothcode,
         deviceId: rowObj.deviceid,
         transactionNumber: rowObj.transactionNumber,
         coordinates: rowObj.coordinates,
@@ -38,14 +38,14 @@ async function fetchSheetData() {
     } else if (rowObj.status === "approved") {
       data.approved.push({
         itName: rowObj.itname,
-        boothCode: rowObj.boothCode,
-        transaction: rowObj.transactionNumber
+        boothCode: rowObj.boothcode,
+        transaction: rowObj.transactionnumber
       });
     } else if (rowObj.status === "denied") {
       data.denied.push({
         itName: rowObj.itname,
-        boothCode: rowObj.boothCode,
-        transaction: rowObj.transactionNumber
+        boothCode: rowObj.boothcode,
+        transaction: rowObj.transactionnumber
       });
     }
   }

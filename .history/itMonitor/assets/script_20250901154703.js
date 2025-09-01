@@ -44,7 +44,7 @@ async function fetchSheetData() {
     } else if (rowObj.status === "denied") {
       data.denied.push({
         itName: rowObj.itname,
-        boothCode: rowObj.boothCode,
+        boothCode: rowObj.boothcode,
         transaction: rowObj.transactionNumber
       });
     }
