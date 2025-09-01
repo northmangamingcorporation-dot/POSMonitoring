@@ -135,6 +135,8 @@ try {
 
 let lineChartInstance = null; // global reference
 
+let lineChartInstance = null;
+
 function renderChart(data) {
   // Count items in each category
   const canceled = data.recentCancellation.length;

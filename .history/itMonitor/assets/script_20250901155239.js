@@ -135,11 +135,10 @@ try {
 
 let lineChartInstance = null; // global reference
 
-function renderChart(data) {
-  // Count items in each category
-  const canceled = data.recentCancellation.length;
-  const approved = data.approved.length;
-  const denied   = data.denied.length;
+function renderChart(allItems) {
+  const canceled = allItems.filter(d => d.type === "p").length;
+  const approved = allItems.filter(d => d.type === "approved").length;
+  const denied   = allItems.filter(d => d.type === "denied").length;
 
   const ctx = document.getElementById("statusChart").getContext("2d");
 
@@ -148,14 +147,14 @@ function renderChart(data) {
     lineChartInstance.destroy();
   }
 
-  // Create new pie chart
+  // Store the new chart instance
   lineChartInstance = new Chart(ctx, {
     type: "pie",
     data: {
       labels: ["Recent Cancellations", "Approved", "Denied"],
       datasets: [{
         data: [canceled, approved, denied],
-        backgroundColor: ["#f44336", "#4caf50", "#2196f3"], // red, green, blue
+        backgroundColor: ["#4caf50", "#2196f3", "#f44336"],
       }]
     },
     options: {
