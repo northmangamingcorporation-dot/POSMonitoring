@@ -146,13 +146,16 @@ function filterByStatusAndOperator() {
   // ✅ Prepare counts
   const statusCounts = {};
   const operatorCounts = {};
-  const uniqueStatuses = new Set();
-  const uniqueOperators = new Set();
+  const allStatuses = new Set();   // store ALL seen statuses
+  const allOperators = new Set();  // store ALL seen operators
 
   // ✅ Single loop for filtering + counting
   Array.from(tbody.rows).forEach(row => {
     const statusCell = row.cells[statusColIndex]?.innerText.trim();
     const operatorCell = row.cells[operatorColIndex]?.innerText.trim();
+
+    if (statusCell) allStatuses.add(statusCell);
+    if (operatorCell) allOperators.add(operatorCell);
 
     const statusMatch = !statusValue || statusCell === statusValue;
     const operatorMatch = !operatorValue || operatorCell === operatorValue;
@@ -163,29 +166,27 @@ function filterByStatusAndOperator() {
       // Count visible rows only
       if (statusCell) {
         statusCounts[statusCell] = (statusCounts[statusCell] || 0) + 1;
-        uniqueStatuses.add(statusCell);
       }
       if (operatorCell) {
         operatorCounts[operatorCell] = (operatorCounts[operatorCell] || 0) + 1;
-        uniqueOperators.add(operatorCell);
       }
     } else {
       row.style.display = "none";
     }
   });
 
-  // ✅ Refresh toolbar
+  // ✅ Always pass ALL options, not just filtered ones
   renderStatusToolbar(
     statusCounts,
-    Array.from(uniqueStatuses),
+    Array.from(allStatuses),   // full list
     statusColIndex,
     headers,
     operatorCounts,
-    Array.from(uniqueOperators),
+    Array.from(allOperators),  // full list
     operatorColIndex
   );
 
-  // ✅ Restore dropdown selections (since re-render resets them)
+  // ✅ Restore dropdown selections
   if (document.getElementById("statusFilter"))
     document.getElementById("statusFilter").value = statusValue;
   if (document.getElementById("operatorFilter"))
@@ -193,7 +194,6 @@ function filterByStatusAndOperator() {
 
   showLoader(false); // hide loader
 }
-
 
 
 
