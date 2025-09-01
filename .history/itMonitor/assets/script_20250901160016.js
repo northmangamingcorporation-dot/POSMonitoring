@@ -59,14 +59,9 @@ async function populateTables() {
   const data = await fetchSheetData();
   console.log("📥 Raw data from Google Sheets:", data);
 
-  // Ensure each item has a 'status' field
-  data.recentCancellation = (data.recentCancellation || []).map(item => ({ ...item, status: "pending" }));
-  data.approved = (data.approved || []).map(item => ({ ...item, status: "approved" }));
-  data.denied = (data.denied || []).map(item => ({ ...item, status: "denied" }));
-
   const canceled = data.recentCancellation.length;
   const approved = data.approved.length;
-  const denied = data.denied.length;
+  const denied   = data.denied.length;
 
   console.log("🔢 Counts ->", { canceled, approved, denied });
 
@@ -75,59 +70,64 @@ async function populateTables() {
   document.getElementById("approvedCount").innerHTML = approved;
   document.getElementById("deniedCount").innerHTML = denied;
 
-  // Populate Recent Cancellation Table
-  try {
-    const cancelTbody = document.querySelector("#cancelTable tbody");
-    cancelTbody.innerHTML = "";
-    data.recentCancellation.forEach(item => {
-      const row = `<tr>
-        <td>${item.boothCode || ""}</td>
-        <td>${item.deviceId || ""}</td>
-        <td>${item.transactionNumber || ""}</td>
-        <td>${item.coordinates || ""}</td>
-        <td>${item.address || ""}</td>
-        <td>${item.total || ""}</td>
-      </tr>`;
-      cancelTbody.innerHTML += row;
-    });
-  } catch (e) {
-    console.warn("Failed to populate Recent Cancellation Table:", e);
-  }
+// Populate Recent Cancellation Table
+try {
+  const cancelTbody = document.querySelector("#cancelTable tbody");
+  cancelTbody.innerHTML = ""; // clear old rows
+  (data.recentCancellation || []).forEach(item => {
+    const row = `<tr>
+      <td>${item.boothCode || ""}</td>
+      <td>${item.deviceId || ""}</td>
+      <td>${item.transaction || ""}</td>
+      <td>${item.coords || ""}</td>
+      <td>${item.address || ""}</td>
+      <td>${item.total || ""}</td>
+    </tr>`;
+    cancelTbody.innerHTML += row;
+  });
+} catch(e) {
+  console.warn("Failed to populate Recent Cancellation Table:", e);
+}
 
-  // Populate Approved Table
-  try {
-    const approvedTbody = document.querySelector("#approvedTable tbody");
-    approvedTbody.innerHTML = "";
-    data.approved.forEach(item => {
-      const row = `<tr>
-        <td>${item.itName || ""}</td>
-        <td>${item.boothCode || ""}</td>
-        <td>${item.transactionNumber || ""}</td>
-      </tr>`;
-      approvedTbody.innerHTML += row;
-    });
-  } catch (e) {
-    console.warn("Failed to populate Approved Table:", e);
-  }
+// Populate Approved Table
+try {
+  const approvedTbody = document.querySelector("#approvedTable tbody");
+  approvedTbody.innerHTML = "";
+  (data.approved || []).forEach(item => {
+    const row = `<tr>
+      <td>${item.itName || ""}</td>
+      <td>${item.boothCode || ""}</td>
+      <td>${item.transaction || ""}</td>
+    </tr>`;
+    approvedTbody.innerHTML += row;
+  });
+} catch(e) {
+  console.warn("Failed to populate Approved Table:", e);
+}
 
-  // Populate Denied Table
-  try {
-    const deniedTbody = document.querySelector("#deniedTable tbody");
-    deniedTbody.innerHTML = "";
-    data.denied.forEach(item => {
-      const row = `<tr>
-        <td>${item.itName || ""}</td>
-        <td>${item.boothCode || ""}</td>
-        <td>${item.transactionNumber || ""}</td>
-      </tr>`;
-      deniedTbody.innerHTML += row;
-    });
-  } catch (e) {
-    console.warn("Failed to populate Denied Table:", e);
-  }
+// Populate Denied Table
+try {
+  const deniedTbody = document.querySelector("#deniedTable tbody");
+  deniedTbody.innerHTML = "";
+  (data.denied || []).forEach(item => {
+    const row = `<tr>
+      <td>${item.itName || ""}</td>
+      <td>${item.boothCode || ""}</td>
+      <td>${item.transaction || ""}</td>
+    </tr>`;
+    deniedTbody.innerHTML += row;
+  });
+} catch(e) {
+  console.warn("Failed to populate Denied Table:", e);
+}
 
-  // Merge all items for chart
-  const allItems = [...data.recentCancellation, ...data.approved, ...data.denied];
+
+  // Merge all for chart
+  const allItems = [
+    ...data.recentCancellation,
+    ...data.approved,
+    ...data.denied,
+  ];
   console.log("📊 All items merged for chart:", allItems);
 
   renderChart(allItems);
@@ -165,7 +165,7 @@ function renderChart(allItems = []) {
         datalabels: {
           color: "#fff",
           font: { weight: "bold", size: 14 },
-          formatter: value => value
+          formatter: (value) => value
         }
       }
     },
