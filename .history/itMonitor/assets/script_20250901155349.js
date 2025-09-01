@@ -133,13 +133,13 @@ try {
   renderChart(allItems);
 }
 
-let lineChartInstance = null;
+let lineChartInstance = null; // global reference
 
-function renderChart(allItems = []) {
-  // Count items based on their "status" field
-  const canceled = allItems.filter(d => d.status === "pending").length;
-  const approved = allItems.filter(d => d.status === "approved").length;
-  const denied   = allItems.filter(d => d.status === "denied").length;
+function renderChart(data) {
+  // Count items in each category
+  const canceled = data.recentCancellation.length;
+  const approved = data.approved.length;
+  const denied   = data.denied.length;
 
   const ctx = document.getElementById("statusChart").getContext("2d");
 
@@ -172,7 +172,6 @@ function renderChart(allItems = []) {
     plugins: [ChartDataLabels]
   });
 }
-
 
 // Function to refresh dashboard and tables
 async function refreshDashboard() {
