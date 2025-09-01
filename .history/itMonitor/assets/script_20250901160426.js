@@ -86,7 +86,7 @@ async function populateTables() {
         <td>${item.transaction || ""}</td>
         <td>${item.coordinates || ""}</td>
         <td>${item.address || ""}</td>
-        <td>₱${item.total || 0}</td>
+        <td>${item.total || ""}</td>
       </tr>`;
       cancelTbody.innerHTML += row;
     });
