@@ -28,9 +28,9 @@ async function fetchSheetData() {
     // Map based on "status" column
     if (rowObj.status === "pending") {
       data.recentCancellation.push({
-        boothCode: rowObj.boothcode,
+        boothCode: rowObj.boothCode,
         deviceId: rowObj.deviceid,
-        transactionNumber: rowObj.transactionnumber,
+        transactionNumber: rowObj.transactionNumber,
         coordinates: rowObj.coordinates,
         address: rowObj.boothaddress,
         total: parseFloat(rowObj.totalamount) || 0
@@ -38,14 +38,14 @@ async function fetchSheetData() {
     } else if (rowObj.status === "approved") {
       data.approved.push({
         itName: rowObj.itname,
-        boothCode: rowObj.boothcode,
-        transaction: rowObj.transactionnumber
+        boothCode: rowObj.boothCode,
+        transaction: rowObj.transactionNumber
       });
     } else if (rowObj.status === "denied") {
       data.denied.push({
         itName: rowObj.itname,
-        boothCode: rowObj.boothcode,
-        transaction: rowObj.transactionnumber
+        boothCode: rowObj.boothCode,
+        transaction: rowObj.transactionNumber
       });
     }
   }

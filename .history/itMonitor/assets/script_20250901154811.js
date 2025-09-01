@@ -38,14 +38,14 @@ async function fetchSheetData() {
     } else if (rowObj.status === "approved") {
       data.approved.push({
         itName: rowObj.itname,
-        boothCode: rowObj.boothcode,
-        transaction: rowObj.transactionnumber
+        boothCode: rowObj.boothCode,
+        transaction: rowObj.transactionNumber
       });
     } else if (rowObj.status === "denied") {
       data.denied.push({
         itName: rowObj.itname,
-        boothCode: rowObj.boothcode,
-        transaction: rowObj.transactionnumber
+        boothCode: rowObj.boothCode,
+        transaction: rowObj.transactionNumber
       });
     }
   }
