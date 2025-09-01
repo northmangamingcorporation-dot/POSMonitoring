@@ -9,14 +9,16 @@ document.getElementById("refresh").addEventListener("click", loadData);
 
 async function loadData() {
   const limitElement = document.getElementById("limit");
-  const limit = parseInt(limitElement.value) || 100; // Default to 100 if empty/invalid
+  const limit = parseInt(limitElement.value) || 100;
 
-  const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${SHEET_NAME}?key=${API_KEY}`;
-  const res = await fetch(url);
+  // Fetch from your webhook endpoint instead of Sheets API
+  const res = await fetch("/api/webhook");
   const data = await res.json();
 
+  // Assuming webhook returns { values: [...] }
   render(data.values, limit);
 }
+
 
 function render(rowsRaw, limit) {
   // Skip headers (first row) and map indexes
