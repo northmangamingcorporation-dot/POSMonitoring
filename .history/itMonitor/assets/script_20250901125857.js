@@ -1,59 +1,75 @@
-const SPREADSHEET_ID = "1VWPTrBlRIWOBHHIFttTUZH5mDnbKvieyR_gZOHsrNQQ";
-const SHEET_NAME = "WebhookLogs";
-const API_KEY = "AIzaSyAMLy_lt4KiSOTIyBKo4VE4N-29l_S39io"; // Your API key
+ 
+ // Import from Firebase CDN
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+  import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-analytics.js";
 
-// Fetch documents from Google Sheets
-async function fetchSheetData() {
-  const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${SHEET_NAME}?key=${API_KEY}`;
-  const res = await fetch(url);
-  const json = await res.json();
+  const firebaseConfig = {
+    apiKey: "AIzaSyC1MXd3FcLv_Ta00hzv7CU6skJPw4H1w7M",
+    authDomain: "northmancorpdatabase.firebaseapp.com",
+    projectId: "northmancorpdatabase",
+    storageBucket: "northmancorpdatabase.appspot.com",
+    messagingSenderId: "843208612876",
+    appId: "1:843208612876:web:d4249a28702e62010ae229",
+    measurementId: "G-3P6XCFX2SK"
+  };
 
-  const rows = json.values || [];
+  // Initialize Firebase + Firestore
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  // Fetch documents from Firestore
+// Fetch documents from Firestore
+async function fetchFirestoreData() {
+  const snapshot = await getDocs(collection(db, "webhooks"));
   const data = {
     recentCancellation: [],
     approved: [],
     denied: []
   };
 
-  // Assuming header row exists in row 0
-  const headers = rows[0] || [];
-  
-  for (let i = 1; i < rows.length; i++) {
-    const row = rows[i];
-    const rowObj = headers.reduce((acc, header, index) => {
-      acc[header.toLowerCase()] = row[index] || "";
-      return acc;
-    }, {});
+  snapshot.forEach(doc => {
+    const f = doc.data();
 
-    // Map columns to your data structure
-    if (rowObj.recentcancellationrequest) {
-      const r = JSON.parse(rowObj.recentcancellationrequest);
-      data.recentCancellation.push({
-        boothCode: r.BoothCode || "",
-        deviceId: r.DeviceID || "",
-        transaction: r.TransactionNumber || "",
-        coords: r.Coordinates || "",
-        address: r.BoothAddress || "",
-        total: r.TotalAmount || 0
-      });
-    } else if (rowObj.recentapprovedcancellation) {
-      const r = JSON.parse(rowObj.recentapprovedcancellation);
-      data.approved.push({
-        itName: r.ITName || "",
-        boothCode: r.BoothCode || "",
-        transaction: r.TransactionNumber || ""
-      });
-    } else if (rowObj.recentdeniedcancellationrequest) {
-      const r = JSON.parse(rowObj.recentdeniedcancellationrequest);
-      data.denied.push({
-        itName: r.ITName || "",
-        boothCode: r.BoothCode || "",
-        transaction: r.TransactionNumber || ""
-      });
+    if (!f.rawData) return;
+
+    try {
+      const parsed = JSON.parse(f.rawData);
+
+      if (parsed.RecentCancellationRequest) {
+        const r = parsed.RecentCancellationRequest;
+        data.recentCancellation.push({
+          boothCode: r.BoothCode || "",
+          deviceId: r.DeviceID || "",
+          transaction: r.TransactionNumber || "",
+          coords: r.Coordinates || "",
+          address: r.BoothAddress || "",
+          total: r.TotalAmount || ""
+        });
+      } 
+      else if (parsed.RecentApprovedCancellation) {
+        const r = parsed.RecentApprovedCancellation;
+        data.approved.push({
+          itName: r.ITName || "",
+          boothCode: r.BoothCode || "",
+          transaction: r.TransactionNumber || ""
+        });
+      } 
+      else if (parsed.RecentDeniedCancellationRequest) {
+        const r = parsed.RecentDeniedCancellationRequest;
+        data.denied.push({
+          itName: r.ITName || "",
+          boothCode: r.BoothCode || "",
+          transaction: r.TransactionNumber || ""
+        });
+      }
+
+    } catch (err) {
+      console.error("❌ Failed to parse rawData:", f.rawData, err);
     }
-  }
+  });
 
-  console.log("✅ Processed Sheet data:", data);
+  console.log("✅ Processed Firestore data:", data);
   return data;
 }
 
