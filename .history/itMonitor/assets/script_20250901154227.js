@@ -28,13 +28,17 @@ async function fetchSheetData() {
     // Map based on "status" column
     if (rowObj.status === "pending") {
       data.recentCancellation.push({
+        receivedAt: rowObj.receivedat,
+        type: rowObj.type,
         boothCode: rowObj.boothcode,
         deviceId: rowObj.deviceid,
         transactionNumber: rowObj.transactionnumber,
+        transactionCode: rowObj.transactioncode,
         coordinates: rowObj.coordinates,
         address: rowObj.boothaddress,
-        total: parseFloat(rowObj.totalamount) || 0
-      });
+        total: parseFloat(rowObj.totalamount) || 0,
+        itName: rowObj.itname
+    });
     } else if (rowObj.status === "approved") {
       data.approved.push({
         itName: rowObj.itname,
