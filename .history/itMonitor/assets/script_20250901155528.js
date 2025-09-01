@@ -130,7 +130,7 @@ try {
   ];
   console.log("📊 All items merged for chart:", allItems);
 
-  renderChart(data);
+  renderChart(allItems);
 }
 
 let lineChartInstance = null;
