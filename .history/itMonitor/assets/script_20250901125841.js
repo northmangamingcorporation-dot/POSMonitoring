@@ -179,6 +179,7 @@ function renderChart(allItems) {
       responsive: true,
       plugins: {
         legend: { position: "bottom" },
+  
         datalabels: {
           color: "#fff",
           font: { weight: "bold", size: 14 },

@@ -179,6 +179,7 @@ function renderChart(allItems) {
       responsive: true,
       plugins: {
         legend: { position: "bottom" },
+        title: { display: true, text: "Transaction Status Distribution" },
         datalabels: {
           color: "#fff",
           font: { weight: "bold", size: 14 },
