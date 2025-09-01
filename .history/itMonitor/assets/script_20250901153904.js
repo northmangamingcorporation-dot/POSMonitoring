@@ -38,7 +38,7 @@ async function fetchSheetData() {
         address: rowObj.boothaddress,
         total: parseFloat(rowObj.totalamount) || 0,
         itName: rowObj.itname
-    });
+      });
     } else if (rowObj.status === "approved") {
       data.approved.push({
         itName: rowObj.itname,
