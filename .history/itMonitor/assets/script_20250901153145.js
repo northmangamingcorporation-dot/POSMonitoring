@@ -58,8 +58,8 @@ async function fetchSheetData() {
 }
 
 async function populateTables() {
-  const data = await fetchSheetData();
-  console.log("📥 Raw data from Google Sheets:", data);
+  const data = await fetchFirestoreData();
+  console.log("📥 Raw data from Firestore:", data);
 
   const canceled = data.recentCancellation.length;
   const approved = data.approved.length;
