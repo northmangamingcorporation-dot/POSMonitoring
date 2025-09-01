@@ -120,17 +120,11 @@ body {
 }
 
 .card {
-  background: #111;
-  padding: 16px;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(255, 255, 255, 0.08);
-  display: flex;
-  flex-direction: column;
+  padding: 12px;
+  border-radius: 10px;
   text-align: center;
   font-weight: bold;
   color: #fff;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  height: 100%; /* Match parent height */
 }
 
 .card.green { background: #16a34a; }
@@ -142,11 +136,6 @@ body {
   margin-top: 6px;
 }
 
-.card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 14px rgba(255, 255, 255, 0.12);
-}
-
 /* ===== Dashboard Grid ===== */
 .dashboard-grid {
   display: grid;
@@ -156,7 +145,7 @@ body {
   height: 400px; /* Fixed height */
 }
 
-/* ===== Chart Section ===== */
+/* ===== Card & Chart Sections ===== */
 .chart-section {
   background: #111;
   padding: 16px;
@@ -168,7 +157,18 @@ body {
   height: 100%; /* Match parent height */
 }
 
-.chart-section:hover {
+.card {
+  background: #111;
+  padding: 16px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(255, 255, 255, 0.08);
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  height: 100%; /* Match parent height */
+}
+
+.card:hover, .chart-section:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 14px rgba(255, 255, 255, 0.12);
 }
@@ -180,8 +180,9 @@ body {
   gap: 10px;
   margin-bottom: 12px;
   font-size: 13px;
-  width: 100%; /* Fill the card */
+  width: 100%; /* Fill the 80% card */
 }
+
 
 .controls select,
 .controls button {
@@ -230,7 +231,28 @@ body {
   color: #fff;
 }
 
-/* ===== Table Card ===== */
+/* ===== Table Inside Card ===== */
+.card table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.card table th, 
+.card table td {
+  padding: 10px;
+  border-bottom: 1px solid #333;
+  text-align: left;
+  font-size: 13px;
+  color: #ddd;
+}
+
+.card table th {
+  background: #1a1a1a;
+  font-weight: 600;
+  color: #fff;
+}
+
+/* Table card styling */
 .table-card {
   background-color: #1a1a1a; /* dark card background */
   border-radius: 12px;
@@ -280,3 +302,6 @@ tbody tr:hover {
     font-size: 0.85rem;
   }
 }
+
+
+
