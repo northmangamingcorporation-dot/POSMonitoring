@@ -83,7 +83,7 @@ async function populateTables() {
       const row = `<tr>
         <td>${item.boothCode || ""}</td>
         <td>${item.deviceId || ""}</td>
-        <td>${item.transaction || ""}</td>
+        <td>${item.transactionNumber || ""}</td>
         <td>${item.coordinates || ""}</td>
         <td>${item.address || ""}</td>
         <td>${item.total || ""}</td>
@@ -102,7 +102,7 @@ async function populateTables() {
       const row = `<tr>
         <td>${item.itName || ""}</td>
         <td>${item.boothCode || ""}</td>
-        <td>${item.transaction || ""}</td>
+        <td>${item.transactionNumber || ""}</td>
       </tr>`;
       approvedTbody.innerHTML += row;
     });
@@ -118,7 +118,7 @@ async function populateTables() {
       const row = `<tr>
         <td>${item.itName || ""}</td>
         <td>${item.boothCode || ""}</td>
-        <td>${item.transaction || ""}</td>
+        <td>${item.transactionNumber || ""}</td>
       </tr>`;
       deniedTbody.innerHTML += row;
     });
