@@ -19,6 +19,8 @@ async function loadData() {
   render(data.values, limit);
 }
 
+
+
 function render(rowsRaw, limit) {
   // Skip headers (first row) and map indexes
   const rows = rowsRaw.slice(1).map(r => ({

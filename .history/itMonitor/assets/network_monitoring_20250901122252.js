@@ -12,7 +12,7 @@ async function loadData() {
   const limit = parseInt(limitElement.value) || 100;
 
   // Fetch from your webhook endpoint instead of Sheets API
-  const res = await fetch("/api/webhook");
+  const res = await fetch("../api/webhook.js");
   const data = await res.json();
 
   // Assuming webhook returns { values: [...] }
