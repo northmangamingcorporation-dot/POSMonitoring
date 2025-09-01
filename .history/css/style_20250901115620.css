@@ -56,23 +56,23 @@
     }
     
     /* Loader (hidden by default) */
-#loader {
-  display: none;
-  position: fixed; /* stays in place */
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  border: 6px solid #f3f3f3; /* light gray */
-  border-top: 6px solid #3498db; /* blue */
-  border-radius: 50%;
-  width: 40px;
-  height: 40px;
-  animation: spin 1s linear infinite;
-  z-index: 1000; /* make sure it’s on top */
-}
+    #loader {
+      display: none;
+      position: fixed; /* stays in place */
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      border: 6px solid #f3f3f3; /* light gray */
+      border-top: 6px solid #3498db; /* blue */
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      z-index: 1000; /* make sure it’s on top */
+    }
 
-/* Spin animation */
-@keyframes spin {
-  0%   { transform: translate(-50%, -50%) rotate(0deg); }
-  100% { transform: translate(-50%, -50%) rotate(360deg); }
-}
+    /* Spin animation */
+    @keyframes spinner {
+      0%   { transform: translate(-50%, -50%) rotate(0deg); }
+      100% { transform: translate(-50%, -50%) rotate(360deg); }
+    }
