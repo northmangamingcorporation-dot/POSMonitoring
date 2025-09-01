@@ -30,7 +30,7 @@ async function fetchSheetData() {
       data.recentCancellation.push({
         boothCode: rowObj.boothcode,
         deviceId: rowObj.deviceid,
-        transaction: rowObj.transactionnumber,
+        transactionNumber: rowObj.transactionnumber,
         coordinates: rowObj.coordinates,
         address: rowObj.boothaddress,
         total: parseFloat(rowObj.totalamount) || 0
