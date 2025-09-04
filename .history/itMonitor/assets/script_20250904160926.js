@@ -75,37 +75,38 @@ async function populateTables() {
   document.getElementById("deniedCount").innerHTML = denied;
 
   // Populate Recent Cancellation Table
-  try {
-    const cancelTbody = document.querySelector("#cancelTable tbody");
-    cancelTbody.innerHTML = "";
+ // Populate Recent Cancellation Table
+try {
+  const cancelTbody = document.querySelector("#cancelTable tbody");
+  cancelTbody.innerHTML = "";
 
-    let totalAmount = 0;
+  let totalAmount = 0;
 
-    data.recentCancellation.forEach(item => {
-      const amount = Number(item.total) || 0;
-      totalAmount += amount;
+  data.recentCancellation.forEach(item => {
+    const amount = Number(item.total) || 0;
+    totalAmount += amount;
 
-      const row = `<tr>
-        <td>${item.boothCode || ""}</td>
-        <td>${item.deviceId || ""}</td>
-        <td>${item.transaction || ""}</td>
-        <td>${item.coordinates || ""}</td>
-        <td>${item.address || ""}</td>
-        <td>₱${amount.toLocaleString()}</td>
-      </tr>`;
-      cancelTbody.innerHTML += row;
-    });
-
-    // ✅ Add total row at bottom
-    const totalRow = `<tr style="font-weight:bold; background:#f5f5f5;">
-      <td colspan="5" style="text-align:right;">TOTAL</td>
-      <td>₱${totalAmount.toLocaleString()}</td>
+    const row = `<tr>
+      <td>${item.boothCode || ""}</td>
+      <td>${item.deviceId || ""}</td>
+      <td>${item.transaction || ""}</td>
+      <td>${item.coordinates || ""}</td>
+      <td>${item.address || ""}</td>
+      <td>₱${amount.toLocaleString()}</td>
     </tr>`;
-    cancelTbody.innerHTML += totalRow;
+    cancelTbody.innerHTML += row;
+  });
 
-  } catch (e) {
-    console.warn("Failed to populate Recent Cancellation Table:", e);
-  }
+  // ✅ Add total row at bottom
+  const totalRow = `<tr style="font-weight:bold; background:#f5f5f5;">
+    <td colspan="5" style="text-align:right;">TOTAL</td>
+    <td>₱${totalAmount.toLocaleString()}</td>
+  </tr>`;
+  cancelTbody.innerHTML += totalRow;
+
+} catch (e) {
+  console.warn("Failed to populate Recent Cancellation Table:", e);
+}
 
   // Populate Approved Table
   try {

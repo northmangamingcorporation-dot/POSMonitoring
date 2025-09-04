@@ -75,6 +75,7 @@ async function populateTables() {
   document.getElementById("deniedCount").innerHTML = denied;
 
   // Populate Recent Cancellation Table
+ // Populate Recent Cancellation Table
   try {
     const cancelTbody = document.querySelector("#cancelTable tbody");
     cancelTbody.innerHTML = "";
