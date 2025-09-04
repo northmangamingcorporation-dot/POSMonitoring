@@ -238,16 +238,6 @@ body {
   padding: 16px;
   transition: transform 0.2s, box-shadow 0.2s;
   margin-bottom: 30px;
-  max-height: 600px; /* Fixed height */
-  overflow-y: auto;  /* Scroll if content exceeds height */
-
-  /* Hide scrollbar cross-browser */
-  scrollbar-width: none;       /* Firefox */
-  -ms-overflow-style: none;    /* IE/Edge */
-}
-
-.table-card::-webkit-scrollbar {
-  display: none; /* Chrome, Safari, Opera */
 }
 
 /* Hover effect */
@@ -266,6 +256,8 @@ body {
 table {
   width: 100%;
   border-collapse: collapse;
+  max-height: 00px; /* Fixed height */
+  overflow-y: auto;  /* Scroll if content exceeds height */
 }
 
 
