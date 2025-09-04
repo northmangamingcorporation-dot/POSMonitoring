@@ -217,8 +217,8 @@ refreshDashboard();
 
 // Run repeatedly in the background
 setInterval(refreshDashboard, REFRESH_INTERVAL);
+?
 
-populateTables
 
 
 
