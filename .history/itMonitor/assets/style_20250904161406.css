@@ -238,8 +238,6 @@ body {
   padding: 16px;
   transition: transform 0.2s, box-shadow 0.2s;
   margin-bottom: 30px;
-  max-height: 400px; /* Fixed height */
-  overflow-y: auto;  /* Scroll if content exceeds height */
 }
 
 /* Hover effect */
