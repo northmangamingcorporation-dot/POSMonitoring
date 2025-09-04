@@ -97,7 +97,7 @@ async function populateTables() {
     });
 
     // ✅ Add total row at bottom
-    const totalRow = `<tr style="font-weight:bold; font-color:#fff;">
+    const totalRow = `<tr style="font-weight:bold; font-color:#fff; bold">
       <td colspan="5" style="text-align:right;">TOTAL</td>
       <td>₱${totalAmount.toLocaleString()}</td>
     </tr>`;
