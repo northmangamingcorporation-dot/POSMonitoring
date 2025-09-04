@@ -170,9 +170,6 @@ function renderChart(allItems = []) {
   const ctx = document.getElementById("statusChart").getContext("2d");
   
   if (!ctx) {
-    console.error("Canvas context not found!");
-    return;
-  }
 
   // Destroy previous chart if it exists
   if (lineChartInstance) {

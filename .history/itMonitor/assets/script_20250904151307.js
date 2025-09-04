@@ -167,11 +167,8 @@ function renderChart(allItems = []) {
   const approved = allItems.filter(d => d.status === "approved").length;
   const denied   = allItems.filter(d => d.status === "denied").length;
 
-  const ctx = document.getElementById("statusChart").getContext("2d");
-  
-  if (!ctx) {
-    console.error("Canvas context not found!");
-    return;
+  if (condition) {
+    const ctx = document.getElementById("statusChart").getContext("2d");
   }
 
   // Destroy previous chart if it exists
