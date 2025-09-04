@@ -132,32 +132,7 @@ async function populateTables() {
   renderChart(allItems);
 }
 
-async function populateStatusCards() {
-  const data = await fetchSheetData();
-  console.log("📥 Raw data from Google Sheets:", data);
 
-  // Ensure each item has a 'status' field
-  data.recentCancellation = (data.recentCancellation || []).map(item => ({ ...item, status: "pending" }));
-  data.approved = (data.approved || []).map(item => ({ ...item, status: "approved" }));
-  data.denied = (data.denied || []).map(item => ({ ...item, status: "denied" }));
-
-  const canceled = data.recentCancellation.length;
-  const approved = data.approved.length;
-  const denied = data.denied.length;
-
-  console.log("🔢 Counts ->", { canceled, approved, denied });
-
-  // Update dashboard cards
-  document.getElementById("recentCount").innerHTML = canceled;
-  document.getElementById("approvedCount").innerHTML = approved;
-  document.getElementById("deniedCount").innerHTML = denied;
-
-  // Merge all items for chart
-  const allItems = [...data.recentCancellation, ...data.approved, ...data.denied];
-  console.log("📊 All items merged for chart:", allItems);
-
-  renderChart(allItems);
-} 
 
 let lineChartInstance = null;
 
@@ -203,7 +178,7 @@ function renderChart(allItems = []) {
 // Function to refresh dashboard and tables
 async function refreshDashboard() {
   try {
-    await populateStatusCards();
+    await populateTables();
   } catch (e) {
     console.error("Error updating dashboard:", e);
   }

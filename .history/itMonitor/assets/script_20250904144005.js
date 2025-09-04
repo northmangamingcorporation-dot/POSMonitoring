@@ -132,7 +132,7 @@ async function populateTables() {
   renderChart(allItems);
 }
 
-async function populateStatusCards() {
+async function populateTables() {
   const data = await fetchSheetData();
   console.log("📥 Raw data from Google Sheets:", data);
 
@@ -152,12 +152,7 @@ async function populateStatusCards() {
   document.getElementById("approvedCount").innerHTML = approved;
   document.getElementById("deniedCount").innerHTML = denied;
 
-  // Merge all items for chart
-  const allItems = [...data.recentCancellation, ...data.approved, ...data.denied];
-  console.log("📊 All items merged for chart:", allItems);
-
-  renderChart(allItems);
-} 
+  
 
 let lineChartInstance = null;
 
@@ -203,7 +198,7 @@ function renderChart(allItems = []) {
 // Function to refresh dashboard and tables
 async function refreshDashboard() {
   try {
-    await populateStatusCards();
+    await populateTables();
   } catch (e) {
     console.error("Error updating dashboard:", e);
   }

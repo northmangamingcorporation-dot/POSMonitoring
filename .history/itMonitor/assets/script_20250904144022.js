@@ -203,7 +203,7 @@ function renderChart(allItems = []) {
 // Function to refresh dashboard and tables
 async function refreshDashboard() {
   try {
-    await populateStatusCards();
+    await populateTables();
   } catch (e) {
     console.error("Error updating dashboard:", e);
   }
