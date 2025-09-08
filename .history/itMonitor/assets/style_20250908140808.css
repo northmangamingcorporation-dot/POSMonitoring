@@ -232,7 +232,7 @@ body {
 
 /* ===== Table Card ===== */
 .table-card {
-  background-color: #e8e9ea; /* dark card background */
+  background-color: #ffffff; /* dark card background */
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
   padding: 16px;
