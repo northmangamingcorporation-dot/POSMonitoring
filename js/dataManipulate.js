@@ -1,4 +1,52 @@
 // ---------------------------
+// Cache for sheet data
+// ---------------------------
+
+async function getSheetData(sheetName) {
+            console.log(`Fetching data for sheet: ${sheetName}`);
+            let sheetDataCache = {};
+            try {
+                const token = await ensureAccessToken(); // ✅ always valid
+                const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${encodeURIComponent(sheetName)}`;
+
+                let res = await fetch(url, {
+                    headers: {
+                        "Authorization": `Bearer ${token}`
+                    }
+                });
+
+                // If unauthorized, try silent refresh once more
+                if (res.status === 401) {
+                    console.warn("Access token invalid, retrying with silent refresh...");
+                    const refreshed = await attemptSilentAuth();
+                    if (!refreshed) {
+                        showAuthModal();
+                        return [];
+                    }
+                    res = await fetch(url, {
+                        headers: {
+                            "Authorization": `Bearer ${accessToken}`
+                        }
+                    });
+                }
+
+                if (!res.ok) {
+                    console.error(`Failed to fetch sheet data: ${res.status} ${res.statusText}`);
+                    return [];
+                }
+
+                const data = await res.json();
+                console.log("Sheet data received:", data);
+                sheetDataCache[sheetName] = data.values || [];
+                return sheetDataCache[sheetName];
+            } catch (err) {
+                console.error("Error fetching sheet data:", err);
+                return [];
+            } finally {
+            }
+        }
+
+// ---------------------------
 // Append row
 // ---------------------------
 async function appendRow(sheetName, values) {

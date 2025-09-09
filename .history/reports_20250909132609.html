@@ -207,45 +207,37 @@ dropZone.addEventListener("drop", (e) => {
   }
 })
 
-async function handleFile(file) {
+function handleFile(file) {
   const reader = new FileReader();
-
   reader.onload = async (evt) => {
-    // 1️⃣ Read Excel file
     const data = new Uint8Array(evt.target.result);
     const workbook = XLSX.read(data, { type: "array" });
 
-    // 2️⃣ Get first sheet and convert to JSON
     const sheetName = workbook.SheetNames[0];
     const sheet = workbook.Sheets[sheetName];
-    const tableData = XLSX.utils.sheet_to_json(sheet);
+    tableData = XLSX.utils.sheet_to_json(sheet);
 
-    // 3️⃣ Fetch POS data from Google Sheets
+    // ✅ Fetch POS sheet from Google Sheets
     const posData = await getSheetData("POS");
     const headers = posData[0];
-
-    // 4️⃣ Map POS rows to objects with only Operator and Boothcode
     const posRows = posData.slice(1).map(r => ({
       operator: r[headers.indexOf("Operator")] || "",
-      boothcode: r[headers.indexOf("Boothcode")] || ""
+      outlet: r[headers.indexOf("Outlet")] || ""
     }));
 
-    // 5️⃣ Compare Excel vs POS
-    const unrecorded = tableData.filter(
+    // Compare Excel vs POS
+    unrecorded = tableData.filter(
       row =>
         !posRows.some(
           p =>
             p.operator.toLowerCase() === String(row.Operator).toLowerCase() &&
-            p.boothcode.toLowerCase() === String(row.Outlet).toLowerCase()
+            p.outlet.toLowerCase() === String(row.Outlet).toLowerCase()
         )
     );
 
-    // 6️⃣ Render the table and show send button
     renderTable(tableData, unrecorded);
     document.getElementById("sendBtn").style.display = "block";
   };
-
-  // Read the file as ArrayBuffer
   reader.readAsArrayBuffer(file);
 }
 

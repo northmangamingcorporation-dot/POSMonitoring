@@ -100,6 +100,7 @@ class AuthModal extends HTMLElement {
             reject("User cancelled");
           }
         });
+
       });
     };
   }

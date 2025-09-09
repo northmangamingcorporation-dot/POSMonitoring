@@ -74,9 +74,10 @@ class AuthModal extends HTMLElement {
       return new Promise((resolve, reject) => {
         this.show();
 
-        btn.addEventListener("click", () => {
+        btn.onclick = () => {
           if (!tokenClient) return reject("tokenClient not initialized");
 
+          // Request token
           tokenClient.requestAccessToken({
             prompt: "consent",
             callback: (resp) => {
@@ -93,13 +94,7 @@ class AuthModal extends HTMLElement {
               }
             },
           });
-        }, { once: true }); // only trigger once
-        modal.addEventListener("click", (e) => {
-          if (e.target === modal) { // click outside modal-box
-            this.hide();
-            reject("User cancelled");
-          }
-        });
+        };
       });
     };
   }

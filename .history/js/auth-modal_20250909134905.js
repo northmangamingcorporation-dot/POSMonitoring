@@ -94,12 +94,7 @@ class AuthModal extends HTMLElement {
             },
           });
         }, { once: true }); // only trigger once
-        modal.addEventListener("click", (e) => {
-          if (e.target === modal) { // click outside modal-box
-            this.hide();
-            reject("User cancelled");
-          }
-        });
+
       });
     };
   }

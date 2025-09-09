@@ -4,12 +4,16 @@ const SPREADSHEET_ID = "1VWPTrBlRIWOBHHIFttTUZH5mDnbKvieyR_gZOHsrNQQ";
 const SCOPES = "https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email";
 
 let tokenClient;
-let accessToken = null;
+let accessToken;
 let tokenExpiry = 0;
-let checkInterval = null;
 
 // ------------------- GIS Setup -------------------
 function initGIS() {
+  if (!google?.accounts?.oauth2) {
+    console.error("Google Identity Services not loaded!");
+    return;
+  }
+
   console.log("✅ GIS Loaded, initializing tokenClient...");
 
   tokenClient = google.accounts.oauth2.initTokenClient({
@@ -18,102 +22,166 @@ function initGIS() {
     callback: handleNewToken,
   });
 
-  // Try to reuse stored token
-  const savedToken = sessionStorage.getItem("gsheets_access_token");
-  const savedExpiry = sessionStorage.getItem("gsheets_token_expiry");
-
-  if (savedToken && savedExpiry && Date.now() < parseInt(savedExpiry, 10)) {
-    accessToken = savedToken;
-    tokenExpiry = parseInt(savedExpiry, 10);
-    document.querySelector("auth-modal")?.hide();
-    loadUserProfile();
+  // Only try to get token after initialization, not immediately call sheets/profile
+  ensureAccessToken().then((token) => {
+    console.log("Access token ready:", token);
     loadSheetsAfterAuth();
-    checkInterval = setInterval(checkTokenValidity, 30 * 1000);
-  } else {
-    document.querySelector("auth-modal")?.show();
-  }
+    loadUserProfile();
+  }).catch((err) => {
+    console.warn("Access token not available, user consent needed.", err);
+    showModal();
+  });
 }
 
-// Wait for DOM before attaching listener
-document.addEventListener("DOMContentLoaded", () => {
-  const modal = document.querySelector("auth-modal");
-  if (!modal) return;
-
-  modal.addEventListener("authorize-clicked", () => {
-    if (!tokenClient) {
-      console.warn("⚠️ tokenClient not ready yet");
-      return;
-    }
-    tokenClient.requestAccessToken({ prompt: "consent" });
-  });
-});
-
-// ------------------- Handle new tokens -------------------
+// ------------------- Fallback Token Handler -------------------
 function handleNewToken(tokenResponse) {
-  const modal = document.querySelector("auth-modal"); // ✅ always resolve fresh
+  if (!tokenResponse) return;
 
   if (tokenResponse.error) {
     console.error("Auth error:", tokenResponse);
-    modal?.show();
+    showModal();
     return;
   }
 
   accessToken = tokenResponse.access_token;
-  tokenExpiry = Date.now() + (tokenResponse.expires_in * 1000);
+  tokenExpiry = Date.now() + tokenResponse.expires_in * 1000;
 
   sessionStorage.setItem("gsheets_access_token", accessToken);
   sessionStorage.setItem("gsheets_token_expiry", tokenExpiry);
 
-  modal?.hide(); // ✅ close if available
+  hideModal(); // hide modal first
+  console.log("New token acquired via handleNewToken:", accessToken);
 
-  loadUserProfile();
+  // Now safe to load sheets/profile
   loadSheetsAfterAuth();
-
-  if (checkInterval) clearInterval(checkInterval);
-  checkInterval = setInterval(checkTokenValidity, 30 * 1000);
+  loadUserProfile();
 }
 
-// ------------------- Token Refresh -------------------
-function checkTokenValidity() {
-  if (!accessToken || Date.now() >= tokenExpiry - 5000) {
-    console.warn("Token expired or near expiry, refreshing...");
-    tokenClient.requestAccessToken({ prompt: "" }); // silent refresh
-  }
-}
 
 // ------------------- Token Utils -------------------
 function isTokenExpired() {
   return !accessToken || Date.now() >= tokenExpiry - 5000;
 }
 
-async function ensureAccessToken() {
-  const modal = document.querySelector("auth-modal");
+// ------------------- Modal Helpers -------------------
+// ------------------- Modal Helpers -------------------
+function showModal() {
+  try {
+    // Wait for the modal to exist in the DOM
+    const waitForModal = () =>
+      new Promise((resolve, reject) => {
+        const check = () => {
+          const modal = window.top?.document.querySelector("auth-modal");
+          if (modal && typeof modal.show === "function") {
+            resolve(modal);
+          } else if (document.readyState === "complete") {
+            reject("Auth modal not found or show() not defined");
+          } else {
+            setTimeout(check, 50);
+          }
+        };
+        check();
+      });
 
-  // Case 1: No token at all
-  if (!accessToken) {
-    console.log("No access token, showing login modal...");
-    modal?.show();
-    throw new Error("No access token");
+    waitForModal()
+      .then((modal) => modal.show())
+      .catch((err) => console.error(err));
+  } catch (err) {
+    console.error("Failed to show modal:", err);
   }
-
-  // Case 2: Token expired or near expiry → try silent refresh
-  if (isTokenExpired()) {
-    console.log("Token expired, refreshing silently...");
-    tokenClient.requestAccessToken({ prompt: "" });
-
-    // Wait a little to let the callback update `accessToken` and `tokenExpiry`
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
-    if (isTokenExpired()) {
-      console.log("Silent refresh failed, showing login modal...");
-      modal?.show();
-      throw new Error("Silent refresh failed");
-    }
-  }
-
-  // ✅ If we reach here, token is valid → hide modal
-  modal?.hide();
-  return accessToken;
 }
 
-// ---------------------------
+function hideModal() {
+  try {
+    const modal = window.top?.document.querySelector("auth-modal");
+    if (modal?.hide) modal.hide();
+  } catch (err) {
+    console.error("Failed to hide modal:", err);
+  }
+}
+
+
+// ------------------- Get Access Token via Modal -------------------
+async function getAccessTokenViaModal() {
+  const modal = window.top?.document.querySelector("auth-modal");
+  if (!modal) throw new Error("Auth modal not found");
+
+  if (typeof modal.getToken !== "function") {
+    throw new Error("<auth-modal> does not implement getToken()");
+  }
+
+  return await modal.getToken();
+}
+
+// ------------------- Silent Refresh -------------------
+async function refreshAccessTokenSilent() {
+  return new Promise((resolve, reject) => {
+    if (!tokenClient) return reject("Token client not initialized");
+
+    tokenClient.requestAccessToken({
+      prompt: "", // silent
+      callback: (resp) => {
+        if (resp.error) {
+          reject(resp.error);
+        } else {
+          accessToken = resp.access_token;
+          tokenExpiry = Date.now() + resp.expires_in * 1000;
+          sessionStorage.setItem("gsheets_access_token", accessToken);
+          sessionStorage.setItem("gsheets_token_expiry", tokenExpiry);
+          loadSheetsAfterAuth();
+          loadUserProfile();  
+          resolve(accessToken);
+        }
+      },
+    });
+  });
+}
+
+// ------------------- Ensure Access Token -------------------
+let accessTokenRequest = null; // <-- tracks ongoing requests
+
+async function ensureAccessToken() {
+  // Load token from sessionStorage if available
+  const savedToken = sessionStorage.getItem("gsheets_access_token");
+  const savedExpiry = sessionStorage.getItem("gsheets_token_expiry");
+
+  if (savedToken && savedExpiry && Date.now() < parseInt(savedExpiry, 10)) {
+    accessToken = savedToken;
+    tokenExpiry = parseInt(savedExpiry, 10);
+  }
+
+  if (accessToken && !isTokenExpired()) {
+    return accessToken; // token is valid
+  }
+
+  // If a request is already in progress, just return it
+  if (accessTokenRequest) {
+    return accessTokenRequest;
+  }
+
+  // Start a single token request
+  accessTokenRequest = (async () => {
+    try {
+      if (!accessToken) {
+        console.log("No access token, requesting user consent...");
+        return await getAccessTokenViaModal();
+      }
+
+      if (isTokenExpired()) {
+        console.log("Token expired or near expiry, trying silent refresh...");
+        try {
+          return await refreshAccessTokenSilent();
+        } catch (err) {
+          console.warn("Silent refresh failed, showing modal for consent...", err);
+          return await getAccessTokenViaModal();
+        }
+      }
+    } finally {
+      // Reset so future calls can request again if needed
+      accessTokenRequest = null;
+    }
+  })();
+
+  return accessTokenRequest;
+}
+

@@ -99,16 +99,7 @@
         let addSheetName = "";
         let sheetDataCache = {};
         let currentEdit = null;
-        
-        const modal = document.querySelector("auth-modal");
-        modal.addEventListener("auth-request", () => {
-            if (!tokenClient) {
-                console.error("⚠️ tokenClient not ready yet");
-                return;
-            }
-            tokenClient.requestAccessToken({ prompt: "consent" });
-            modal.hide();
-        });
+
         // ------------------- Init -------------------
         window.onload = () => {
             initGIS();
@@ -170,51 +161,7 @@
         // ---------------------------
         // Sheets API functions using OAuth2
         // ---------------------------
-        async function getSheetData(sheetName) {
-            showLoader(true);
-            console.log(`Fetching data for sheet: ${sheetName}`);
-
-            try {
-                const token = await ensureAccessToken(); // ✅ always valid
-                const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${encodeURIComponent(sheetName)}`;
-
-                let res = await fetch(url, {
-                    headers: {
-                        "Authorization": `Bearer ${token}`
-                    }
-                });
-
-                // If unauthorized, try silent refresh once more
-                if (res.status === 401) {
-                    console.warn("Access token invalid, retrying with silent refresh...");
-                    const refreshed = await attemptSilentAuth();
-                    if (!refreshed) {
-                        showAuthModal();
-                        return [];
-                    }
-                    res = await fetch(url, {
-                        headers: {
-                            "Authorization": `Bearer ${accessToken}`
-                        }
-                    });
-                }
-
-                if (!res.ok) {
-                    console.error(`Failed to fetch sheet data: ${res.status} ${res.statusText}`);
-                    return [];
-                }
-
-                const data = await res.json();
-                console.log("Sheet data received:", data);
-                sheetDataCache[sheetName] = data.values || [];
-                return sheetDataCache[sheetName];
-            } catch (err) {
-                console.error("Error fetching sheet data:", err);
-                return [];
-            } finally {
-                showLoader(false);
-            }
-        }
+        
 
         document.getElementById("toggleReportBtn").addEventListener("click", function() {
             const container = document.getElementById("reportCard");

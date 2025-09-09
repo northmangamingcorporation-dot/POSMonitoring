@@ -7,30 +7,31 @@ class AuthModal extends HTMLElement {
     shadow.innerHTML = `
       <style>
         #authModal {
-          display: none; /* hidden by default */
-          position: fixed;
-          top: 0; left: 0;
-          width: 100%; height: 100%;
-          background: rgba(0,0,0,0.6);
-          justify-content: center;
-          align-items: center;
-          z-index: 1000;
-        }
+        display: none; /* hidden by default */
+        position: fixed;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        background: rgba(0,0,0,0.6);
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+      }
 
-        #authModal.show {
-          display: flex; /* only when showing */
-        }
-        .modal-box {
-          background: white;
-          padding: 32px;
-          border-radius: 12px;
-          max-width: 400px;
-          width: 90%;
-          text-align: center;
-          box-shadow: 0 8px 24px rgba(0,0,0,0.3);
-          font-family: Arial, sans-serif;
-          pointer-events: auto; /* ensure clicks reach the modal box */
-        }
+      #authModal.show {
+        display: flex; /* only when showing */
+      }
+
+      .modal-box {
+        background: white;
+        padding: 32px;
+        border-radius: 12px;
+        max-width: 400px;
+        width: 90%;
+        text-align: center;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+        font-family: Arial, sans-serif;
+        pointer-events: auto; /* ensure clicks reach the modal box */
+      }
 
         button {
           display:flex; align-items:center; justify-content:center;
@@ -67,16 +68,18 @@ class AuthModal extends HTMLElement {
     const modal = this.shadowRoot.getElementById("authModal");
     const btn = this.shadowRoot.getElementById("modalAuthorizeBtn");
 
-    this.show = () => modal.classList.add("show");
-    this.hide = () => modal.classList.remove("show");
+    this.show = () => (modal.style.display = "flex");
+    this.hide = () => (modal.style.display = "none");
+
     // Promise to resolve when user clicks and signs in
     this.getToken = () => {
       return new Promise((resolve, reject) => {
         this.show();
 
-        btn.addEventListener("click", () => {
+        btn.onclick = () => {
           if (!tokenClient) return reject("tokenClient not initialized");
 
+          // Request token
           tokenClient.requestAccessToken({
             prompt: "consent",
             callback: (resp) => {
@@ -93,13 +96,7 @@ class AuthModal extends HTMLElement {
               }
             },
           });
-        }, { once: true }); // only trigger once
-        modal.addEventListener("click", (e) => {
-          if (e.target === modal) { // click outside modal-box
-            this.hide();
-            reject("User cancelled");
-          }
-        });
+        };
       });
     };
   }

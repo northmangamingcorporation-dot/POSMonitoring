@@ -75,31 +75,26 @@ class AuthModal extends HTMLElement {
         this.show();
 
         btn.addEventListener("click", () => {
-          if (!tokenClient) return reject("tokenClient not initialized");
+  if (!tokenClient) return reject("tokenClient not initialized");
 
-          tokenClient.requestAccessToken({
-            prompt: "consent",
-            callback: (resp) => {
-              if (resp.error) {
-                reject(resp.error);
-              } else {
-                accessToken = resp.access_token;
-                tokenExpiry = Date.now() + resp.expires_in * 1000;
-                sessionStorage.setItem("gsheets_access_token", accessToken);
-                sessionStorage.setItem("gsheets_token_expiry", tokenExpiry);
+  tokenClient.requestAccessToken({
+    prompt: "consent",
+    callback: (resp) => {
+      if (resp.error) {
+        reject(resp.error);
+      } else {
+        accessToken = resp.access_token;
+        tokenExpiry = Date.now() + resp.expires_in * 1000;
+        sessionStorage.setItem("gsheets_access_token", accessToken);
+        sessionStorage.setItem("gsheets_token_expiry", tokenExpiry);
 
-                this.hide();
-                resolve(accessToken);
-              }
-            },
-          });
-        }, { once: true }); // only trigger once
-        modal.addEventListener("click", (e) => {
-          if (e.target === modal) { // click outside modal-box
-            this.hide();
-            reject("User cancelled");
-          }
-        });
+        this.hide();
+        resolve(accessToken);
+      }
+    },
+  });
+}, { once: true }); // only trigger once
+
       });
     };
   }
