@@ -232,11 +232,11 @@ body {
 
 /* ===== Table Card ===== */
 .table-card {
-  background: linear-gradient(145deg, #111, #1b1b1b); /* dark gradient for depth */
-  border-radius: 14px;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.7);
-  padding: 18px;
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  background-color: #e8e9ea; /* dark card background */
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  padding: 16px;
+  transition: transform 0.2s, box-shadow 0.2s;
   margin-bottom: 30px;
   max-height: 600px; /* Fixed height */
   overflow-y: auto;  /* Scroll if content exceeds height */
@@ -245,6 +245,7 @@ body {
   scrollbar-width: none;       /* Firefox */
   -ms-overflow-style: none;    /* IE/Edge */
 }
+
 .table-card::-webkit-scrollbar {
   display: none; /* Chrome, Safari, Opera */
 }
@@ -252,17 +253,13 @@ body {
 /* Hover effect */
 .table-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.85);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.7);
 }
 
-/* Card Title */
 .table-card h3 {
-  margin-bottom: 14px;
-  font-size: 1.2rem;
-  font-weight: 600;
-  color: #3b82f6; /* blue accent */
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  padding-bottom: 8px;
+  margin-bottom: 12px;
+  font-size: 1.1rem;
+  color: #fff;
 }
 
 /* Table styling */
@@ -271,24 +268,21 @@ table {
   border-collapse: collapse;
 }
 
+
 thead {
-  background: #222;
+  background-color: #333;
 }
 
 th, td {
   text-align: left;
-  padding: 12px 14px;
+  padding: 10px 12px;
   font-size: 0.95rem;
-  border-bottom: 1px solid #333;
-  color: #ddd;
-}
-
-tbody tr {
-  transition: background 0.25s ease;
+  border-bottom: 1px solid #555;
+  color: #fff;
 }
 
 tbody tr:hover {
-  background: rgba(37, 99, 235, 0.12); /* subtle blue hover */
+  background-color: #2a2a2a;
 }
 
 /* Responsive for small screens */

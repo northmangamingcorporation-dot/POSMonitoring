@@ -1,0 +1,151 @@
+/* ==== Base Reset ==== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: "Segoe UI", Arial, sans-serif;
+  display: flex;
+  height: 100vh;
+  background: linear-gradient(135deg, #0a0a0a, #1a1a1a); /* subtle gradient */
+  color: #fff;
+  line-height: 1.5;
+}
+
+/* ==== Sidebar ==== */
+.sidebar {
+  width: 220px;
+  background: linear-gradient(180deg, #0d0d0d, #111); /* gradient for depth */
+  color: #fff;
+  padding: 20px 16px;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 2px 0 12px rgba(0, 0, 0, 0.5);
+}
+
+.sidebar .logo {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 24px;
+  text-align: center;
+  letter-spacing: 1px;
+  color: #3b82f6; /* accent color */
+  text-shadow: 0 0 8px rgba(37, 99, 235, 0.7);
+}
+
+.sidebar nav a {
+  color: #aaa;
+  text-decoration: none;
+  display: block;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  font-size: 15px;
+  transition: all 0.3s;
+}
+
+.sidebar nav a.active,
+.sidebar nav a:hover {
+  background: linear-gradient(90deg, #2563eb, #1e40af);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.5);
+  transform: translateX(6px);
+}
+
+.sidebar-bottom button {
+  padding: 10px;
+  border: none;
+  border-radius: 8px;
+  background: linear-gradient(90deg, #2563eb, #1e40af);
+  color: white;
+  cursor: pointer;
+  width: 100%;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.sidebar-bottom button:hover {
+  background: linear-gradient(90deg, #1e40af, #1d4ed8);
+  box-shadow: 0 2px 8px rgba(29, 78, 216, 0.6);
+}
+
+/* ==== Main Content ==== */
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  gap: 16px;
+}
+
+.topbar h2 {
+  font-size: 20px;
+  font-weight: 600;
+}
+
+/* ==== Cards ==== */
+.card {
+  background: linear-gradient(145deg, #111, #1b1b1b);
+  padding: 18px;
+  border-radius: 14px;
+  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.05);
+  text-align: center;
+  font-weight: bold;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.card.green { background: linear-gradient(145deg, #16a34a, #15803d); }
+.card.blue  { background: linear-gradient(145deg, #2563eb, #1e40af); }
+.card.red   { background: linear-gradient(145deg, #dc2626, #991b1b); }
+
+.card p {
+  font-size: 1.6rem;
+  margin-top: 8px;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 6px 16px rgba(255, 255, 255, 0.12);
+}
+
+/* ==== Table Card ==== */
+.table-card {
+  background: linear-gradient(145deg, #111, #1b1b1b);
+  border-radius: 14px;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.7);
+  padding: 18px;
+  overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.table-card::-webkit-scrollbar { display: none; }
+
+.table-card h3 {
+  margin-bottom: 14px;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #3b82f6;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 8px;
+}
+
+/* Table */
+thead {
+  background-color: #222;
+}
+th, td {
+  text-align: left;
+  padding: 10px 14px;
+  font-size: 0.95rem;
+  border-bottom: 1px solid #333;
+  color: #ddd;
+}
+tbody tr:hover {
+  background: rgba(37, 99, 235, 0.08);
+  transition: background 0.3s;
+}
