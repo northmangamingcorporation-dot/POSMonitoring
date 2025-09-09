@@ -142,7 +142,6 @@ button:active {
   </style>
 </head>
 <body>
-    
 <div id="dropZone" class="drop-zone">
   <p>Drag & drop your Excel file here or <span id="browseLink">browse</span></p>
   <input type="file" id="fileInput" accept=".xlsx,.xls" hidden />
@@ -158,9 +157,7 @@ button:active {
   <auth-modal></auth-modal>
 
   <script>
-
-  
-    const knownOutlets = [
+const knownOutlets = [
   { operator: "Northman", outlet: "Outlet123" },
   { operator: "GamingCorp", outlet: "Outlet456" }
 ];
@@ -168,14 +165,7 @@ button:active {
 let tableData = [];
 let unrecorded = [];
 const modal = document.querySelector("auth-modal");
-modal.addEventListener("auth-request", () => {
-            if (!tokenClient) {
-                console.error("⚠️ tokenClient not ready yet");
-                return;
-            }
-            tokenClient.requestAccessToken({ prompt: "consent" });
-            modal.hide();
-        });
+
 const dropZone = document.getElementById("dropZone");
 const fileInput = document.getElementById("fileInput");
 const browseLink = document.getElementById("browseLink");

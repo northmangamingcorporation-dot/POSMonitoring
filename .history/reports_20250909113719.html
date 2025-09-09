@@ -159,7 +159,23 @@ button:active {
 
   <script>
 
-  
+  btn.addEventListener("click", async () => {
+    // Wait for tokenClient to be ready
+    if (ensureAccessToken) {
+      console.warn("⚠️ tokenClient not ready yet, waiting...");
+      await new Promise((resolve) => {
+        const interval = setInterval(() => {
+          if (window.tokenClient) {
+            clearInterval(interval);
+            resolve();
+          }
+        }, 200);
+      });
+    }
+
+    window.tokenClient.requestAccessToken({ prompt: "consent" });
+  });
+
     const knownOutlets = [
   { operator: "Northman", outlet: "Outlet123" },
   { operator: "GamingCorp", outlet: "Outlet456" }
@@ -168,14 +184,7 @@ button:active {
 let tableData = [];
 let unrecorded = [];
 const modal = document.querySelector("auth-modal");
-modal.addEventListener("auth-request", () => {
-            if (!tokenClient) {
-                console.error("⚠️ tokenClient not ready yet");
-                return;
-            }
-            tokenClient.requestAccessToken({ prompt: "consent" });
-            modal.hide();
-        });
+
 const dropZone = document.getElementById("dropZone");
 const fileInput = document.getElementById("fileInput");
 const browseLink = document.getElementById("browseLink");

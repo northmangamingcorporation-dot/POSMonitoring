@@ -62,6 +62,22 @@ class AuthModal extends HTMLElement {
   this.show = () => (modal.style.display = "flex");
   this.hide = () => (modal.style.display = "none");
 
+  btn.addEventListener("click", async () => {
+    // Wait for tokenClient to be ready
+    if (ensureAccessToken) {
+      console.warn("⚠️ tokenClient not ready yet, waiting...");
+      await new Promise((resolve) => {
+        const interval = setInterval(() => {
+          if (window.tokenClient) {
+            clearInterval(interval);
+            resolve();
+          }
+        }, 200);
+      });
+    }
+
+    window.tokenClient.requestAccessToken({ prompt: "consent" });
+  });
 }
 
 }
