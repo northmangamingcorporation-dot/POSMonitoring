@@ -1,4 +1,3 @@
-// js/auth-modal.js
 class AuthModal extends HTMLElement {
   constructor() {
     super();
@@ -72,6 +71,5 @@ get authorizeBtn() {
 }
 
 }
-
 
 customElements.define("auth-modal", AuthModal);

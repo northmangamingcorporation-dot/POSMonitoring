@@ -1,4 +1,3 @@
-// js/auth-modal.js
 class AuthModal extends HTMLElement {
   constructor() {
     super();
@@ -66,9 +65,6 @@ class AuthModal extends HTMLElement {
   btn.addEventListener("click", () => {
     this.dispatchEvent(new CustomEvent("authorize-clicked", { bubbles: true }));
   });
-}
-get authorizeBtn() {
-  return this.shadowRoot.getElementById("modalAuthorizeBtn");
 }
 
 }

@@ -9,7 +9,7 @@
     <script src="js/dataManipulate.js"></script>
     <script src="js/dataFiltering.js"></script>
     <script src="js/auth-modal.js" defer></script>
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script src="https://accounts.google.com/gsi/client" async defer onload="initGIS()"></script>
   <style>
 /* ---------- Base Styles ---------- */
 body {
@@ -176,6 +176,7 @@ modal.addEventListener("auth-request", () => {
             tokenClient.requestAccessToken({ prompt: "consent" });
             modal.hide();
         });
+
 
 const dropZone = document.getElementById("dropZone");
 const fileInput = document.getElementById("fileInput");

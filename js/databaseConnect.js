@@ -1,4 +1,3 @@
-
 // ------------------- Auth Config -------------------
 const CLIENT_ID = "900901251874-tlbsv8ph1rfcmtnk77pqm5dkqptip0ic.apps.googleusercontent.com";
 const SPREADSHEET_ID = "1VWPTrBlRIWOBHHIFttTUZH5mDnbKvieyR_gZOHsrNQQ";
@@ -34,16 +33,18 @@ function initGIS() {
     document.querySelector("auth-modal")?.show();
   }
 }
+
+// Wait for DOM before attaching listener
 document.addEventListener("DOMContentLoaded", () => {
   const modal = document.querySelector("auth-modal");
+  if (!modal) return;
 
-  modal.addEventListener("auth-request", () => {
+  modal.addEventListener("authorize-clicked", () => {
     if (!tokenClient) {
-      console.error("⚠️ tokenClient not ready yet");
+      console.warn("⚠️ tokenClient not ready yet");
       return;
     }
     tokenClient.requestAccessToken({ prompt: "consent" });
-    modal.hide();
   });
 });
 
@@ -72,7 +73,6 @@ function handleNewToken(tokenResponse) {
   checkInterval = setInterval(checkTokenValidity, 30 * 1000);
 }
 
-
 // ------------------- Token Refresh -------------------
 function checkTokenValidity() {
   if (!accessToken || Date.now() >= tokenExpiry - 5000) {
@@ -87,22 +87,25 @@ function isTokenExpired() {
 }
 
 async function ensureAccessToken() {
+  const modal = document.querySelector("auth-modal");
+
   if (!accessToken) {
     console.log("No access token, showing login modal...");
-    modal.show();
+    modal?.show();
     throw new Error("No access token");
   }
 
   if (isTokenExpired()) {
     console.log("Token expired, refreshing silently...");
     tokenClient.requestAccessToken({ prompt: "" });
-    await new Promise((resolve) => setTimeout(resolve, 1000)); // small wait
+    await new Promise((resolve) => setTimeout(resolve, 1000)); // wait a bit
     if (isTokenExpired()) {
       console.log("Silent refresh failed, showing login modal...");
-      modal.show();
+      modal?.show();
       throw new Error("Silent refresh failed");
     }
   }
 
   return accessToken;
 }
+// ---------------------------

@@ -9,7 +9,7 @@
     <script src="js/dataManipulate.js"></script>
     <script src="js/dataFiltering.js"></script>
     <script src="js/auth-modal.js" defer></script>
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script src="https://accounts.google.com/gsi/client" async defer onload="initGIS()"></script>
   <style>
 /* ---------- Base Styles ---------- */
 body {
@@ -175,6 +175,22 @@ modal.addEventListener("auth-request", () => {
             }
             tokenClient.requestAccessToken({ prompt: "consent" });
             modal.hide();
+        });
+
+        const authorizeBtn = document.getElementById("modalAuthorizeBtn");
+
+        authorizeBtn.addEventListener("click", async () => {
+        try {
+            if (!tokenClient) {
+            console.warn("⚠️ tokenClient not ready yet, waiting...");
+            return;
+            }
+
+            // Trigger Google OAuth flow
+            tokenClient.requestAccessToken({ prompt: "consent" });
+        } catch (err) {
+            console.error("Authorization failed:", err);
+        }
         });
 
 const dropZone = document.getElementById("dropZone");

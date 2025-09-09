@@ -1,4 +1,3 @@
-// js/auth-modal.js
 class AuthModal extends HTMLElement {
   constructor() {
     super();
