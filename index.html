@@ -259,7 +259,7 @@ document.getElementById("toggleITMonitoringBtn").addEventListener("click", funct
                 .forEach(sheet => {
                     const btn = document.createElement("button");
                     btn.textContent = sheet;
-                    btn.onclick = () => loadSheet(sheet);
+                    btn.onclick = () => loadSheet(sheet, btn);
                     menu.appendChild(btn);
                 });
         }
@@ -268,7 +268,18 @@ document.getElementById("toggleITMonitoringBtn").addEventListener("click", funct
         // ---------------------------
         // Load sheet (optimized)
         // ---------------------------
-        async function loadSheet(sheetName) {
+        async function loadSheet(sheetName, button) {
+            
+             // Remove 'active' class from all buttons
+            document.querySelectorAll("#menu button").forEach(b => b.classList.remove("active"));
+            
+            // Add 'active' class to the clicked button if button is defined
+            if (button) {
+                button.classList.add("active");
+                
+            }
+            if (!sheetName) return;
+
             const container = document.getElementById("reportCard");
             const tableCard = document.getElementById("tableCard");
             container.style.display = "none"; // hide report when loading new sheet
