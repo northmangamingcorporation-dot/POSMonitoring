@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Excel Report Analyzer</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script src="js/databaseConnect.js"></script>
+    <script src="js/dataManipulate.js"></script>
+    <script src="js/dataFiltering.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 6px;
+      text-align: left;
+    }
+    th {
+      background: #f0f0f0;
+    }
+    .unrecorded {
+      color: red;
+      font-weight: bold;
+      margin-top: 20px;
+    }
+    button {
+      margin-top: 20px;
+      padding: 8px 16px;
+      background: #007bff;
+      border: none;
+      color: white;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+  </style>
+</head>
+<body>
+  <h1>Excel Report Analyzer</h1>
+  <input type="file" id="fileInput" accept=".xlsx,.xls" />
+
+  <div id="output"></div>
+  <div id="unrecorded"></div>
+  <button id="sendBtn" style="display:none;">Upload via Webhook</button>
+
+  <script>
+    const knownOutlets = [
+      { operator: "Northman", outlet: "Outlet123" },
+      { operator: "GamingCorp", outlet: "Outlet456" }
+      // ✅ Replace with your actual list
+    ];
+
+    let tableData = [];
+    let unrecorded = [];
+
+    document.getElementById("fileInput").addEventListener("change", handleFile);
+  async function getSheetData(sheetName) {
+    console.log(`Fetching data for sheet: ${sheetName}`);
+    try {
+      const token = await ensureAccessToken();
+      const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${encodeURIComponent(sheetName)}`;
+
+      let res = await fetch(url, {
+        headers: { "Authorization": `Bearer ${token}` }
+      });
+
+      if (res.status === 401) {
+        console.warn("Token expired, retrying...");
+        const refreshed = await attemptSilentAuth();
+        if (!refreshed) return [];
+        res = await fetch(url, {
+          headers: { "Authorization": `Bearer ${accessToken}` }
+        });
+      }
+
+      if (!res.ok) {
+        console.error(`Failed: ${res.status} ${res.statusText}`);
+        return [];
+      }
+
+      const data = await res.json();
+      return data.values || [];
+    } catch (err) {
+      console.error("Error fetching sheet data:", err);
+      return [];
+    }
+  }
+    function handleFile(file) {
+      const reader = new FileReader();
+    reader.onload = async (evt) => {
+      const data = new Uint8Array(evt.target.result);
+      const workbook = XLSX.read(data, { type: "array" });
+
+      const sheetName = workbook.SheetNames[0];
+      const sheet = workbook.Sheets[sheetName];
+      const tableData = XLSX.utils.sheet_to_json(sheet);
+
+      // ✅ Fetch POS sheet from Google Sheets
+      const posData = await getSheetData("POS"); 
+      const headers = posData[0];
+      const posRows = posData.slice(1).map(r => ({
+        operator: r[headers.indexOf("Operator")] || "",
+        outlet: r[headers.indexOf("Outlet")] || ""
+      }));
+
+      // Compare Excel vs POS
+      const unrecorded = tableData.filter(
+        row =>
+          !posRows.some(
+            p =>
+              p.operator.toLowerCase() === String(row.Operator).toLowerCase() &&
+              p.outlet.toLowerCase() === String(row.Outlet).toLowerCase()
+          )
+      );
+
+      renderTable(tableData, unrecorded);
+    };
+    reader.readAsArrayBuffer(file);
+
+    function renderTable() {
+      let html = "<table><thead><tr>";
+      Object.keys(tableData[0]).forEach(col => {
+        html += `<th>${col}</th>`;
+      });
+      html += "</tr></thead><tbody>";
+      tableData.forEach(row => {
+        html += "<tr>";
+        Object.values(row).forEach(val => {
+          html += `<td>${val}</td>`;
+        });
+        html += "</tr>";
+      });
+      html += "</tbody></table>";
+      document.getElementById("output").innerHTML = html;
+
+      if (unrecorded.length > 0) {
+        let list = "<div class='unrecorded'>Unrecorded BoothCodes:<ul>";
+        unrecorded.forEach(r => {
+          list += `<li>${r.Operator} - ${r.Outlet} (${r.Municipality})</li>`;
+        });
+        list += "</ul></div>";
+        document.getElementById("unrecorded").innerHTML = list;
+      } else {
+        document.getElementById("unrecorded").innerHTML = "";
+      }
+    }
+
+    document.getElementById("sendBtn").addEventListener("click", async () => {
+      const payload = { receivedAt: new Date().toISOString(), tableData, unrecorded };
+
+      await fetch("https://your-webhook-url.com", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      alert("✅ Data uploaded to webhook!");
+    });
+  </script>
+</body>
+</html>

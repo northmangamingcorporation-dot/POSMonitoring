@@ -5,6 +5,21 @@ async function appendRow(sheetName, values) {
   try {
     if (!accessToken) throw new Error("No access token");
 
+    // 1️⃣ Fetch existing sheet data
+    const existingData = await getSheetData(sheetName);
+    const headers = existingData[0] || [];
+    const rows = existingData.slice(1);
+
+    // 2️⃣ Build unique key (example: join all values OR specific columns)
+    const newKey = values.join("|");
+    const existingKeys = rows.map(r => r.join("|"));
+
+    if (existingKeys.includes(newKey)) {
+      console.warn(`⏩ Skipping duplicate row in ${sheetName}:`, values);
+      return; // ✅ Don’t append duplicate
+    }
+
+    // 3️⃣ Append only if not duplicate
     const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${encodeURIComponent(sheetName)}:append?valueInputOption=RAW`;
 
     const res = await fetch(url, {
@@ -18,12 +33,13 @@ async function appendRow(sheetName, values) {
 
     if (!res.ok) throw new Error(`Append failed: ${res.status} ${res.statusText}`);
 
-    await logChange("ADD", sheetName, values); // Log the addition
+    await logChange("ADD", sheetName, values);
     return getSheetData(sheetName);
   } catch (err) {
     console.error("Error appending row:", err);
   }
 }
+
 
 // ---------------------------
 // Update row

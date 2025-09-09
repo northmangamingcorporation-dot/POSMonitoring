@@ -9,17 +9,18 @@
     <link rel="stylesheet" href="css/table.css">
     <link rel="stylesheet" href="css/searchBar.css">
     <link rel="stylesheet" href="css/modal.css">
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script src="https://accounts.google.com/gsi/client" async defer onload="initGIS()"></script>
     <script src="js/databaseConnect.js"></script>
     <script src="js/dataManipulate.js"></script>
     <script src="js/dataFiltering.js"></script>
+    <script src="js/auth-modal.js" defer></script>
 </head>
 
 <body onload='loadSheet("POS")'>
     <div class="sidebar">
         <h2>STI Northman Gaming</h2>
         <div class="menu" id="menu"></div>
-
+        
         <!-- User Profile -->
         <div id="userProfile" style="display: none; display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
            margin-top: 16px; padding: 12px; border-radius: 12px; max-width: 320px;
@@ -36,11 +37,14 @@
                white-space: normal; word-wrap: break-word; overflow-wrap: anywhere;"></div>
             </div>
         </div>
-
+        <!-- ✅ Button to toggle report -->
+        <button id="toggleReportBtn" style="margin-top: 12px; padding: 8px 16px; border: none; border-radius: 6px; background: #007bff; color: white; cursor: pointer; width: 100%;">
+            📊 Show Report Analyzer
+        </button>
         <!-- Redirect button -->
         <button style="margin-top: 16px; padding: 8px 16px; border: none; border-radius: 6px; background: #28a745; color: white; cursor: pointer; width: 100%;" onclick="window.location.href='/itMonitor/index.html'">
-    Go to IT Monitoring
-  </button>
+            Go to IT Monitoring
+            </button>
 
     </div>
 
@@ -48,7 +52,7 @@
         <div class="loader" id="loader">
             <div class="spinner"></div>
         </div>
-        <div class="card">
+        <div class="card" id="tableCard">
             <h2 id="sheetTitle">Select a Sheet</h2>
             <div class="search-box" style="display: flex; gap: 8px; margin-top: 10px;">
                 <input type="text" id="searchInput" placeholder="Search..." style="flex: 1;">
@@ -57,34 +61,17 @@
         </button>
             </div>
             <div id="tableContainer"></div>
+
         </div>
+        <!-- ✅ Report Analyzer embedded -->
+            <div class="card" id="reportCard" style="margin-top: 20px; display: none;">
+                <h2>Excel Report Analyzer</h2>
+                <iframe src="reports.html" style="width: 100%; height: 700px; border: none; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.1);"></iframe>
+            </div>
     </div>
 
-    <!-- Modal -->
-    <div id="authModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; 
-      background:rgba(0,0,0,0.6); display:flex; justify-content:center; align-items:center; z-index:1000;">
-        <div style="background:white; padding:32px; border-radius:12px; max-width:400px; width:90%; 
-              text-align:center; box-shadow:0 8px 24px rgba(0,0,0,0.3); font-family:Arial, sans-serif;">
-
-            <h1 style="margin-bottom:16px; color:#333;">Sign In</h1>
-            <p style="margin-bottom:24px; color:#555;">You need to authorize Google Sheets access to continue.</p>
-
-            <!-- Website Logo -->
-            <img src="image/cancellationlogo.jpg" alt="Website Logo" style="width:200px; height:auto; margin-bottom:16px; border-radius:12px;">
-
-            <!-- Google Sign-In Button -->
-            <button id="modalAuthorizeBtn" style="display:flex; align-items:center; justify-content:center; 
-            gap:8px; padding:10px 16px; border:none; border-radius:6px; background:white; 
-            color:#444; font-weight:bold; cursor:pointer; box-shadow:0 2px 6px rgba(0,0,0,0.2); 
-            transition:0.2s all; width: 100%; height:auto;">
-      <img src="image/google.png" 
-           alt="Google Logo" style="width:20px; height:20px;">
-      Sign in with Google
-    </button>
-
-            <p style="margin-top:16px; font-size:12px; color:#888;">Your data will not be shared publicly.</p>
-        </div>
-    </div>
+    <!-- ✅ Component -->
+    <auth-modal></auth-modal>
 
     <!-- Hover effect -->
     <style>
@@ -112,27 +99,13 @@
         let addSheetName = "";
         let sheetDataCache = {};
         let currentEdit = null;
+        
+        const modal = document.querySelector("auth-modal");
 
         // ------------------- Init -------------------
         window.onload = () => {
             initGIS();
         };
-
-        document.getElementById("modalAuthorizeBtn").addEventListener("click", () => {
-            tokenClient.requestAccessToken({
-                prompt: "consent"
-            });
-        });
-
-        // ------------------- Auth Modal Helpers -------------------
-        function showAuthModal() {
-            document.getElementById("authModal").style.display = "flex";
-        }
-
-        function hideAuthModal() {
-            document.getElementById("authModal").style.display = "none";
-        }
-
         // ------------------- User Profile -------------------
         async function loadUserProfile() {
             try {
@@ -235,6 +208,20 @@
                 showLoader(false);
             }
         }
+
+        document.getElementById("toggleReportBtn").addEventListener("click", function() {
+            const container = document.getElementById("reportCard");
+            const tableCard = document.getElementById("tableCard");
+            if (container.style.display === "none") {
+            container.style.display = "block";
+            tableCard.style.display = "none";
+            this.textContent = "❌ Hide Report Analyzer";
+            } else {
+            container.style.display = "none";
+            tableCard.style.display = "block";
+            this.textContent = "📊 Show Report Analyzer";
+            }
+        });
 
         async function getSheetNames() {
             showLoader(true);

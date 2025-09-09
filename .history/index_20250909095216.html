@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <base target="_top">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+    <link rel="icon" type="image/jpeg" href="image/cancellationlogo.jpg">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/table.css">
+    <link rel="stylesheet" href="css/searchBar.css">
+    <link rel="stylesheet" href="css/modal.css">
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script src="js/databaseConnect.js"></script>
+    <script src="js/dataManipulate.js"></script>
+    <script src="js/dataFiltering.js"></script>
+</head>
+
+<body onload='loadSheet("POS")'>
+    <div class="sidebar">
+        <h2>STI Northman Gaming</h2>
+        <div class="menu" id="menu"></div>
+        
+        <!-- User Profile -->
+        <div id="userProfile" style="display: none; display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+           margin-top: 16px; padding: 12px; border-radius: 12px; max-width: 320px;
+           color: white; box-shadow: 0 4px 12px rgba(0,0,0,0.2); overflow: hidden;">
+
+            <!-- Profile Picture -->
+            <img id="userPic" src="" alt="Profile Picture" style="width: 55px; height: 55px; border-radius: 50%; border: 3px solid white; flex-shrink: 0;">
+
+            <div style="text-align: left; min-width: 0; flex: 1;">
+                <div id="userName" style="font-weight: bold; font-size: 16px; letter-spacing: 0.3px;
+           line-height: 1.0; word-wrap: break-word; overflow-wrap: anywhere; margin-bottom: 4px;"></div>
+
+                <div id="userEmail" style="font-size: 13px; opacity: 0.9; font-style: italic;
+               white-space: normal; word-wrap: break-word; overflow-wrap: anywhere;"></div>
+            </div>
+        </div>
+        <!-- ✅ Button to toggle report -->
+        <button id="toggleReportBtn" style="margin-top: 12px; padding: 8px 16px; border: none; border-radius: 6px; background: #007bff; color: white; cursor: pointer; width: 100%;">
+            📊 Show Report Analyzer
+        </button>
+        <!-- Redirect button -->
+        <button style="margin-top: 16px; padding: 8px 16px; border: none; border-radius: 6px; background: #28a745; color: white; cursor: pointer; width: 100%;" onclick="window.location.href='/itMonitor/index.html'">
+            Go to IT Monitoring
+            </button>
+
+    </div>
+
+    <div class="main">
+        <div class="loader" id="loader">
+            <div class="spinner"></div>
+        </div>
+        <div class="card" id="ta">
+            <h2 id="sheetTitle">Select a Sheet</h2>
+            <div class="search-box" style="display: flex; gap: 8px; margin-top: 10px;">
+                <input type="text" id="searchInput" placeholder="Search..." style="flex: 1;">
+                <button id="addBtn" style="padding: 8px 16px; border: none; border-radius: 6px; background: #007bff; color: white; cursor: pointer;" onclick="openModal()">
+          ➕ ADD ENTRY
+        </button>
+            </div>
+            <div id="tableContainer"></div>
+
+        </div>
+        <!-- ✅ Report Analyzer embedded -->
+            <div class="card" style="margin-top: 20px;">
+                <h2>Excel Report Analyzer</h2>
+                <iframe src="report.html" style="width: 100%; height: 600px; border: none; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.1);"></iframe>
+            </div>
+    </div>
+
+    <!-- Modal -->
+    <div id="authModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; 
+      background:rgba(0,0,0,0.6); display:flex; justify-content:center; align-items:center; z-index:1000;">
+        <div style="background:white; padding:32px; border-radius:12px; max-width:400px; width:90%; 
+              text-align:center; box-shadow:0 8px 24px rgba(0,0,0,0.3); font-family:Arial, sans-serif;">
+
+            <h1 style="margin-bottom:16px; color:#333;">Sign In</h1>
+            <p style="margin-bottom:24px; color:#555;">You need to authorize Google Sheets access to continue.</p>
+
+            <!-- Website Logo -->
+            <img src="image/cancellationlogo.jpg" alt="Website Logo" style="width:200px; height:auto; margin-bottom:16px; border-radius:12px;">
+
+            <!-- Google Sign-In Button -->
+            <button id="modalAuthorizeBtn" style="display:flex; align-items:center; justify-content:center; 
+            gap:8px; padding:10px 16px; border:none; border-radius:6px; background:white; 
+            color:#444; font-weight:bold; cursor:pointer; box-shadow:0 2px 6px rgba(0,0,0,0.2); 
+            transition:0.2s all; width: 100%; height:auto;">
+      <img src="image/google.png" 
+           alt="Google Logo" style="width:20px; height:20px;">
+      Sign in with Google
+    </button>
+
+            <p style="margin-top:16px; font-size:12px; color:#888;">Your data will not be shared publicly.</p>
+        </div>
+    </div>
+
+    <!-- Hover effect -->
+    <style>
+        #modalAuthorizeBtn:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            transform: translateY(-2px);
+        }
+    </style>
+
+    <!-- Add Row Modal -->
+    <div id="addModal" class="modal" style="display:none;">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal()">&times;</span>
+            <h2>Add New Row</h2>
+            <form id="addRowForm"></form>
+            <div class="modal-actions">
+                <button type="button" onclick="saveNewRow()">💾 Save</button>
+                <button type="button" onclick="closeModal()">❌ Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let sheetpage = "";
+        let addSheetName = "";
+        let sheetDataCache = {};
+        let currentEdit = null;
+
+        // ------------------- Init -------------------
+        window.onload = () => {
+            initGIS();
+        };
+
+        document.getElementById("modalAuthorizeBtn").addEventListener("click", () => {
+            tokenClient.requestAccessToken({
+                prompt: "consent"
+            });
+        });
+
+        // ------------------- Auth Modal Helpers -------------------
+        function showAuthModal() {
+            document.getElementById("authModal").style.display = "flex";
+        }
+
+        function hideAuthModal() {
+            document.getElementById("authModal").style.display = "none";
+        }
+
+        // ------------------- User Profile -------------------
+        async function loadUserProfile() {
+            try {
+                const res = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
+                    headers: {
+                        Authorization: `Bearer ${accessToken}`
+                    }
+                });
+                const user = await res.json();
+
+                // Existing user profile rendering
+                document.getElementById("userProfile").style.display = "flex";
+                document.getElementById("userPic").src = user.picture || "https://www.gravatar.com/avatar?d=mp&s=200";
+                document.getElementById("userName").innerText = user.name || "Unknown User";
+                document.getElementById("userEmail").innerText = user.email || "";
+
+                logChange("LOGIN", "", null, "");
+            } catch (err) {
+                console.error("Error fetching user profile:", err);
+            }
+        }
+
+        function isUserAuthorized() {
+            const AUTHORIZED_EMAILS = [
+                "northmangamingcorporation@gmail.com",
+                "it@northman.ph",
+                "kristineamaeng31@gmail.com"
+            ];
+
+            const userEmail = document.getElementById("userEmail") ?.innerText ?.trim() || "";
+            return AUTHORIZED_EMAILS.includes(userEmail);
+        }
+
+
+        // ------------------- Sheets Loader -------------------
+        async function loadSheetsAfterAuth() {
+            try {
+                const sheets = await getSheetNames();
+                renderMenu(sheets);
+
+                if (sheets.includes("POS")) {
+                    await loadSheet("POS");
+                } else if (sheets.length > 0) {
+                    await loadSheet(sheets[0]);
+                }
+            } catch (err) {
+                console.error("Error loading sheets:", err);
+            }
+        }
+
+        function showLoader(show) {
+            document.getElementById("loader").style.display = show ? "block" : "none";
+        }
+
+        // ---------------------------
+        // Sheets API functions using OAuth2
+        // ---------------------------
+        async function getSheetData(sheetName) {
+            showLoader(true);
+            console.log(`Fetching data for sheet: ${sheetName}`);
+
+            try {
+                const token = await ensureAccessToken(); // ✅ always valid
+                const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${encodeURIComponent(sheetName)}`;
+
+                let res = await fetch(url, {
+                    headers: {
+                        "Authorization": `Bearer ${token}`
+                    }
+                });
+
+                // If unauthorized, try silent refresh once more
+                if (res.status === 401) {
+                    console.warn("Access token invalid, retrying with silent refresh...");
+                    const refreshed = await attemptSilentAuth();
+                    if (!refreshed) {
+                        showAuthModal();
+                        return [];
+                    }
+                    res = await fetch(url, {
+                        headers: {
+                            "Authorization": `Bearer ${accessToken}`
+                        }
+                    });
+                }
+
+                if (!res.ok) {
+                    console.error(`Failed to fetch sheet data: ${res.status} ${res.statusText}`);
+                    return [];
+                }
+
+                const data = await res.json();
+                console.log("Sheet data received:", data);
+                sheetDataCache[sheetName] = data.values || [];
+                return sheetDataCache[sheetName];
+            } catch (err) {
+                console.error("Error fetching sheet data:", err);
+                return [];
+            } finally {
+                showLoader(false);
+            }
+        }
+
+        document.getElementById("toggleReportBtn").addEventListener("click", function() {
+            const container = document.getElementById("reportContainer");
+            if (container.style.display === "none") {
+            container.style.display = "block";
+            this.textContent = "❌ Hide Report Analyzer";
+            } else {
+            container.style.display = "none";
+            this.textContent = "📊 Show Report Analyzer";
+            }
+        });
+
+        async function getSheetNames() {
+            showLoader(true);
+            console.log("Fetching sheet names...");
+
+            try {
+                const token = await ensureAccessToken(); // ✅ always valid
+                const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}?fields=sheets.properties.title`;
+
+                let res = await fetch(url, {
+                    headers: {
+                        "Authorization": `Bearer ${token}`
+                    }
+                });
+
+                if (res.status === 401) {
+                    console.warn("Access token invalid, retrying with silent refresh...");
+                    const refreshed = await attemptSilentAuth();
+                    if (!refreshed) {
+                        showAuthModal();
+                        return [];
+                    }
+                    res = await fetch(url, {
+                        headers: {
+                            "Authorization": `Bearer ${accessToken}`
+                        }
+                    });
+                }
+
+                if (!res.ok) {
+                    console.error(`Failed to fetch sheet names: ${res.status} ${res.statusText}`);
+                    return [];
+                }
+
+                const data = await res.json();
+                console.log("Sheet names received:", data);
+                if (!data.sheets) return [];
+                return data.sheets.map(s => s.properties.title);
+            } catch (err) {
+                console.error("Error fetching sheet names:", err);
+                return [];
+            } finally {
+                showLoader(false);
+            }
+        }
+
+        // ---------------------------
+        // Render menu (skip "Log")
+        // ---------------------------
+        async function renderMenu(sheets) {
+            const menu = document.getElementById("menu");
+            menu.innerHTML = "";
+
+            sheets
+                .filter(sheet => sheet !== "Log") // skip "Log"
+                .filter(sheet => sheet !== "WebhookLogs") // skip "WebhookLogs"
+                .forEach(sheet => {
+                    const btn = document.createElement("button");
+                    btn.textContent = sheet;
+                    btn.onclick = () => loadSheet(sheet);
+                    menu.appendChild(btn);
+                });
+        }
+
+        sheetDataWithFormat = []; // store formatting info
+        // ---------------------------
+        // Load sheet (optimized)
+        // ---------------------------
+        async function loadSheet(sheetName) {
+            document.getElementById("sheetTitle").textContent = sheetName + " Data";
+            sheetpage = sheetName;
+            document.getElementById("tableContainer").innerHTML = "";
+            showLoader(true);
+
+            try {
+                // ✅ Load values only first (much faster)
+                const urlValues = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${encodeURIComponent(sheetName)}?majorDimension=ROWS`;
+                const resValues = await fetch(urlValues, {
+                    headers: {
+                        "Authorization": `Bearer ${accessToken}`
+                    }
+                });
+                const valuesData = await resValues.json();
+                let values = valuesData.values || [];
+
+                // Attach Google Sheets row index
+                values = values.map((row, idx) => {
+                    row._sheetRowIndex = idx + 1;
+                    return row;
+                });
+
+                // Render table immediately (no styles yet)
+                renderTable(values, sheetName);
+
+                // ✅ Load formatting in background (optional)
+                const urlFormat = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}?ranges=${encodeURIComponent(sheetName)}&fields=sheets.data.rowData.values.effectiveFormat.backgroundColor&includeGridData=true`;
+                const resFormat = await fetch(urlFormat, {
+                    headers: {
+                        "Authorization": `Bearer ${accessToken}`
+                    }
+                });
+                const formatData = await resFormat.json();
+                sheetDataWithFormat = (formatData.sheets ?.[0] ?.data ?.[0] ?.rowData || []).map(r => r.values || []);
+
+                // Apply formatting asynchronously
+                applyCellFormatting();
+            } catch (err) {
+                console.error("Error loading sheet:", err);
+            } finally {
+                showLoader(false);
+            }
+        }
+
+        // ---------------------------
+        // Search filter
+        // ---------------------------
+        document.getElementById("searchInput").addEventListener("input", () => {
+            const filter = document.getElementById("searchInput").value.trim().toLowerCase();
+            const table = document.querySelector("#tableContainer table");
+            if (!table) return;
+
+            const rows = table.rows;
+            const authorized = isUserAuthorized();
+
+            for (let i = 1; i < rows.length; i++) { // skip header
+                let match = false;
+
+                // Check all cells except the last (Action)
+                for (let j = 0; j < rows[i].cells.length - 1; j++) {
+                    if (rows[i].cells[j].textContent.toLowerCase().includes(filter)) {
+                        match = true;
+                        break;
+                    }
+                }
+
+                rows[i].style.display = match ? "" : "none";
+
+                // Optionally, disable action buttons if unauthorized
+                const actionBtns = rows[i].querySelectorAll(".action-buttons button");
+                if (!authorized) {
+                    actionBtns.forEach(btn => {
+                        btn.disabled = true;
+                        btn.title = "Not authorized";
+                    });
+                    const addBtn = document.getElementById("addBtn");
+                    if (!addBtn) return;
+                    addBtn.disabled = true;
+                    addBtn.style.cursor = "not-allowed";
+                    addBtn.style.opacity = "0.6"; // visually show it’s disabled
+                } else {
+                    actionBtns.forEach(btn => btn.disabled = false);
+                }
+            }
+        });
+
+
+        function renderTable(data, sheetName) {
+            const container = document.getElementById("tableContainer");
+            container.innerHTML = "";
+
+            if (!data.length) {
+                container.innerHTML = "<p>No data available</p>";
+                return;
+            }
+
+            const headers = data[0] || [];
+            const tbody = document.createElement("tbody");
+
+            // Determine valid columns
+            const validIndexes = headers.map((h, i) => i).filter(i =>
+                data.some(row => row[i] && String(row[i]).trim() !== "")
+            );
+
+            // Identify status column
+            const statusIndex = validIndexes.find(i =>
+                (headers[i] || "").toLowerCase().includes("status")
+            );
+
+            // Count statuses
+            let statusCounts = {};
+            let uniqueStatuses = [];
+            if (statusIndex !== undefined) {
+                data.slice(1).forEach(row => {
+                    const s = row[statusIndex] || "Unknown";
+                    statusCounts[s] = (statusCounts[s] || 0) + 1;
+                });
+                uniqueStatuses = Object.keys(statusCounts);
+            }
+
+            // Identify operator column
+            const operatorIndex = validIndexes.find(i =>
+                (headers[i] || "").toLowerCase().includes("operator")
+            );
+
+            // Count operators
+            let operatorCounts = {};
+            let uniqueOperators = [];
+            if (operatorIndex !== undefined) {
+                data.slice(1).forEach(row => {
+                    const op = row[operatorIndex] || "Unknown";
+                    operatorCounts[op] = (operatorCounts[op] || 0) + 1;
+                });
+                uniqueOperators = Object.keys(operatorCounts);
+            }
+
+            // Render toolbar below title
+            renderStatusToolbar(
+                statusCounts,
+                uniqueStatuses,
+                statusIndex,
+                headers,
+                operatorCounts,
+                uniqueOperators,
+                operatorIndex
+            );
+
+            const authorized = isUserAuthorized();
+
+            // Build table rows
+            for (let rowIndex = 1; rowIndex < data.length; rowIndex++) {
+                const row = data[rowIndex];
+                const tr = document.createElement("tr");
+
+                validIndexes.forEach(i => {
+                    const td = document.createElement("td");
+                    td.textContent = row[i] || "";
+                    tr.appendChild(td);
+                });
+
+                // Action buttons
+                const tdAction = document.createElement("td");
+                if (authorized) {
+                    tdAction.innerHTML = `
+        <div class="action-buttons">
+          <button onclick="editRow(${row._sheetRowIndex}, ${rowIndex}, '${sheetName}')">✏️</button>
+          <button onclick="deleteRowHandler(${row._sheetRowIndex}, '${sheetName}')">🗑️</button>
+        </div>`;
+                } else {
+                    tdAction.innerHTML = `
+        <div class="action-buttons">
+          <button disabled title="Not authorized">✏️</button>
+          <button disabled title="Not authorized">🗑️</button>
+        </div>`;
+                    const addBtn = document.getElementById("addBtn");
+                    if (!addBtn) return;
+                    addBtn.disabled = true;
+                    addBtn.style.cursor = "not-allowed";
+                    addBtn.style.opacity = "0.6"; // visually show it’s disabled
+                }
+
+                tr.appendChild(tdAction);
+
+                tr.dataset.key = row._sheetRowIndex;
+                tbody.appendChild(tr);
+            }
+
+            // Build table header
+            const headerHtml = validIndexes.map(i => `<th>${headers[i] || "Column " + (i+1)}</th>`).join("");
+
+            // Build table
+            container.innerHTML = `
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>${headerHtml}<th>Action</th></tr>
+        </thead>
+      </table>
+    </div>
+  `;
+            document.querySelector("#tableContainer table").appendChild(tbody);
+
+            // Apply formatting
+            applyCellFormatting();
+        }
+
+        // ---------------------------
+        // Apply formatting (deferred)
+        // ---------------------------
+        function applyCellFormatting() {
+            if (!sheetDataWithFormat) return;
+
+            const rows = document.querySelectorAll("#tableContainer tbody tr");
+            const cssRules = [];
+            const usedClasses = new Set();
+
+            rows.forEach((tr, rowIndex) => {
+                const formatRow = sheetDataWithFormat[rowIndex + 1] || [];
+                [...tr.children].forEach((td, colIndex) => {
+                    const bg = formatRow[colIndex] ?.effectiveFormat ?.backgroundColor;
+                    if (bg) {
+                        const r = Math.round((bg.red ?? 0) * 255);
+                        const g = Math.round((bg.green ?? 0) * 255);
+                        const b = Math.round((bg.blue ?? 0) * 255);
+                        const contrast = getContrastColor(r, g, b);
+                        const cls = `cell-bg-${r}-${g}-${b}-${contrast}`;
+                        td.classList.add(cls);
+
+                        if (!usedClasses.has(cls)) {
+                            cssRules.push(`.${cls}{background-color:rgb(${r},${g},${b});color:${contrast};}`);
+                            usedClasses.add(cls);
+                        }
+                    }
+                });
+            });
+
+            if (cssRules.length) {
+                const styleEl = document.createElement("style");
+                styleEl.textContent = cssRules.join("\n");
+                document.head.appendChild(styleEl);
+            }
+        }
+
+        // Utility for text contrast
+        function getContrastColor(r, g, b) {
+            const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+            return brightness > 125 ? "black" : "white";
+        }
+
+        // ---------------------------
+        // Status filter
+        // ---------------------------
+        function filterByStatus() {
+            const filterValue = document.getElementById("statusFilter").value.toLowerCase();
+            const table = document.querySelector("#tableContainer table");
+            if (!table) return;
+            const rows = table.querySelectorAll("tbody tr");
+            rows.forEach(row => {
+                const statusCell = Array.from(row.cells).find(cell => cell.textContent.toLowerCase() === filterValue);
+                row.style.display = !filterValue || statusCell ? "" : "none";
+            });
+        }
+
+        // ---------------------------
+        // Add/Edit row modal
+        // ---------------------------
+        function openModal() {
+            addSheetName = sheetpage;
+            const table = document.querySelector("#tableContainer table");
+            if (!table) return;
+            const headers = Array.from(table.querySelectorAll("thead th")).map(th => th.innerText).filter(h => h !== "Action");
+            const rows = Array.from(table.querySelectorAll("tbody tr")).map(tr => Array.from(tr.cells).map(td => td.innerText));
+            const form = document.getElementById("addRowForm");
+            form.innerHTML = "";
+
+            headers.forEach((header, colIndex) => {
+                        const field = document.createElement("div");
+                        field.classList.add("form-field");
+                        let inputHTML = `<input type="text" name="${header}" placeholder="Enter ${header}">`;
+                        const colValues = rows.map(r => r[colIndex]).filter(v => v && v.trim() !== "");
+                        const freqMap = {};
+                        colValues.forEach(v => freqMap[v] = (freqMap[v] || 0) + 1);
+                        const sortedUnique = Object.entries(freqMap).sort((a, b) => b[1] - a[1]).map(([val]) => val);
+
+                        if (/date/i.test(header)) {
+                            inputHTML = `<input type="date" name="${header}">`;
+                        } else if (/email/i.test(header)) {
+                            inputHTML = `<input type="email" name="${header}" placeholder="name@example.com">`;
+                        } else if (/status/i.test(header) || /operator code/i.test(header)) {
+                            // Dropdown for Status and Operator Code
+                            inputHTML = `<select name="${header}" style="width:100%;padding:6px;margin-bottom:10px;">
+        <option value="">Select ${header}</option>
+        ${sortedUnique.map(val => `<option value="${val}">${val}</option>`).join("")}
+      </select>`;
+    } else if(/amount|price|total/i.test(header)) {
+      inputHTML = `<input type="number" step="0.01" name="${header}" placeholder="0.00">`;
+    }
+
+    field.innerHTML=`<label>${header}</label>${inputHTML}`;
+    form.appendChild(field);
+  });
+
+  document.getElementById("addModal").style.display="flex";
+}
+
+function closeModal() { document.getElementById("addModal").style.display="none"; }
+
+async function saveNewRow() {
+  const form = document.getElementById("addRowForm");
+  const inputs = form.querySelectorAll("input, select");
+  const newValues = Array.from(inputs).map(input=>input.value.trim());
+  const data = await appendRow(addSheetName, newValues);
+  renderTable(data, addSheetName);
+  closeModal();
+}
+
+function editRow(primaryKey, tableRowIndex, sheetName) {
+  currentEdit = { primaryKey, tableRowIndex, sheetName };
+
+  const table = document.querySelector("#tableContainer table");
+  const tbody = table.querySelector("tbody");
+  const row = tbody.rows[tableRowIndex - 1]; // <-- map to tbody
+  if (!row) {
+    console.error("Row not found for editing:", tableRowIndex);
+    return;
+  }
+
+  const headers = Array.from(table.querySelectorAll("thead th")).map(th =>
+    th.innerText.toLowerCase()
+  );
+
+  const statusColIndex = headers.findIndex(h => h.includes("status"));
+  const operatorColIndex = headers.findIndex(h => h.includes("operator"));
+
+  // collect unique statuses
+  let uniqueStatuses = [];
+  if (statusColIndex !== -1) {
+    uniqueStatuses = [...new Set(
+      Array.from(tbody.rows)
+        .map(r => r.cells[statusColIndex]?.innerText.trim())
+        .filter(v => v)
+    )];
+  }
+
+  // collect unique operators
+  let uniqueOperators = [];
+  if (operatorColIndex !== -1) {
+    uniqueOperators = [...new Set(
+      Array.from(tbody.rows)
+        .map(r => r.cells[operatorColIndex]?.innerText.trim())
+        .filter(v => v)
+    )];
+  }
+
+  for (let i = 0; i < row.cells.length - 1; i++) {
+    const cell = row.cells[i];
+
+    // status dropdown
+    if (i === statusColIndex) {
+      const currentValue = cell.innerText.trim();
+      const optionsHTML = uniqueStatuses
+        .map(
+          s =>
+            `<option value="${s}" ${s === currentValue ? "selected" : ""}>${s}</option>`
+        )
+        .join("");
+      cell.innerHTML = `<select class="status-dropdown">${optionsHTML}</select>`;
+
+    // operator dropdown
+    } else if (i === operatorColIndex) {
+      const currentValue = cell.innerText.trim();
+      const optionsHTML = uniqueOperators
+        .map(
+          op =>
+            `<option value="${op}" ${op === currentValue ? "selected" : ""}>${op}</option>`
+        )
+        .join("");
+      cell.innerHTML = `<select class="operator-dropdown">${optionsHTML}</select>`;
+
+    // other cells editable
+    } else {
+      cell.contentEditable = true;
+      cell.addEventListener("paste", (e) => {
+        e.preventDefault();
+        const text = (e.clipboardData || window.clipboardData).getData("text");
+        document.execCommand("insertText", false, text.trim());
+      });
+    }
+  }
+
+  // action buttons
+  const actionCell = row.cells[row.cells.length - 1];
+  actionCell.innerHTML = `
+    <div class="action-buttons">
+      <button onclick="saveRow()">💾</button>
+      <button onclick="cancelEdit()">✖</button>
+    </div>
+  `;
+}
+
+async function saveRow() {
+  if (!currentEdit) return;
+
+  const { primaryKey, tableRowIndex, sheetName } = currentEdit; // ✅ extract properly
+  const table = document.querySelector("#tableContainer table");
+  const row = table.rows[tableRowIndex];
+  const newValues = [];
+
+  for (let i = 0; i < row.cells.length - 1; i++) {
+    const select = row.cells[i].querySelector("select");
+    const value = select ? select.value.trim() : row.cells[i].innerText.trim();
+    newValues.push(value);
+
+    row.cells[i].contentEditable = false;
+    row.cells[i].innerText = value; // ✅ write back final value
+  }
+
+  // ✅ fast UI update done — now sync in background
+  updateRow(sheetName, primaryKey, newValues).then(async () => {
+    // background re-sync with sheet
+    const latestData = await getSheetData(sheetName);
+
+    // find the row we just updated
+    const updatedRow = latestData.find(r => r.primaryKey === primaryKey);
+    if (updatedRow) {
+      // only re-render if data differs
+      for (let i = 0; i < newValues.length; i++) {
+        if (row.cells[i].innerText.trim() !== updatedRow.values[i].trim()) {
+          renderTable(sheetName, latestData);
+          break;
+        }
+      }
+    }
+  }).catch(err => {
+    console.error("Save failed:", err);
+    // optionally show modal if auth expired
+    showAuthModal();
+  });
+
+  // ✅ restore action buttons immediately
+  const actionCell = row.cells[row.cells.length - 1];
+  actionCell.innerHTML = `<div class="action-buttons">
+      <button onclick="editRow(${primaryKey}, ${tableRowIndex}, '${sheetName}')">✏️</button>
+      <button onclick="deleteRowHandler(${primaryKey}, '${sheetName}')">🗑️</button>
+    </div>`;
+
+  currentEdit = null;
+}
+
+
+async function cancelEdit() {
+  showLoader(true);
+
+  if (!currentEdit) return;
+  const data = await getSheetData(currentEdit.sheetName); // ✅ already fine
+  renderTable(data, currentEdit.sheetName);
+  currentEdit = null;
+  showLoader(false);
+}
+
+
+async function deleteRowHandler(primaryKey, sheetName) {
+  if (!confirm(`Are you sure you want to delete row ${primaryKey}?`)) return;
+  showLoader(true);
+  const data = await deleteRow(sheetName, primaryKey);
+  renderTable(data, sheetName);
+  showLoader(false);
+}
+    </script>
+
+</body>
+
+</html>

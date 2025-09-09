@@ -1,3 +1,4 @@
+
 // ------------------- Auth Config -------------------
 const CLIENT_ID = "900901251874-tlbsv8ph1rfcmtnk77pqm5dkqptip0ic.apps.googleusercontent.com";
 const SPREADSHEET_ID = "1VWPTrBlRIWOBHHIFttTUZH5mDnbKvieyR_gZOHsrNQQ";
@@ -7,37 +8,52 @@ let tokenClient;
 let accessToken = null;
 let tokenExpiry = 0;
 let checkInterval = null;
+
 // ------------------- GIS Setup -------------------
 function initGIS() {
+  console.log("✅ GIS Loaded, initializing tokenClient...");
+
   tokenClient = google.accounts.oauth2.initTokenClient({
     client_id: CLIENT_ID,
     scope: SCOPES,
-    callback: (tokenResponse) => {
-      handleNewToken(tokenResponse);
-    },
+    callback: handleNewToken,
   });
 
-  // Try to reuse token from sessionStorage
+  // Try to reuse stored token
   const savedToken = sessionStorage.getItem("gsheets_access_token");
   const savedExpiry = sessionStorage.getItem("gsheets_token_expiry");
 
   if (savedToken && savedExpiry && Date.now() < parseInt(savedExpiry, 10)) {
     accessToken = savedToken;
     tokenExpiry = parseInt(savedExpiry, 10);
-    hideAuthModal();
+    document.querySelector("auth-modal")?.hide();
     loadUserProfile();
     loadSheetsAfterAuth();
     checkInterval = setInterval(checkTokenValidity, 30 * 1000);
   } else {
-    showAuthModal();
+    document.querySelector("auth-modal")?.show();
   }
 }
+document.addEventListener("DOMContentLoaded", () => {
+  const modal = document.querySelector("auth-modal");
+
+  modal.addEventListener("auth-request", () => {
+    if (!tokenClient) {
+      console.error("⚠️ tokenClient not ready yet");
+      return;
+    }
+    tokenClient.requestAccessToken({ prompt: "consent" });
+    modal.hide();
+  });
+});
 
 // ------------------- Handle new tokens -------------------
 function handleNewToken(tokenResponse) {
+  const modal = document.querySelector("auth-modal"); // ✅ always resolve fresh
+
   if (tokenResponse.error) {
     console.error("Auth error:", tokenResponse);
-    showAuthModal();
+    modal?.show();
     return;
   }
 
@@ -47,12 +63,15 @@ function handleNewToken(tokenResponse) {
   sessionStorage.setItem("gsheets_access_token", accessToken);
   sessionStorage.setItem("gsheets_token_expiry", tokenExpiry);
 
-  hideAuthModal();
+  modal?.hide(); // ✅ close if available
+
   loadUserProfile();
   loadSheetsAfterAuth();
+
   if (checkInterval) clearInterval(checkInterval);
   checkInterval = setInterval(checkTokenValidity, 30 * 1000);
 }
+
 
 // ------------------- Token Refresh -------------------
 function checkTokenValidity() {
@@ -70,7 +89,7 @@ function isTokenExpired() {
 async function ensureAccessToken() {
   if (!accessToken) {
     console.log("No access token, showing login modal...");
-    showAuthModal();
+    modal.show();
     throw new Error("No access token");
   }
 
@@ -80,7 +99,7 @@ async function ensureAccessToken() {
     await new Promise((resolve) => setTimeout(resolve, 1000)); // small wait
     if (isTokenExpired()) {
       console.log("Silent refresh failed, showing login modal...");
-      showAuthModal();
+      modal.show();
       throw new Error("Silent refresh failed");
     }
   }

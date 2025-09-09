@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Excel Report Analyzer</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="js/databaseConnect.js"></script>
+    <script src="js/dataManipulate.js"></script>
+    <script src="js/dataFiltering.js"></script>
+    <script src="js/auth-modal.js" defer></script>
+    <script src="https://accounts.google.com/gsi/client" async defer onload="initGIS()"></script>
+  <style>
+/* ---------- Base Styles ---------- */
+body {
+  font-family: "Segoe UI", Roboto, Arial, sans-serif;
+  padding: 20px;
+  background: #f9fafb;
+  color: #333;
+  line-height: 1.5;
+}
+
+/* ---------- Table ---------- */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+  background: #fff;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+}
+
+th, td {
+  padding: 10px 12px;
+  text-align: left;
+}
+
+th {
+  background: #f3f4f6;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 13px;
+  letter-spacing: 0.5px;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+td {
+  border-bottom: 1px solid #e5e7eb;
+  font-size: 14px;
+}
+
+tr:hover td {
+  background: #f9fafb;
+}
+
+/* ---------- Unrecorded Section ---------- */
+.unrecorded {
+  margin-top: 20px;
+  padding: 12px 16px;
+  border: 1px solid #fca5a5;
+  background: #fee2e2;
+  color: #b91c1c;
+  font-weight: 600;
+  border-radius: 6px;
+}
+
+.unrecorded ul {
+  margin: 8px 0 0;
+  padding-left: 20px;
+}
+
+.unrecorded li {
+  margin: 4px 0;
+}
+
+/* ---------- Button ---------- */
+button {
+  display: inline-block;
+  margin-top: 20px;
+  padding: 10px 18px;
+  background: #2563eb;
+  border: none;
+  border-radius: 6px;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.25s, transform 0.15s;
+}
+
+button:hover {
+  background: #1d4ed8;
+  transform: translateY(-1px);
+}
+
+button:active {
+  background: #1e40af;
+  transform: translateY(0);
+}
+
+/* ---------- Drop Zone ---------- */
+#dropZone {
+  margin-top: 20px;
+  padding: 40px;
+  border: 2px dashed #93c5fd;
+  border-radius: 10px;
+  background: #f9fafb;
+  text-align: center;
+  color: #555;
+  font-size: 15px;
+  cursor: pointer;
+  transition: background 0.25s, border-color 0.25s;
+}
+
+#dropZone:hover {
+  background: #f3f4f6;
+  border-color: #3b82f6;
+}
+
+#dropZone.dragover {
+  background: #e0f2fe;
+  border-color: #2563eb;
+  color: #1e40af;
+}
+
+#dropZone p {
+  margin: 0;
+}
+
+#browseLink {
+  color: #2563eb;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+}
+.file-name {
+  margin-top: 15px;
+  font-weight: bold;
+  color: #333;
+}
+  </style>
+</head>
+<body>
+  <h1>Excel Report Analyzer</h1>
+<div id="dropZone" class="drop-zone">
+  <p>Drag & drop your Excel file here or <span id="browseLink">browse</span></p>
+  <input type="file" id="fileInput" accept=".xlsx,.xls" hidden />
+</div>
+
+<!-- Will show after file is chosen -->
+<div id="fileName" class="file-name" style="display:none;"></div>
+
+
+
+  <div id="output"></div>
+  <div id="unrecorded"></div>
+  <button id="sendBtn" style="display:none;">Upload via Webhook</button>
+<!-- ✅ Component -->
+  <auth-modal></auth-modal>
+
+  <script>
+const knownOutlets = [
+  { operator: "Northman", outlet: "Outlet123" },
+  { operator: "GamingCorp", outlet: "Outlet456" }
+];
+
+let tableData = [];
+let unrecorded = [];
+const modal = document.querySelector("auth-modal");
+
+const dropZone = document.getElementById("dropZone");
+const fileInput = document.getElementById("fileInput");
+const browseLink = document.getElementById("browseLink");
+const fileNameDisplay = document.getElementById("fileName");
+
+function showFileName(file) {
+  dropZone.style.display = "none";   // hide dropzone
+  fileNameDisplay.style.display = "block"; // show filename
+  fileNameDisplay.textContent = `📂 Selected file: ${file.name}`;
+  handleFile(file); // process the file
+}
+
+// Open file dialog when clicking "browse"
+browseLink.addEventListener("click", () => fileInput.click());
+
+// Handle normal file input
+fileInput.addEventListener("change", (e) => {
+  if (e.target.files.length > 0) {
+    showFileName(e.target.files[0]);
+  }
+});
+
+// Drag & drop support
+dropZone.addEventListener("dragover", (e) => {
+  e.preventDefault();
+  dropZone.classList.add("dragover");
+});
+
+dropZone.addEventListener("dragleave", () => {
+  dropZone.classList.remove("dragover");
+});
+
+dropZone.addEventListener("drop", (e) => {
+  e.preventDefault();
+  dropZone.classList.remove("dragover");
+
+  if (e.dataTransfer.files.length > 0) {
+    showFileName(e.dataTransfer.files[0]);
+  }
+});
+
+
+async function getSheetData(sheetName) {
+  console.log(`Fetching data for sheet: ${sheetName}`);
+  try {
+    const token = await ensureAccessToken();
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${encodeURIComponent(sheetName)}`;
+
+    let res = await fetch(url, {
+      headers: { "Authorization": `Bearer ${token}` }
+    });
+
+    if (res.status === 401) {
+      console.warn("Token expired, retrying...");
+      const refreshed = await attemptSilentAuth();
+      if (!refreshed) return [];
+      res = await fetch(url, {
+        headers: { "Authorization": `Bearer ${accessToken}` }
+      });
+    }
+
+    if (!res.ok) {
+      console.error(`Failed: ${res.status} ${res.statusText}`);
+      return [];
+    }
+
+    const data = await res.json();
+    return data.values || [];
+  } catch (err) {
+    console.error("Error fetching sheet data:", err);
+    return [];
+  }
+}
+
+function handleFile(file) {
+  const reader = new FileReader();
+  reader.onload = async (evt) => {
+    const data = new Uint8Array(evt.target.result);
+    const workbook = XLSX.read(data, { type: "array" });
+
+    const sheetName = workbook.SheetNames[0];
+    const sheet = workbook.Sheets[sheetName];
+    tableData = XLSX.utils.sheet_to_json(sheet);
+
+    // ✅ Fetch POS sheet from Google Sheets
+    const posData = await getSheetData("POS");
+    const headers = posData[0];
+    const posRows = posData.slice(1).map(r => ({
+      operator: r[headers.indexOf("Operator")] || "",
+      outlet: r[headers.indexOf("Outlet")] || ""
+    }));
+
+    // Compare Excel vs POS
+    unrecorded = tableData.filter(
+      row =>
+        !posRows.some(
+          p =>
+            p.operator.toLowerCase() === String(row.Operator).toLowerCase() &&
+            p.outlet.toLowerCase() === String(row.Outlet).toLowerCase()
+        )
+    );
+
+    renderTable(tableData, unrecorded);
+    document.getElementById("sendBtn").style.display = "block";
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function renderTable(tableData, unrecorded) {
+  let html = "<table><thead><tr>";
+  Object.keys(tableData[0]).forEach(col => {
+    html += `<th>${col}</th>`;
+  });
+  html += "</tr></thead><tbody>";
+  tableData.forEach(row => {
+    html += "<tr>";
+    Object.values(row).forEach(val => {
+      html += `<td>${val}</td>`;
+    });
+    html += "</tr>";
+  });
+  html += "</tbody></table>";
+  document.getElementById("output").innerHTML = html;
+
+  if (unrecorded.length > 0) {
+    let list = "<div class='unrecorded'>Unrecorded BoothCodes:<ul>";
+    unrecorded.forEach(r => {
+      list += `<li>${r.Operator} - ${r.Outlet} (${r.Municipality})</li>`;
+    });
+    list += "</ul></div>";
+    document.getElementById("unrecorded").innerHTML = list;
+  } else {
+    document.getElementById("unrecorded").innerHTML = "";
+  }
+}
+
+document.getElementById("sendBtn").addEventListener("click", async () => {
+  const payload = { receivedAt: new Date().toISOString(), tableData, unrecorded };
+
+  await fetch("https://your-webhook-url.com", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+
+  alert("✅ Data uploaded to webhook!");
+});
+
+  </script>
+</body>
+</html>
