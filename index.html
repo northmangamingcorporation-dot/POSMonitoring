@@ -37,6 +37,7 @@
                white-space: normal; word-wrap: break-word; overflow-wrap: anywhere;"></div>
             </div>
         </div>
+        
         <!-- ✅ Button to toggle report -->
         <button id="toggleReportBtn" style="margin-top: 12px; padding: 8px 16px; border: none; border-radius: 6px; background: #007bff; color: white; cursor: pointer; width: 100%;">
             📊 Show Report Analyzer
@@ -162,55 +163,45 @@
         // ---------------------------
         
 
-  document.getElementById("toggleReportBtn").addEventListener("click", function() {
+  const toggleContainer = (button, src, label) => {
     const container = document.getElementById("reportCard");
     const tableCard = document.getElementById("tableCard");
     const iframe = document.getElementById("mainIframe");
-    const itBtn = document.getElementById("toggleITMonitoringBtn");
+    const otherButton = [...document.querySelectorAll(".toggleBtn")].find(
+        btn => btn !== button
+    );
 
-    // Hide IT Monitoring if open
-    if (itBtn.textContent.startsWith("❌")) {
-        itBtn.textContent = "📊 Show IT Monitoring";
+    // Hide other section if open
+    if (otherButton.textContent.startsWith("❌")) {
+        const otherLabel = otherButton.dataset.label;
+        otherButton.textContent = `📊 Show ${otherLabel}`;    
     }
 
-    // Show/Hide Report Analyzer
+    // Show/Hide current section
     if (container.style.display === "none" || container.style.display === "") {
         container.style.display = "block";
         tableCard.style.display = "none";
-        iframe.src = "reports.html";
-        this.textContent = "❌ Hide Report Analyzer";
+        iframe.src = src;
+        button.textContent = `❌ Hide ${label}`;
     } else {
         container.style.display = "none";
         tableCard.style.display = "block";
-        this.textContent = "📊 Show Report Analyzer";
+        button.textContent = `📊 Show ${label}`;
     }
+};
+
+// Attach to buttons
+document.getElementById("toggleReportBtn").classList.add("toggleBtn");
+document.getElementById("toggleReportBtn").dataset.label = "Report Analyzer";
+document.getElementById("toggleReportBtn").addEventListener("click", function() {
+    toggleContainer(this, "reports.html", "Report Analyzer");
 });
 
+document.getElementById("toggleITMonitoringBtn").classList.add("toggleBtn");
+document.getElementById("toggleITMonitoringBtn").dataset.label = "IT Monitoring";
 document.getElementById("toggleITMonitoringBtn").addEventListener("click", function() {
-    const container = document.getElementById("reportCard");
-    const tableCard = document.getElementById("tableCard");
-    const iframe = document.getElementById("mainIframe");
-    const reportBtn = document.getElementById("toggleReportBtn");
-
-    // Hide Report Analyzer if open
-    if (reportBtn.textContent.startsWith("❌")) {
-        reportBtn.textContent = "📊 Show Report Analyzer";
-    }
-
-    // Show/Hide IT Monitoring
-    if (container.style.display === "none" || container.style.display === "") {
-        container.style.display = "block";
-        tableCard.style.display = "none";
-        iframe.src = "itMonitor/index.html";
-        this.textContent = "❌ Hide IT Monitoring";
-    } else {
-        container.style.display = "none";
-        tableCard.style.display = "block";
-        this.textContent = "📊 Show IT Monitoring";
-    }
+    toggleContainer(this, "itMonitor/index.html", "IT Monitoring");
 });
-
-
 
         async function getSheetNames() {
             showLoader(true);
