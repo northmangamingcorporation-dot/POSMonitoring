@@ -14,8 +14,6 @@ function initGIS() {
     return;
   }
 
-  console.log("✅ GIS Loaded, initializing tokenClient...");
-
   tokenClient = google.accounts.oauth2.initTokenClient({
     client_id: CLIENT_ID,
     scope: SCOPES,
@@ -24,7 +22,7 @@ function initGIS() {
 
   // Only try to get token after initialization, not immediately call sheets/profile
   ensureAccessToken().then((token) => {
-    console.log("Access token ready:", token);
+    accessToken = token;
     loadSheetsAfterAuth();
     loadUserProfile();
   }).catch((err) => {
@@ -50,7 +48,6 @@ function handleNewToken(tokenResponse) {
   sessionStorage.setItem("gsheets_token_expiry", tokenExpiry);
 
   hideModal(); // hide modal first
-  console.log("New token acquired via handleNewToken:", accessToken);
 
   // Now safe to load sheets/profile
   loadSheetsAfterAuth();
@@ -168,7 +165,6 @@ async function ensureAccessToken() {
       }
 
       if (isTokenExpired()) {
-        console.log("Token expired or near expiry, trying silent refresh...");
         try {
           return await refreshAccessTokenSilent();
         } catch (err) {

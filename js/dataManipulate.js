@@ -3,8 +3,7 @@
 // ---------------------------
 
 async function getSheetData(sheetName) {
-            console.log(`Fetching data for sheet: ${sheetName}`);
-            let sheetDataCache = {};
+           let sheetDataCache = {};
             try {
                 const token = await ensureAccessToken(); // ✅ always valid
                 const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${encodeURIComponent(sheetName)}`;
@@ -17,7 +16,7 @@ async function getSheetData(sheetName) {
 
                 // If unauthorized, try silent refresh once more
                 if (res.status === 401) {
-                    console.warn("Access token invalid, retrying with silent refresh...");
+                    
                     const refreshed = await attemptSilentAuth();
                     if (!refreshed) {
                         showAuthModal();
@@ -36,7 +35,6 @@ async function getSheetData(sheetName) {
                 }
 
                 const data = await res.json();
-                console.log("Sheet data received:", data);
                 sheetDataCache[sheetName] = data.values || [];
                 return sheetDataCache[sheetName];
             } catch (err) {

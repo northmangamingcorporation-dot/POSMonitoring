@@ -205,7 +205,6 @@ document.getElementById("toggleITMonitoringBtn").addEventListener("click", funct
 
         async function getSheetNames() {
             showLoader(true);
-            console.log("Fetching sheet names...");
 
             try {
                 const token = await ensureAccessToken(); // ✅ always valid
@@ -237,7 +236,6 @@ document.getElementById("toggleITMonitoringBtn").addEventListener("click", funct
                 }
 
                 const data = await res.json();
-                console.log("Sheet names received:", data);
                 if (!data.sheets) return [];
                 return data.sheets.map(s => s.properties.title);
             } catch (err) {
