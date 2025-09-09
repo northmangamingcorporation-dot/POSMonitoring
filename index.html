@@ -42,8 +42,8 @@
             📊 Show Report Analyzer
         </button>
         <!-- Redirect button -->
-        <button style="margin-top: 16px; padding: 8px 16px; border: none; border-radius: 6px; background: #28a745; color: white; cursor: pointer; width: 100%;" onclick="window.location.href='/itMonitor/index.html'">
-            Go to IT Monitoring
+        <button id="toggleITMonitoringBtn" style="margin-top: 16px; padding: 8px 16px; border: none; border-radius: 6px; background: #28a745; color: white; cursor: pointer; width: 100%;">
+            📶 Go to IT Monitoring
             </button>
 
     </div>
@@ -65,8 +65,7 @@
         </div>
         <!-- ✅ Report Analyzer embedded -->
             <div class="card" id="reportCard" style="margin-top: 20px; display: none;">
-                <h2>Excel Report Analyzer</h2>
-                <iframe src="reports.html" style="width: 100%; height: 700px; border: none; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.1);"></iframe>
+                <iframe id="mainIframe"  style="width: 100%; height: 800px; border: none; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.1);"></iframe>
             </div>
     </div>
 
@@ -163,19 +162,55 @@
         // ---------------------------
         
 
-        document.getElementById("toggleReportBtn").addEventListener("click", function() {
-            const container = document.getElementById("reportCard");
-            const tableCard = document.getElementById("tableCard");
-            if (container.style.display === "none") {
-            container.style.display = "block";
-            tableCard.style.display = "none";
-            this.textContent = "❌ Hide Report Analyzer";
-            } else {
-            container.style.display = "none";
-            tableCard.style.display = "block";
-            this.textContent = "📊 Show Report Analyzer";
-            }
-        });
+  document.getElementById("toggleReportBtn").addEventListener("click", function() {
+    const container = document.getElementById("reportCard");
+    const tableCard = document.getElementById("tableCard");
+    const iframe = document.getElementById("mainIframe");
+    const itBtn = document.getElementById("toggleITMonitoringBtn");
+
+    // Hide IT Monitoring if open
+    if (itBtn.textContent.startsWith("❌")) {
+        itBtn.textContent = "📊 Show IT Monitoring";
+    }
+
+    // Show/Hide Report Analyzer
+    if (container.style.display === "none" || container.style.display === "") {
+        container.style.display = "block";
+        tableCard.style.display = "none";
+        iframe.src = "reports.html";
+        this.textContent = "❌ Hide Report Analyzer";
+    } else {
+        container.style.display = "none";
+        tableCard.style.display = "block";
+        this.textContent = "📊 Show Report Analyzer";
+    }
+});
+
+document.getElementById("toggleITMonitoringBtn").addEventListener("click", function() {
+    const container = document.getElementById("reportCard");
+    const tableCard = document.getElementById("tableCard");
+    const iframe = document.getElementById("mainIframe");
+    const reportBtn = document.getElementById("toggleReportBtn");
+
+    // Hide Report Analyzer if open
+    if (reportBtn.textContent.startsWith("❌")) {
+        reportBtn.textContent = "📊 Show Report Analyzer";
+    }
+
+    // Show/Hide IT Monitoring
+    if (container.style.display === "none" || container.style.display === "") {
+        container.style.display = "block";
+        tableCard.style.display = "none";
+        iframe.src = "itMonitor/index.html";
+        this.textContent = "❌ Hide IT Monitoring";
+    } else {
+        container.style.display = "none";
+        tableCard.style.display = "block";
+        this.textContent = "📊 Show IT Monitoring";
+    }
+});
+
+
 
         async function getSheetNames() {
             showLoader(true);
