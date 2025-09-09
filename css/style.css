@@ -41,7 +41,7 @@ body {
   padding: 12px 16px;
   text-align: left;
   width: 100%;
-  border-radius: 12px;
+  border-radius: 20px; /* more rounded for badge feel */
   transition: all 0.25s ease;
   cursor: pointer;
   display: flex;
@@ -61,12 +61,14 @@ body {
   box-shadow: 0 2px 6px rgba(0,0,0,0.25);
 }
 
-/* Active menu item */
+/* Active menu item (synced with badge style) */
 .menu button.active {
-  background: linear-gradient(90deg, #2563eb, #1e40af);
+  background: rgba(37, 99, 235, 0.2); /* subtle blue tint */
   color: #fff;
   font-weight: 600;
-  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.45);
+  border: 1px solid rgba(37, 99, 235, 0.5);
+  border-radius: 20px; /* pill-like */
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
   transform: translateX(6px);
 }
 
@@ -78,9 +80,11 @@ body {
 .menu button.active i {
   color: #fff;
 }
+
 .sidebar-bottom {
   margin-top: 24px;
 }
+
 /* Main Content */
 .main {
   flex: 1;
