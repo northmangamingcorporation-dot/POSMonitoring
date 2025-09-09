@@ -155,6 +155,7 @@ button:active {
   <div id="unrecorded"></div>
   <button id="sendBtn" style="display:none;">Upload via Webhook</button>
 
+
   <script>
 
   
@@ -165,6 +166,16 @@ button:active {
 
 let tableData = [];
 let unrecorded = [];
+
+const modal = document.querySelector("auth-modal");
+modal.addEventListener("auth-request", () => {
+            if (!tokenClient) {
+                console.error("⚠️ tokenClient not ready yet");
+                return;
+            }
+            tokenClient.requestAccessToken({ prompt: "consent" });
+            modal.hide();
+        });
 
 const dropZone = document.getElementById("dropZone");
 const fileInput = document.getElementById("fileInput");
