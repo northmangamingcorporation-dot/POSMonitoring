@@ -1,0 +1,125 @@
+body {
+  margin: 0;
+  font-family: "Segoe UI", Roboto, Arial, sans-serif;
+  background: #f4f6fb;
+  color: #2e2e2e;
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* Sidebar */
+.sidebar {
+  width: 260px;
+  background: linear-gradient(180deg, #1e293b, #0f172a);
+  color: #f1f5f9;
+  display: flex;
+  flex-direction: column;
+  padding: 24px;
+  box-shadow: 2px 0 12px rgba(0,0,0,0.15);
+}
+
+.sidebar h2 {
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 28px;
+  text-align: center;
+  letter-spacing: 0.5px;
+  color: #e2e8f0;
+  text-transform: uppercase;
+}
+
+.menu {
+  flex: 1;
+}
+
+.menu button {
+  background: transparent;
+  border: none;
+  color: #cbd5e1;
+  font-size: 15px;
+  padding: 12px 16px;
+  text-align: left;
+  width: 100%;
+  border-radius: 12px;
+  transition: all 0.25s ease;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  line-height: 1.4;
+
+  /* auto-wrap text if too long */
+  white-space: normal;
+  word-wrap: break-word;
+}
+
+.menu button:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  transform: translateX(6px);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+}
+
+/* Active menu item */
+.menu button.active {
+  background: linear-gradient(90deg, #2563eb, #1e40af);
+  color: #fff;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.45);
+  transform: translateX(6px);
+}
+
+/* Optional icon styling */
+.menu button i {
+  font-size: 18px;
+  color: #93c5fd;
+}
+.menu button.active i {
+  color: #fff;
+}
+.sidebar-bottom {
+  margin-top: 24px;
+}
+/* Main Content */
+.main {
+  flex: 1;
+  padding: 28px;
+  overflow-y: auto;
+  position: relative;
+  background: #f8fafc;
+}
+.card {
+  background: white;
+  padding: 22px;
+  border-radius: 14px;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+  margin-bottom: 24px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 18px rgba(0,0,0,0.12);
+}
+
+/* Loader */
+#loader {
+  display: none;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  border: 5px solid #e5e7eb;
+  border-top: 5px solid #2563eb;
+  border-radius: 50%;
+  width: 44px;
+  height: 44px;
+  animation: spin 0.9s linear infinite;
+  z-index: 10;
+}
+
+/* Spin animation */
+@keyframes spin {
+  0%   { transform: translate(-50%, -50%) rotate(0deg); }
+  100% { transform: translate(-50%, -50%) rotate(360deg); }
+}

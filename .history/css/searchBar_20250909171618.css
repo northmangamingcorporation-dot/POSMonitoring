@@ -1,0 +1,23 @@
+.search-box {
+  margin-bottom: 16px;
+  width: 100%;
+  max-width: 400px; /* keeps it neat on large screens */
+  position: relative;
+}
+
+.search-box input {
+  width: 100%;
+  padding: 10px 38px 10px 14px; /* room for an icon on the right */
+  font-size: 14px;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  background: #fff;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+  transition: border 0.2s ease, box-shadow 0.2s ease;
+}
+
+.search-box input:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.3);
+}
