@@ -153,11 +153,18 @@ button:active {
 
   <div id="output"></div>
   <div id="unrecorded"></div>
-  <button id="sendBtn" style="display:none;">Upload</button>
+  <button id="sendBtn" style="display:none;">Upload via Webhook</button>
 
   <script>
-let tableData = [];      // global
-let unrecorded = [];     // global
+
+  
+    const knownOutlets = [
+  { operator: "Northman", outlet: "Outlet123" },
+  { operator: "GamingCorp", outlet: "Outlet456" }
+];
+
+let tableData = [];
+let unrecorded = [];
 
 const dropZone = document.getElementById("dropZone");
 const fileInput = document.getElementById("fileInput");
@@ -165,127 +172,104 @@ const browseLink = document.getElementById("browseLink");
 const fileNameDisplay = document.getElementById("fileName");
 
 function showFileName(file) {
-  dropZone.style.display = "none";
-  fileNameDisplay.style.display = "block";
+  dropZone.style.display = "none";   // hide dropzone
+  fileNameDisplay.style.display = "block"; // show filename
   fileNameDisplay.textContent = `📂 Selected file: ${file.name}`;
-  handleFile(file);
+  handleFile(file); // process the file
 }
 
-// Browse link
+// Open file dialog when clicking "browse"
 browseLink.addEventListener("click", () => fileInput.click());
+
+// Handle normal file input
 fileInput.addEventListener("change", (e) => {
-  if (e.target.files.length > 0) showFileName(e.target.files[0]);
+  if (e.target.files.length > 0) {
+    showFileName(e.target.files[0]);
+  }
 });
 
-// Drag & drop
-dropZone.addEventListener("dragover", (e) => { e.preventDefault(); dropZone.classList.add("dragover"); });
-dropZone.addEventListener("dragleave", () => dropZone.classList.remove("dragover"));
+// Drag & drop support
+dropZone.addEventListener("dragover", (e) => {
+  e.preventDefault();
+  dropZone.classList.add("dragover");
+});
+
+dropZone.addEventListener("dragleave", () => {
+  dropZone.classList.remove("dragover");
+});
+
 dropZone.addEventListener("drop", (e) => {
   e.preventDefault();
   dropZone.classList.remove("dragover");
-  if (e.dataTransfer.files.length > 0) showFileName(e.dataTransfer.files[0]);
-});
+
+  if (e.dataTransfer.files.length > 0) {
+    showFileName(e.dataTransfer.files[0]);
+  }
+})
 
 async function handleFile(file) {
   const reader = new FileReader();
 
   reader.onload = async (evt) => {
+    // 1️⃣ Read Excel file
     const data = new Uint8Array(evt.target.result);
     const workbook = XLSX.read(data, { type: "array" });
 
-    // 1️⃣ Prompt user to choose a sheet if multiple sheets exist
-    let chosenSheet = workbook.SheetNames[0];
-    if (workbook.SheetNames.length > 1) {
-      const sheetPrompt =
-        "Select a sheet to process:\n" +
-        workbook.SheetNames.map((s, i) => `${i + 1}. ${s}`).join("\n");
+    // 2️⃣ Get first sheet and convert to JSON
+    const sheetName = workbook.SheetNames[0];
+    const sheet = workbook.Sheets[sheetName];
+    const tableData = XLSX.utils.sheet_to_json(sheet);
 
-      let choice = prompt(sheetPrompt, "1");
-      let index = parseInt(choice, 10) - 1;
-
-      if (isNaN(index) || index < 0 || index >= workbook.SheetNames.length) {
-        alert("Invalid selection. Defaulting to first sheet.");
-        index = 0;
-      }
-
-      chosenSheet = workbook.SheetNames[index];
-    }
-
-    // 2️⃣ Read selected sheet
-    const sheet = workbook.Sheets[chosenSheet];
-    if (!sheet) {
-      alert("Selected sheet is empty or not found.");
-      return;
-    }
-
-    tableData = XLSX.utils.sheet_to_json(sheet, { defval: "" }); // use global, default empty values
-
-    if (!tableData.length) {
-      alert("Selected sheet has no data.");
-      return;
-    }
-
-    // 3️⃣ Fetch POS data
+    // 3️⃣ Fetch POS data from Google Sheets
     const posData = await getSheetData("POS");
-    if (!posData || posData.length < 2) {
-      alert("POS sheet is empty or missing.");
-      return;
-    }
-
     const headers = posData[0];
-    const posRows = posData.slice(1).map((r) => ({
-      operator: (r[headers.indexOf("Operator")] || "").toString().trim(),
-      boothcode: (r[headers.indexOf("Boothcode")] || "").toString().trim(),
+
+    // 4️⃣ Map POS rows to objects with only Operator and Boothcode
+    const posRows = posData.slice(1).map(r => ({
+      operator: r[headers.indexOf("Operator")] || "",
+      boothcode: r[headers.indexOf("Boothcode")] || ""
     }));
 
-    // 4️⃣ Compare Excel vs POS
-    unrecorded = tableData.filter((row) => {
-      const excelOutlet = (row.Outlet || "").toString().trim().toLowerCase();
+    // 5️⃣ Compare Excel vs POS
+    const unrecorded = tableData.filter(
+      row =>
+        !posRows.some(
+          p =>
+            p.operator.toLowerCase() === String(row.Operator).toLowerCase() &&
+            p.boothcode.toLowerCase() === String(row.Outlet).toLowerCase()
+        )
+    );
 
-      return !posRows.some(
-        (p) =>
-          p.boothcode.toLowerCase() === excelOutlet
-      );
-    });
-
-    // 5️⃣ Render table and unrecorded list
+    // 6️⃣ Render the table and show send button
     renderTable(tableData, unrecorded);
-
-    // 6️⃣ Show Upload button
     document.getElementById("sendBtn").style.display = "block";
   };
 
-  // Read the file
+  // Read the file as ArrayBuffer
   reader.readAsArrayBuffer(file);
 }
 
-
-
 function renderTable(tableData, unrecorded) {
-  if (!tableData || tableData.length === 0) return;
-
-  // 1️⃣ Render main table with numbering
-  let html = "<table border='1'><thead><tr>";
-  html += "<th>#</th>"; // numbering column
-  Object.keys(tableData[0]).forEach(col => html += `<th>${col}</th>`);
+  let html = "<table><thead><tr>";
+  Object.keys(tableData[0]).forEach(col => {
+    html += `<th>${col}</th>`;
+  });
   html += "</tr></thead><tbody>";
-
-  tableData.forEach((row, index) => {
+  tableData.forEach(row => {
     html += "<tr>";
-    html += `<td>${index + 1}</td>`; // number each row
-    Object.values(row).forEach(val => html += `<td>${val}</td>`);
+    Object.values(row).forEach(val => {
+      html += `<td>${val}</td>`;
+    });
     html += "</tr>";
   });
-
   html += "</tbody></table>";
   document.getElementById("output").innerHTML = html;
 
-  // 2️⃣ Render unrecorded list with numbering
-  if (unrecorded && unrecorded.length > 0) {
-    let list = "<div class='unrecorded'><strong>Unrecorded BoothCodes:</strong><ul>";
-    unrecorded.forEach((r, index) => 
-      list += `<li>${index + 1}. ${r.Operator} - ${r.Outlet} (${r.Municipality || ""})</li>`
-    );
+  if (unrecorded.length > 0) {
+    let list = "<div class='unrecorded'>Unrecorded BoothCodes:<ul>";
+    unrecorded.forEach(r => {
+      list += `<li>${r.Operator} - ${r.Outlet} (${r.Municipality})</li>`;
+    });
     list += "</ul></div>";
     document.getElementById("unrecorded").innerHTML = list;
   } else {
@@ -293,6 +277,7 @@ function renderTable(tableData, unrecorded) {
   }
 }
 
+ global so both functions can access
 
 document.getElementById("sendBtn").addEventListener("click", async () => {
   if (!unrecorded || unrecorded.length === 0) {
@@ -322,6 +307,8 @@ document.getElementById("sendBtn").addEventListener("click", async () => {
     alert("❌ Failed to append rows. Check console for details.");
   }
 });
+
+
   </script>
 </body>
 </html>

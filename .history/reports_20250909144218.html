@@ -240,10 +240,12 @@ async function handleFile(file) {
 
     // 4️⃣ Compare Excel vs POS
     unrecorded = tableData.filter((row) => {
+      const excelOperator = (row.Operator || "").toString().trim().toLowerCase();
       const excelOutlet = (row.Outlet || "").toString().trim().toLowerCase();
 
       return !posRows.some(
         (p) =>
+          p.operator.toLowerCase() === excelOperator &&
           p.boothcode.toLowerCase() === excelOutlet
       );
     });

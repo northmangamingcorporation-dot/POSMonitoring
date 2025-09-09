@@ -196,57 +196,34 @@ async function handleFile(file) {
     // 1️⃣ Prompt user to choose a sheet if multiple sheets exist
     let chosenSheet = workbook.SheetNames[0];
     if (workbook.SheetNames.length > 1) {
-      const sheetPrompt =
-        "Select a sheet to process:\n" +
+      const sheetPrompt = "Select a sheet to process:\n" +
         workbook.SheetNames.map((s, i) => `${i + 1}. ${s}`).join("\n");
-
-      let choice = prompt(sheetPrompt, "1");
-      let index = parseInt(choice, 10) - 1;
-
-      if (isNaN(index) || index < 0 || index >= workbook.SheetNames.length) {
-        alert("Invalid selection. Defaulting to first sheet.");
-        index = 0;
+      const choice = prompt(sheetPrompt, "1");
+      const index = parseInt(choice, 10) - 1;
+      if (index >= 0 && index < workbook.SheetNames.length) {
+        chosenSheet = workbook.SheetNames[index];
       }
-
-      chosenSheet = workbook.SheetNames[index];
     }
 
     // 2️⃣ Read selected sheet
     const sheet = workbook.Sheets[chosenSheet];
-    if (!sheet) {
-      alert("Selected sheet is empty or not found.");
-      return;
-    }
-
-    tableData = XLSX.utils.sheet_to_json(sheet, { defval: "" }); // use global, default empty values
-
-    if (!tableData.length) {
-      alert("Selected sheet has no data.");
-      return;
-    }
+    tableData = XLSX.utils.sheet_to_json(sheet); // assign to global
 
     // 3️⃣ Fetch POS data
     const posData = await getSheetData("POS");
-    if (!posData || posData.length < 2) {
-      alert("POS sheet is empty or missing.");
-      return;
-    }
-
     const headers = posData[0];
-    const posRows = posData.slice(1).map((r) => ({
-      operator: (r[headers.indexOf("Operator")] || "").toString().trim(),
-      boothcode: (r[headers.indexOf("Boothcode")] || "").toString().trim(),
+    const posRows = posData.slice(1).map(r => ({
+      operator: r[headers.indexOf("Operator")] || "",
+      boothcode: r[headers.indexOf("Boothcode")] || ""
     }));
 
     // 4️⃣ Compare Excel vs POS
-    unrecorded = tableData.filter((row) => {
-      const excelOutlet = (row.Outlet || "").toString().trim().toLowerCase();
-
-      return !posRows.some(
-        (p) =>
-          p.boothcode.toLowerCase() === excelOutlet
-      );
-    });
+    unrecorded = tableData.filter(row =>
+      !posRows.some(p =>
+        p.operator.toLowerCase() === String(row.Operator).toLowerCase() &&
+        p.boothcode.toLowerCase() === String(row.Outlet).toLowerCase()
+      )
+    );
 
     // 5️⃣ Render table and unrecorded list
     renderTable(tableData, unrecorded);
@@ -260,39 +237,28 @@ async function handleFile(file) {
 }
 
 
-
 function renderTable(tableData, unrecorded) {
-  if (!tableData || tableData.length === 0) return;
-
-  // 1️⃣ Render main table with numbering
-  let html = "<table border='1'><thead><tr>";
-  html += "<th>#</th>"; // numbering column
+  if (tableData.length === 0) return;
+  let html = "<table><thead><tr>";
   Object.keys(tableData[0]).forEach(col => html += `<th>${col}</th>`);
   html += "</tr></thead><tbody>";
-
-  tableData.forEach((row, index) => {
+  tableData.forEach(row => {
     html += "<tr>";
-    html += `<td>${index + 1}</td>`; // number each row
     Object.values(row).forEach(val => html += `<td>${val}</td>`);
     html += "</tr>";
   });
-
   html += "</tbody></table>";
   document.getElementById("output").innerHTML = html;
 
-  // 2️⃣ Render unrecorded list with numbering
-  if (unrecorded && unrecorded.length > 0) {
-    let list = "<div class='unrecorded'><strong>Unrecorded BoothCodes:</strong><ul>";
-    unrecorded.forEach((r, index) => 
-      list += `<li>${index + 1}. ${r.Operator} - ${r.Outlet} (${r.Municipality || ""})</li>`
-    );
+  if (unrecorded.length > 0) {
+    let list = "<div class='unrecorded'>Unrecorded BoothCodes:<ul>";
+    unrecorded.forEach(r => list += `<li>${r.Operator} - ${r.Outlet} (${r.Municipality})</li>`);
     list += "</ul></div>";
     document.getElementById("unrecorded").innerHTML = list;
   } else {
     document.getElementById("unrecorded").innerHTML = "";
   }
 }
-
 
 document.getElementById("sendBtn").addEventListener("click", async () => {
   if (!unrecorded || unrecorded.length === 0) {

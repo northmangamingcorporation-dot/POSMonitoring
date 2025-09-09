@@ -240,6 +240,7 @@ async function handleFile(file) {
 
     // 4️⃣ Compare Excel vs POS
     unrecorded = tableData.filter((row) => {
+      
       const excelOutlet = (row.Outlet || "").toString().trim().toLowerCase();
 
       return !posRows.some(

@@ -240,10 +240,12 @@ async function handleFile(file) {
 
     // 4️⃣ Compare Excel vs POS
     unrecorded = tableData.filter((row) => {
+      const excelOperator = (row.Operator || "").toString().trim().toLowerCase();
       const excelOutlet = (row.Outlet || "").toString().trim().toLowerCase();
 
       return !posRows.some(
         (p) =>
+          p.operator.toLowerCase() === excelOperator &&
           p.boothcode.toLowerCase() === excelOutlet
       );
     });
@@ -262,37 +264,27 @@ async function handleFile(file) {
 
 
 function renderTable(tableData, unrecorded) {
-  if (!tableData || tableData.length === 0) return;
-
-  // 1️⃣ Render main table with numbering
-  let html = "<table border='1'><thead><tr>";
-  html += "<th>#</th>"; // numbering column
+  if (tableData.length === 0) return;
+  let html = "<table><thead><tr>";
   Object.keys(tableData[0]).forEach(col => html += `<th>${col}</th>`);
   html += "</tr></thead><tbody>";
-
-  tableData.forEach((row, index) => {
+  tableData.forEach(row => {
     html += "<tr>";
-    html += `<td>${index + 1}</td>`; // number each row
     Object.values(row).forEach(val => html += `<td>${val}</td>`);
     html += "</tr>";
   });
-
   html += "</tbody></table>";
   document.getElementById("output").innerHTML = html;
 
-  // 2️⃣ Render unrecorded list with numbering
-  if (unrecorded && unrecorded.length > 0) {
-    let list = "<div class='unrecorded'><strong>Unrecorded BoothCodes:</strong><ul>";
-    unrecorded.forEach((r, index) => 
-      list += `<li>${index + 1}. ${r.Operator} - ${r.Outlet} (${r.Municipality || ""})</li>`
-    );
+  if (unrecorded.length > 0) {
+    let list = "<div class='unrecorded'>Unrecorded BoothCodes:<ul>";
+    unrecorded.forEach(r => list += `<li>${r.Operator} - ${r.Outlet} (${r.Municipality})</li>`);
     list += "</ul></div>";
     document.getElementById("unrecorded").innerHTML = list;
   } else {
     document.getElementById("unrecorded").innerHTML = "";
   }
 }
-
 
 document.getElementById("sendBtn").addEventListener("click", async () => {
   if (!unrecorded || unrecorded.length === 0) {
