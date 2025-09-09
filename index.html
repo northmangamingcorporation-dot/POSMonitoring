@@ -245,6 +245,11 @@
         // Load sheet (optimized)
         // ---------------------------
         async function loadSheet(sheetName) {
+            const container = document.getElementById("reportCard");
+            const tableCard = document.getElementById("tableCard");
+            container.style.display = "none"; // hide report when loading new sheet
+            tableCard.style.display = "block"; // show table card   
+            document.getElementById("toggleReportBtn").textContent = "📊 Show Report Analyzer";
             document.getElementById("sheetTitle").textContent = sheetName + " Data";
             sheetpage = sheetName;
             document.getElementById("tableContainer").innerHTML = "";
