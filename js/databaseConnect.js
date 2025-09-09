@@ -89,16 +89,21 @@ function isTokenExpired() {
 async function ensureAccessToken() {
   const modal = document.querySelector("auth-modal");
 
+  // Case 1: No token at all
   if (!accessToken) {
     console.log("No access token, showing login modal...");
     modal?.show();
     throw new Error("No access token");
   }
 
+  // Case 2: Token expired or near expiry → try silent refresh
   if (isTokenExpired()) {
     console.log("Token expired, refreshing silently...");
     tokenClient.requestAccessToken({ prompt: "" });
-    await new Promise((resolve) => setTimeout(resolve, 1000)); // wait a bit
+
+    // Wait a little to let the callback update `accessToken` and `tokenExpiry`
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+
     if (isTokenExpired()) {
       console.log("Silent refresh failed, showing login modal...");
       modal?.show();
@@ -106,6 +111,9 @@ async function ensureAccessToken() {
     }
   }
 
+  // ✅ If we reach here, token is valid → hide modal
+  modal?.hide();
   return accessToken;
 }
+
 // ---------------------------
