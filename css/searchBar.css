@@ -85,16 +85,23 @@
 #statusToolbar select {
   padding: 8px 12px;
   font-size: 14px;
-  border: 1px solid rgba(255,255,255,0.2);
+  border: 1px solid rgba(255,255,255,0.15);
   border-radius: 10px;
-  background: rgba(255, 255, 255, 0.08);
+  background: linear-gradient(180deg, #1e293b, #0f172a); /* match sidebar */
   color: #f1f5f9;
   cursor: pointer;
-  transition: border 0.2s, box-shadow 0.2s, transform 0.2s;
+  transition: border 0.2s, box-shadow 0.2s, transform 0.2s, background 0.3s;
+  appearance: none; /* hide default arrow */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%23cbd5e1' viewBox='0 0 20 20'%3E%3Cpath d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 16px 16px;
+  padding-right: 36px; /* space for arrow */
 }
 
 #statusToolbar select:hover {
   border-color: #2563eb;
+  background: linear-gradient(180deg, #24324d, #111827); /* lighter on hover */
   transform: translateY(-1px);
 }
 
@@ -102,4 +109,18 @@
   outline: none;
   border-color: #2563eb;
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.35);
+}
+
+/* Style dropdown options */
+#statusToolbar select option {
+  background-color: #1e293b;   /* dark background */
+  color: #f1f5f9;             /* light text */
+  padding: 8px 12px;
+}
+
+/* Optional: hovered option */
+#statusToolbar select option:checked,
+#statusToolbar select option:hover {
+  background-color: #2563eb;  /* blue highlight */
+  color: #fff;
 }

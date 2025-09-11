@@ -1,0 +1,112 @@
+.search-box {
+  margin-bottom: 16px;
+  width: 100%;
+  max-width: 400px; /* keeps it neat on large screens */
+  position: relative;
+}
+
+.search-box input {
+  width: 100%;
+  padding: 10px 38px 10px 14px; /* room for an icon on the right */
+  font-size: 14px;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  background: #fff;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+  transition: border 0.2s ease, box-shadow 0.2s ease;
+}
+
+.search-box input:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.3);
+}
+
+/* ------------------------------
+   Status Toolbar (Sidebar Style)
+------------------------------ */
+#statusToolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 18px;
+  padding: 18px;
+  background: linear-gradient(180deg, #1e293b, #0f172a);
+  border-radius: 14px;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.15);
+  color: #f1f5f9;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+#statusToolbar:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 18px rgba(0,0,0,0.25);
+}
+
+/* Status Badges */
+#statusToolbar .status-info {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+#statusToolbar .badge {
+  background: rgba(255, 255, 255, 0.1);
+  color: #f1f5f9;
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 20px;
+  border: 1px solid rgba(255,255,255,0.2);
+  transition: all 0.25s ease;
+}
+
+#statusToolbar .badge:hover {
+  background: #2563eb;
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.45);
+}
+
+/* Filter Rows */
+#statusToolbar .filter-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+#statusToolbar label {
+  font-weight: 600;
+  color: #e2e8f0;
+  font-size: 14px;
+  min-width: 120px;
+}
+
+/* Modern Select Dropdown */
+#statusToolbar select {
+  padding: 8px 12px;
+  font-size: 14px;
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 10px;
+  background: linear-gradient(180deg, #1e293b, #0f172a); /* match sidebar */
+  color: #f1f5f9;
+  cursor: pointer;
+  transition: border 0.2s, box-shadow 0.2s, transform 0.2s, background 0.3s;
+  appearance: none; /* hide default arrow */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%23cbd5e1' viewBox='0 0 20 20'%3E%3Cpath d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 16px 16px;
+  padding-right: 36px; /* space for arrow */
+}
+
+#statusToolbar select:hover {
+  border-color: #2563eb;
+  background: linear-gradient(180deg, #24324d, #111827); /* lighter on hover */
+  transform: translateY(-1px);
+}
+
+#statusToolbar select:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.35);
+}
