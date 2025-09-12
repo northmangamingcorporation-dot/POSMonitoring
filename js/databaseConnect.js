@@ -1,7 +1,7 @@
 // ------------------- Auth Config -------------------
 const CLIENT_ID = "900901251874-tlbsv8ph1rfcmtnk77pqm5dkqptip0ic.apps.googleusercontent.com";
 const SPREADSHEET_ID = "1VWPTrBlRIWOBHHIFttTUZH5mDnbKvieyR_gZOHsrNQQ";
-const SCOPES = "https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email";
+const SCOPES = "https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/drive.file";
 
 let tokenClient;
 let accessToken;
@@ -32,7 +32,7 @@ function initGIS() {
 }
 
 // ------------------- Fallback Token Handler -------------------
-function handleNewToken(tokenResponse) {
+async function handleNewToken(tokenResponse) {
   if (!tokenResponse) return;
 
   if (tokenResponse.error) {

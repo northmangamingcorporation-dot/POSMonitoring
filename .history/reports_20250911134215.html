@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Excel Report Analyzer</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="js/databaseConnect.js"></script>
+    <script src="js/dataManipulate.js"></script>
+    <script src="js/dataFiltering.js"></script>
+    <script src="js/auth-modal.js" defer></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <style>
+/* ---------- Base Styles ---------- */
+body {
+  font-family: "Segoe UI", Roboto, Arial, sans-serif;
+  padding: 20px;
+  background: #f9fafb;
+  color: #333;
+  line-height: 1.5;
+}
+
+/* ---------- Table ---------- */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+  background: #fff;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+}
+
+th, td {
+  padding: 10px 12px;
+  text-align: left;
+}
+
+th {
+  background: #f3f4f6;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 13px;
+  letter-spacing: 0.5px;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+td {
+  border-bottom: 1px solid #e5e7eb;
+  font-size: 14px;
+}
+
+tr:hover td {
+  background: #f9fafb;
+}
+
+/* ---------- Unrecorded Section ---------- */
+.unrecorded {
+  margin-top: 20px;
+  padding: 12px 16px;
+  border: 1px solid #fca5a5;
+  background: #fee2e2;
+  color: #b91c1c;
+  font-weight: 600;
+  border-radius: 6px;
+}
+
+.unrecorded ul {
+  margin: 8px 0 0;
+  padding-left: 20px;
+}
+
+.unrecorded li {
+  margin: 4px 0;
+}
+
+/* ---------- Button ---------- */
+button {
+  display: inline-block;
+  margin-top: 20px;
+  padding: 10px 18px;
+  background: #2563eb;
+  border: none;
+  border-radius: 6px;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.25s, transform 0.15s;
+}
+
+button:hover {
+  background: #1d4ed8;
+  transform: translateY(-1px);
+}
+
+button:active {
+  background: #1e40af;
+  transform: translateY(0);
+}
+
+/* ---------- Drop Zone ---------- */
+#dropZone {
+  margin: 20px auto;
+  padding: 40px;
+  border: 2px dashed #93c5fd;
+  border-radius: 12px;
+  background: #f9fafb;
+  text-align: center;
+  color: #555;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+  width: 90%;
+  height: 500px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+#dropZone:hover {
+  background: #f3f4f6;
+  border-color: #3b82f6;
+}
+
+#dropZone.dragover {
+  background: #e0f2fe;
+  border-color: #2563eb;
+  color: #1e40af;
+}
+
+#dropZone p {
+  margin: 0;
+}
+
+#browseLink {
+  color: #2563eb;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+  margin-top: 8px;
+}
+
+.file-name {
+  margin-top: 15px;
+  font-weight: 600;
+  color: #1f2937;
+  font-size: 15px;
+  word-break: break-all;
+}
+
+  </style>
+</head>
+<body>
+<h2>Excel Report Analyzer</h2>
+<div id="dropZone" class="drop-zone">
+  <p>Drag & drop your Excel file here or <span id="browseLink">browse</span></p>
+  <input type="file" id="fileInput" accept=".xlsx,.xls" hidden />
+</div>
+
+<!-- Will show after file is chosen -->
+<div id="fileName" class="file-name" style="display:none;"></div>
+
+  <div id="output"></div>
+  <div id="unrecorded"></div>
+  <button id="sendBtn" style="display:none;">Upload</button>
+
+  <script>
+let tableData = [];      // global
+let unrecorded = [];     // global
+
+const dropZone = document.getElementById("dropZone");
+const fileInput = document.getElementById("fileInput");
+const browseLink = document.getElementById("browseLink");
+const fileNameDisplay = document.getElementById("fileName");
+
+function showFileName(file) {
+  dropZone.style.display = "none";
+  fileNameDisplay.style.display = "block";
+  fileNameDisplay.textContent = `📂 Selected file: ${file.name}`;
+  handleFile(file);
+}
+
+// Browse link
+browseLink.addEventListener("click", () => fileInput.click());
+fileInput.addEventListener("change", (e) => {
+  if (e.target.files.length > 0) showFileName(e.target.files[0]);
+});
+
+// Drag & drop
+dropZone.addEventListener("dragover", (e) => { e.preventDefault(); dropZone.classList.add("dragover"); });
+dropZone.addEventListener("dragleave", () => dropZone.classList.remove("dragover"));
+dropZone.addEventListener("drop", (e) => {
+  e.preventDefault();
+  dropZone.classList.remove("dragover");
+  if (e.dataTransfer.files.length > 0) showFileName(e.dataTransfer.files[0]);
+});
+
+async function handleFile(file) {
+  const reader = new FileReader();
+
+  reader.onload = async (evt) => {
+    const data = new Uint8Array(evt.target.result);
+    const workbook = XLSX.read(data, { type: "array" });
+
+    // 1️⃣ Prompt user to choose a sheet if multiple sheets exist
+    let chosenSheet = workbook.SheetNames[0];
+    if (workbook.SheetNames.length > 1) {
+      const sheetPrompt =
+        "Select a sheet to process:\n" +
+        workbook.SheetNames.map((s, i) => `${i + 1}. ${s}`).join("\n");
+
+      let choice = prompt(sheetPrompt, "1");
+      let index = parseInt(choice, 10) - 1;
+
+      if (isNaN(index) || index < 0 || index >= workbook.SheetNames.length) {
+        alert("Invalid selection. Defaulting to first sheet.");
+        index = 0;
+      }
+
+      chosenSheet = workbook.SheetNames[index];
+    }
+
+    // 2️⃣ Read selected sheet
+    const sheet = workbook.Sheets[chosenSheet];
+    if (!sheet) {
+      alert("Selected sheet is empty or not found.");
+      return;
+    }
+
+    tableData = XLSX.utils.sheet_to_json(sheet, { defval: "" }); // use global, default empty values
+
+    if (!tableData.length) {
+      alert("Selected sheet has no data.");
+      return;
+    }
+
+    // 3️⃣ Fetch POS data
+    const posData = await getSheetData("POS");
+    if (!posData || posData.length < 2) {
+      alert("POS sheet is empty or missing.");
+      return;
+    }
+
+    const headers = posData[0];
+    const posRows = posData.slice(1).map((r) => ({
+      operator: (r[headers.indexOf("Operator")] || "").toString().trim(),
+      boothcode: (r[headers.indexOf("Boothcode")] || "").toString().trim(),
+    }));
+
+    // 4️⃣ Compare Excel vs POS
+    unrecorded = tableData.filter((row) => {
+      const excelOutlet = (row.Outlet || "").toString().trim().toLowerCase();
+
+      return !posRows.some(
+        (p) =>
+          p.boothcode.toLowerCase() === excelOutlet
+      );
+    });
+
+    // 5️⃣ Render table and unrecorded list
+    renderTable(tableData, unrecorded);
+
+    // 6️⃣ Show Upload button
+    document.getElementById("sendBtn").style.display = "block";
+  };
+
+  // Read the file
+  reader.readAsArrayBuffer(file);
+}
+
+
+
+function renderTable(tableData, unrecorded) {
+  if (!tableData || tableData.length === 0) return;
+
+  // 1️⃣ Render main table with numbering
+  let html = "<table border='1'><thead><tr>";
+  html += "<th>#</th>"; // numbering column
+  Object.keys(tableData[0]).forEach(col => html += `<th>${col}</th>`);
+  html += "</tr></thead><tbody>";
+
+  tableData.forEach((row, index) => {
+    html += "<tr>";
+    html += `<td>${index + 1}</td>`; // number each row
+    Object.values(row).forEach(val => html += `<td>${val}</td>`);
+    html += "</tr>";
+  });
+
+  html += "</tbody></table>";
+  document.getElementById("output").innerHTML = html;
+
+  // 2️⃣ Render unrecorded list with numbering
+  if (unrecorded && unrecorded.length > 0) {
+    let list = "<div class='unrecorded'><strong>Unrecorded BoothCodes:</strong><ul>";
+    unrecorded.forEach((r, index) => 
+      list += `<li>${index + 1}. ${r.Operator} - ${r.Outlet} (${r.Municipality || ""})</li>`
+    );
+    list += "</ul></div>";
+    document.getElementById("unrecorded").innerHTML = list;
+  } else {
+    document.getElementById("unrecorded").innerHTML = "";
+  }
+}
+
+
+document.getElementById("sendBtn").addEventListener("click", async () => {
+  if (!unrecorded || unrecorded.length === 0) {
+    alert("⚠️ No unrecorded rows to append.");
+    return;
+  }
+
+  try {
+    for (const row of unrecorded) {
+      await appendRow("UnrecordedBoothCodes", [
+        new Date().toISOString(),
+        "Unrecorded",
+        row.Outlet || "",
+        "",
+        "",
+        "",
+        "",
+        row.Municipality || "",
+        "",
+        row.Operator || "",
+        "Pending"
+      ]);
+    }
+    alert("✅ Data successfully appended to Google Sheets!");
+  } catch (err) {
+    console.error("❌ Error appending rows:", err);
+    alert("❌ Failed to append rows. Check console for details.");
+  }
+});
+  </script>
+</body>
+</html>

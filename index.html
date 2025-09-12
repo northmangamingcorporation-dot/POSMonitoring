@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="css/table.css">
     <link rel="stylesheet" href="css/searchBar.css">
     <link rel="stylesheet" href="css/modal.css">
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script src="https://accounts.google.com/gsi/client" async defer ></script>
     <script src="js/databaseConnect.js"></script>
     <script src="js/dataManipulate.js"></script>
     <script src="js/dataFiltering.js"></script>
@@ -40,6 +40,11 @@
             </div>
         </div>
         
+        <!-- ✅ Button to toggle report -->
+        <button id="toggleAccomplishmentBtn" style="margin-top: 12px; padding: 8px 16px; border: none; border-radius: 6px; background: #007bff; color: white; cursor: pointer; width: 100%;">
+            📄 Show Accomplishment Report
+        </button>
+
         <!-- ✅ Button to toggle report -->
         <button id="toggleReportBtn" style="margin-top: 12px; padding: 8px 16px; border: none; border-radius: 6px; background: #007bff; color: white; cursor: pointer; width: 100%;">
             📊 Show Report Analyzer
@@ -203,6 +208,12 @@ document.getElementById("toggleITMonitoringBtn").classList.add("toggleBtn");
 document.getElementById("toggleITMonitoringBtn").dataset.label = "IT Monitoring";
 document.getElementById("toggleITMonitoringBtn").addEventListener("click", function() {
     toggleContainer(this, "itMonitor/index.html", "IT Monitoring");
+});
+
+document.getElementById("toggleAccomplishmentBtn").classList.add("toggleBtn");
+document.getElementById("toggleAccomplishmentBtn").dataset.label = "Accomplishment Report";
+document.getElementById("toggleAccomplishmentBtn").addEventListener("click", function() {
+    toggleContainer(this, "accomplishmentReport.html", "Accomplishment Report");
 });
 
         async function getSheetNames() {

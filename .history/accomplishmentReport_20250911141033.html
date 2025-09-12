@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>IT Accomplishment Report</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  
+</head>
+<body class="bg-gray-100 min-h-screen p-6">
+<h1 class="text-2xl font-bold text-center text-gray-800 mb-6">IT Accomplishment Reports</h1>
+
+<!-- Controls -->
+<div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+  <!-- Add Button -->
+  <button id="openModalBtn" class="px-4 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition">
+    ➕ Add New Report
+  </button>
+
+  <!-- Search + Sort -->
+  <div class="flex items-center gap-3">
+    <input 
+      type="text" 
+      id="searchInput" 
+      placeholder="Search reports..." 
+      class="px-3 py-2 border rounded-lg text-sm w-64"
+    >
+
+    <select id="sortSelect" class="px-3 py-2 border rounded-lg text-sm">
+      <option value="newest">Newest First</option>
+      <option value="oldest">Oldest First</option>
+    </select>
+  </div>
+</div>
+
+  <!-- Reports Grid -->
+  <div id="reportsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8"></div>
+
+  <!-- Modal -->
+  <div id="reportModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg shadow-lg w-full max-w-lg p-6">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-lg font-semibold text-gray-800">New Report</h2>
+        <button id="closeModal" class="text-gray-600 hover:text-gray-800">&times;</button>
+      </div>
+      <form id="reportForm" class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Date of Service</label>
+          <input type="date" id="date" required class="mt-1 w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Time of Service</label>
+          <input type="time" id="time" required class="mt-1 w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Service Type</label>
+          <select id="serviceType" required class="mt-1 w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500">
+            <option value="">-- Select Service --</option>
+            <option value="Cleaning Units">Cleaning Units</option>
+            <option value="Repair & Maintenance">Repair & Maintenance</option>
+            <option value="Software Installation">Software Installation</option>
+            <option value="Network Support">Network Support</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Location</label>
+          <input type="text" id="location" placeholder="Ex: Data Center - Building A" class="mt-1 w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Description of Work</label>
+          <textarea id="description" rows="3" required class="mt-1 w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500"></textarea>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Upload Proof (multiple images allowed)</label>
+          <input type="file" id="images" multiple accept="image/*" class="mt-1 w-full">
+          <div id="preview" class="flex gap-2 mt-2 flex-wrap"></div>
+        </div>
+        <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700">Submit Report</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const modal = document.getElementById("reportModal");
+    const openModalBtn = document.getElementById("openModalBtn");
+    const closeModal = document.getElementById("closeModal");
+    const form = document.getElementById("reportForm");
+    const preview = document.getElementById("preview");
+    const reportsGrid = document.getElementById("reportsGrid");
+
+    let uploadedImages = [];
+
+    // Modal Controls
+    openModalBtn.onclick = () => modal.classList.remove("hidden");
+    closeModal.onclick = () => { modal.classList.add("hidden"); resetForm(); };
+    window.onclick = (e) => { if (e.target === modal) { modal.classList.add("hidden"); resetForm(); } };
+
+    // Preview uploaded images
+    document.getElementById("images").addEventListener("change", (e) => {
+      preview.innerHTML = "";
+      uploadedImages = [];
+      Array.from(e.target.files).forEach(file => {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const img = document.createElement("img");
+          img.src = event.target.result;
+          img.className = "w-12 h-12 rounded object-cover border";
+          preview.appendChild(img);
+          uploadedImages.push(event.target.result);
+        };
+        reader.readAsDataURL(file);
+      });
+    });
+
+    // Submit Form
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+
+      const date = document.getElementById("date").value;
+      const time = document.getElementById("time").value;
+      const serviceType = document.getElementById("serviceType").value;
+      const location = document.getElementById("location").value;
+      const description = document.getElementById("description").value;
+
+      // Card template
+      const card = document.createElement("div");
+      card.className = "bg-white rounded-lg shadow hover:shadow-lg transition overflow-hidden group";
+
+      card.innerHTML = `
+        <div class="relative">
+          <img src="${uploadedImages[0] || 'https://via.placeholder.com/400x200?text=No+Image'}" 
+               alt="Proof Image" class="w-full h-48 object-cover" />
+          <div class="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition">
+            <div class="flex space-x-2">
+              <button class="w-8 h-8 bg-white rounded-full shadow flex items-center justify-center hover:bg-blue-600 hover:text-white">
+                <i class="fas fa-edit text-xs"></i>
+              </button>
+              <button class="w-8 h-8 bg-white rounded-full shadow flex items-center justify-center hover:bg-red-600 hover:text-white">
+                <i class="fas fa-trash text-xs"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="p-6">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-sm font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded">
+              <i class="fas fa-calendar mr-1"></i>${date}
+            </span>
+            <span class="text-xs text-gray-500">${time}</span>
+          </div>
+          <p class="text-sm text-gray-500 mb-2"><i class="fas fa-map-marker-alt mr-1"></i>${location || 'N/A'}</p>
+          <h3 class="font-semibold text-gray-800 mb-2">${serviceType}</h3>
+          <p class="text-sm text-gray-600 mb-4">${description}</p>
+          <div class="flex items-center justify-between">
+            <div class="flex -space-x-2">
+              ${uploadedImages.slice(0,3).map(src => `
+                <img src="${src}" class="w-8 h-8 rounded-full border-2 border-white object-cover" />
+              `).join('')}
+              ${uploadedImages.length > 3 ? `
+                <div class="w-8 h-8 bg-gray-200 rounded-full border-2 border-white flex items-center justify-center">
+                  <span class="text-xs text-gray-600">+${uploadedImages.length - 3}</span>
+                </div>
+              ` : ""}
+            </div>
+            <a href="#" class="view-details-btn text-blue-600 hover:text-blue-800 text-sm font-medium">
+                View Details <i class="fas fa-arrow-right ml-1"></i>
+              </a>
+          </div>
+        </div>
+      `;
+
+      reportsGrid.prepend(card);
+      modal.classList.add("hidden");
+      resetForm();
+    });
+
+    function resetForm() {
+      form.reset();
+      preview.innerHTML = "";
+      uploadedImages = [];
+    }
+
+// 🔍 SEARCH FUNCTION
+document.getElementById("searchInput").addEventListener("input", function () {
+  const query = this.value.toLowerCase();
+  document.querySelectorAll("#reportsGrid .group").forEach(card => {
+    const text = card.innerText.toLowerCase();
+    card.style.display = text.includes(query) ? "" : "none";
+  });
+});
+
+// 📑 SORT FUNCTION
+document.getElementById("sortSelect").addEventListener("change", function () {
+  const sortType = this.value;
+  const grid = document.getElementById("reportsGrid");
+  const cards = Array.from(grid.children);
+
+  cards.sort((a, b) => {
+    const dateA = new Date(a.querySelector(".fa-calendar").parentElement.innerText.trim());
+    const dateB = new Date(b.querySelector(".fa-calendar").parentElement.innerText.trim());
+    return sortType === "newest" ? dateB - dateA : dateA - dateB;
+  });
+
+  // Re-append sorted cards
+  cards.forEach(card => grid.appendChild(card));
+});
+
+
+document.addEventListener('DOMContentLoaded', () => {
+
+  // show details modal for a card element — returns the created modal element
+  function showCardDetails(card) {
+    if (!card) { console.error('showCardDetails: no card passed'); return null; }
+
+    // title (h3 or .title)
+    const titleEl = card.querySelector('h3, .title, .report-title');
+    const title = titleEl ? titleEl.innerText.trim() : '';
+
+    // description => choose the longest <p>
+    const pEls = Array.from(card.querySelectorAll('p'));
+    const descEl = pEls.reduce((best, p) => {
+      if (!best) return p;
+      return (p.innerText.trim().length > best.innerText.trim().length) ? p : best;
+    }, null);
+    const description = descEl ? descEl.innerText.trim() : '';
+
+    // date/time: search for date-like and time-like text among spans/time/small/divs
+    let date = '', time = '';
+    const candidates = Array.from(card.querySelectorAll('span, time, small, div'));
+    for (const el of candidates) {
+      const txt = (el.innerText || '').trim();
+      if (!txt) continue;
+      if (!date) {
+        // accepts YYYY-MM-DD or M/D/YYYY or M/D/YY
+        const dmatch = txt.match(/\b\d{4}-\d{2}-\d{2}\b|(\b\d{1,2}\/\d{1,2}\/\d{2,4}\b)/);
+        if (dmatch) date = dmatch[0];
+      }
+      if (!time) {
+        const tmatch = txt.match(/\b\d{1,2}:\d{2}\s?(AM|PM|am|pm)?\b/);
+        if (tmatch) time = tmatch[0];
+      }
+      if (date && time) break;
+    }
+
+    // location: look for map marker icon inside the card and get its parent text
+    let location = '';
+    const locIcon = card.querySelector('.fa-map-marker-alt, .fa-map-marker');
+    if (locIcon && locIcon.parentElement) location = locIcon.parentElement.innerText.trim();
+
+    // images: collect all <img> srcs inside the card
+    const images = Array.from(card.querySelectorAll('img'))
+      .map(img => img.src)
+      .filter(Boolean);
+
+    // helper to escape HTML safely for injection
+    function esc(s) {
+      return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    // build modal
+    const overlay = document.createElement('div');
+    overlay.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50';
+    overlay.style.padding = '1rem';
+
+    overlay.innerHTML = `
+      <div class="bg-white rounded-lg shadow-lg w-full max-w-3xl p-6 relative overflow-auto" style="max-height:90vh;">
+        <button type="button" class="close-modal" aria-label="Close" style="position:absolute;right:12px;top:8px;font-size:22px;border:none;background:none;cursor:pointer;">&times;</button>
+        <h2 class="text-xl font-semibold mb-2">${esc(title)}</h2>
+        <div class="text-sm text-gray-500 mb-3">
+          ${ date ? `<span style="margin-right:0.75rem;"><i class="fas fa-calendar" style="margin-right:6px;"></i>${esc(date)}</span>` : '' }
+          ${ time ? `<span><i class="far fa-clock" style="margin-right:6px;"></i>${esc(time)}</span>` : '' }
+        </div>
+        ${ location ? `<div class="text-sm text-gray-600 mb-4"><i class="fas fa-map-marker-alt" style="margin-right:6px;"></i>${esc(location)}</div>` : '' }
+        <p class="text-gray-700 mb-4">${esc(description)}</p>
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+          ${ images.length ? images.map(src => `<img src="${esc(src)}" class="w-full h-40 object-cover rounded">`).join('') : '<div class="text-sm text-gray-500">No images</div>' }
+        </div>
+      </div>
+    `;
+
+    // close handlers
+    overlay.querySelector('.close-modal').addEventListener('click', () => overlay.remove());
+    overlay.addEventListener('click', (ev) => { if (ev.target === overlay) overlay.remove(); });
+
+    document.body.appendChild(overlay);
+    return overlay;
+  }
+
+  // Delegated click handler — works even if you don't add a custom class
+  document.addEventListener('click', (ev) => {
+    // 1) prefer anchors with class or data attribute
+    const anchor = ev.target.closest('a.view-details-btn, a[data-action="view-details"]') 
+                 // 2) fallback: any <a> whose visible text starts with "View Details"
+                 || (ev.target.closest('a') && ev.target.closest('a').textContent.trim().startsWith('View Details') ? ev.target.closest('a') : null);
+
+    if (!anchor) return; // not a view-details click
+
+    ev.preventDefault();
+
+    // find the card ancestor (tries several common classes)
+    const card = anchor.closest('.group, .report-card, .bg-surface, [data-report-id]');
+    if (!card) {
+      console.warn('View Details clicked but could not find a parent card element. Make sure the link is inside the card container.');
+      return;
+    }
+
+    showCardDetails(card);
+  });
+
+});
+
+  </script>
+</body>
+</html>
