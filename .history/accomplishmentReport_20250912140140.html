@@ -202,7 +202,7 @@ for (const row of rows) {
       <div class="flex items-center justify-between">
         <div class="flex -space-x-2">
           ${finalImages.slice(0,3).map(src => `
-            <img src="${src}" alt="Report proof image" class="w-8 h-8 rounded-full border-2 border-white object-cover" />
+            <img src="${src}" class="w-8 h-8 rounded-full border-2 border-white object-cover" />
           `).join('')}
           ${finalImages.length > 3 ? `
             <div class="w-8 h-8 bg-gray-200 rounded-full border-2 border-white flex items-center justify-center">
@@ -218,6 +218,7 @@ for (const row of rows) {
   `;
 
   console.log(`Rendering card ${cardId} on page.`);
+  toastr.success(`Rendering card ${cardId} on page.`);
   reportsGrid.prepend(card);
   attachCardEvents(card);
 }
@@ -286,7 +287,7 @@ function handleFiles(files) {
           "fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50";
         modal.innerHTML = `
           <div class="relative">
-            <img src="${fileSrc}" alt="Preview Image" class="max-h-[90vh] max-w-[90vw] rounded shadow-lg">
+            <img src="${fileSrc}" class="max-h-[90vh] max-w-[90vw] rounded shadow-lg">
             <button class="absolute top-2 right-2 bg-white text-black rounded-full w-8 h-8 flex items-center justify-center">&times;</button>
           </div>
         `;
@@ -328,6 +329,22 @@ function updateFileInput() {
   fileInput.files = dataTransfer.files;
 }
 
+// Enable pasting images from clipboard
+document.addEventListener("paste", (e) => {
+  const items = e.clipboardData.items;
+  for (let i = 0; i < items.length; i++) {
+    const item = items[i];
+    if (item.type.startsWith("image/")) {
+      const file = item.getAsFile();
+      if (file) {
+        handleFiles([file]);
+        toastr.success("Image pasted successfully!");
+      }
+    }
+  }
+});
+
+
 // Show/hide instruction text
 function toggleDropzoneText() {
   dropzoneText.style.display = uploadedImages.length > 0 ? "none" : "block";
@@ -335,9 +352,9 @@ function toggleDropzoneText() {
 }
     // Submit Form
     // Submit Form (New or Edit)
-form.addEventListener("submit", async (e) => {
+form.addEventListener("submit", (e) => {
   e.preventDefault();
-  const editingId = form.dataset.editingId || null;
+
   const date = document.getElementById("date").value;
   const time = document.getElementById("time").value;
   const serviceType = document.getElementById("serviceType").value;
@@ -346,80 +363,34 @@ form.addEventListener("submit", async (e) => {
 
   // Check if editing
   if (form.dataset.editingId) {
-        console.log("Editing existing report with ID:", editingId);
-        toastr.info("Editing existing report with ID: " + editingId);
+    // Find the card being edited
+    const card = reportsGrid.querySelector(`[data-id="${form.dataset.editingId}"]`);
+    if (card) {
+      // Update fields inside card
+      card.querySelector(".fa-calendar").nextSibling.textContent = ` ${date}`;
+      card.querySelector("span.text-xs").textContent = time;
+      card.querySelector(".report-title").textContent = serviceType;
+      card.querySelector("p.text-sm").innerHTML = `<i class="fas fa-map-marker-alt mr-1"></i>${location || 'N/A'}`;
+      card.querySelector(".report-desc").textContent = description;
 
-        const finalImageLinks = [];
+      // Update main image
+      card.querySelector("img.w-full").src = uploadedImages[0] || "https://via.placeholder.com/400x200?text=No+Image";
 
-        // Keep existing images
-        for (const img of uploadedImages) {
-          if (typeof img === "string") {
-            finalImageLinks.push(img);
-          } else if (img?.src) {
-            finalImageLinks.push(img.src);
-          }
-        }
-
-        // Upload new files
-        for (let i = 0; i < uploadedImageFiles.length; i++) {
-          const file = uploadedImageFiles[i];
-          toastr.info(`Uploading image ${i + 1} of ${uploadedImageFiles.length}...`);
-          const url = await uploadToDriveStandalone(file, `report_${editingId || Date.now()}_${i}.png`);
-          finalImageLinks.push(url);
-        }
-        const sheetName = "Accomplishment Report";
-        toastr.info("Editing existing report...");
-          // EDIT EXISTING
-          const rows = await getSheetData(sheetName);
-          const rowIndex = rows.findIndex(r => r[0] === editingId);
-          if (rowIndex === -1) throw new Error("Row not found in sheet");
-
-          // Remove deleted images from Drive
-          const oldLinks = rows[rowIndex][6]?.split(",").map(s => s.trim()).filter(Boolean) || [];
-          const removed = oldLinks.filter(link => !finalImageLinks.includes(link));
-          for (const link of removed) {
-            const match = link.match(/id=([a-zA-Z0-9_-]+)/);
-            if (match) {
-              try {
-                await deleteFromDrive(match[1]);
-                toastr.warning("Removed old image from Drive", match[1]);
-              } catch (err) {
-                toastr.error("Failed to delete old image from Drive");
-                console.warn("Delete error:", err);
-              }
-            }
-          }
-
-          const values = [
-            editingId,
-            date,
-            time,
-            serviceType,
-            location,
-            description,
-            finalImageLinks.join(", ")
-          ];
-
-          await updateRow(sheetName, rowIndex + 1, values);
-          toastr.success("Report updated successfully!");
-
-          // Update DOM card
-          const card = document.querySelector(`.report-card[data-id="${editingId}"]`);
-          if (card) {
-            card.querySelector(".fa-calendar").nextSibling.textContent = date;
-            card.querySelector("span.text-xs").textContent = time;
-            card.querySelector(".report-title").textContent = serviceType;
-            card.querySelector("p.text-sm").innerHTML = `<i class="fas fa-map-marker-alt mr-1"></i>${location}`;
-            card.querySelector(".report-desc").textContent = description;
-
-            const imgContainer = card.querySelector(".flex.-space-x-2");
-            imgContainer.innerHTML = finalImageLinks.slice(0, 3).map(src => `
-              <img src="${src}" alt="Report proof image" class="w-8 h-8 rounded-full border-2 border-white object-cover" />
-            `).join("");
-          }
-        delete form.dataset.editingId; // clear edit mode
+      // Update preview thumbnails
+      const previewContainer = card.querySelector(".flex.-space-x-2");
+      previewContainer.innerHTML = `
+        ${uploadedImages.slice(0,3).map(src => `
+          <img src="${src}" class="w-8 h-8 rounded-full border-2 border-white object-cover" />
+        `).join('')}
+        ${uploadedImages.length > 3 ? `
+          <div class="w-8 h-8 bg-gray-200 rounded-full border-2 border-white flex items-center justify-center">
+            <span class="text-xs text-gray-600">+${uploadedImages.length - 3}</span>
+          </div>
+        ` : ""}
+      `;
+    }
+    delete form.dataset.editingId; // clear edit mode
   } else {
-    toastr.info("Adding new report...");
     // Create NEW card
     const card = document.createElement("div");
     card.className = "report-card bg-white rounded-lg shadow hover:shadow-lg transition overflow-hidden group";
@@ -460,7 +431,7 @@ form.addEventListener("submit", async (e) => {
         <div class="flex items-center justify-between">
           <div class="flex -space-x-2">
             ${uploadedImages.slice(0,3).map(src => `
-              <img src="${src}" alt="Report proof image" class="w-8 h-8 rounded-full border-2 border-white object-cover" />
+              <img src="${src}" class="w-8 h-8 rounded-full border-2 border-white object-cover" />
             `).join('')}
             ${uploadedImages.length > 3 ? `
               <div class="w-8 h-8 bg-gray-200 rounded-full border-2 border-white flex items-center justify-center">
@@ -477,29 +448,13 @@ form.addEventListener("submit", async (e) => {
 
     reportsGrid.prepend(card);
     attachCardEvents(card);
-    await saveReportToSheet(card); // save to sheet
+    saveReportToSheet(card); // save to sheet
   }
 
   // Close modal + reset form
   modal.classList.add("hidden");
   resetForm();
 });
-
-// Enable pasting images from clipboard
-document.addEventListener("paste", (e) => {
-  const items = e.clipboardData.items;
-  for (let i = 0; i < items.length; i++) {
-    const item = items[i];
-    if (item.type.startsWith("image/")) {
-      const file = item.getAsFile();
-      if (file) {
-        handleFiles([file]);
-        toastr.success("Image pasted successfully!");
-      }
-    }
-  }
-});
-
 
 // -------------------------------
 // Save report card context to Google Sheets
@@ -671,7 +626,8 @@ function attachCardEvents(card) {
   }
 }
 
-  async function editReport(card) {
+// Edit report
+async function editReport(card) {
     // ✅ Store editing context (cardId + rowIndex)
     const cardId = card.dataset.id;
     const rows = await getSheetData("Accomplishment Report");
@@ -757,6 +713,110 @@ function attachCardEvents(card) {
     modal.classList.remove("hidden");
 
   }
+
+form.addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const sheetName = "Accomplishment Report";
+  const editingId = form.dataset.editingId;
+
+  if (!editingId) {
+    toastr.warning("No report selected for editing.");
+    return; // 🚫 Exit early, no save if not editing
+  }
+
+  const date = document.getElementById("date").value;
+  const time = document.getElementById("time").value;
+  const serviceType = document.getElementById("serviceType").value;
+  const location = document.getElementById("location").value;
+  const description = document.getElementById("description").value;
+
+  try {
+    toastr.info("Processing edit...", "Please wait");
+
+    const finalImageLinks = [];
+
+    // Keep existing images
+    for (const img of uploadedImages) {
+      if (typeof img === "string") {
+        finalImageLinks.push(img);
+      } else if (img?.src) {
+        finalImageLinks.push(img.src);
+      }
+    }
+
+    // Upload new files
+    for (let i = 0; i < uploadedImageFiles.length; i++) {
+      const file = uploadedImageFiles[i];
+      toastr.info(`Uploading image ${i + 1} of ${uploadedImageFiles.length}...`);
+      const url = await uploadToDriveStandalone(file, `report_${editingId}_${i}.png`);
+      finalImageLinks.push(url);
+    }
+
+    // ✏️ EDIT EXISTING
+    const rows = await getSheetData(sheetName);
+    const rowIndex = rows.findIndex(r => r[0] === editingId);
+    if (rowIndex === -1) throw new Error("Row not found in sheet");
+
+    // Remove deleted images from Drive
+    const oldLinks = rows[rowIndex][6]?.split(",").map(s => s.trim()).filter(Boolean) || [];
+    const removed = oldLinks.filter(link => !finalImageLinks.includes(link));
+    for (const link of removed) {
+      const match = link.match(/id=([a-zA-Z0-9_-]+)/);
+      if (match) {
+        try {
+          await deleteFromDrive(match[1]);
+          toastr.warning("Removed old image from Drive", match[1]);
+        } catch (err) {
+          toastr.error("Failed to delete old image from Drive");
+          console.warn("Delete error:", err);
+        }
+      }
+    }
+
+    const values = [
+      editingId,
+      date,
+      time,
+      serviceType,
+      location,
+      description,
+      finalImageLinks.join(", ")
+    ];
+
+    await updateRow(sheetName, rowIndex + 1, values);
+    toastr.success("Report updated successfully!");
+
+    // Update DOM card
+    const card = document.querySelector(`.report-card[data-id="${editingId}"]`);
+    if (card) {
+      card.querySelector(".fa-calendar").nextSibling.textContent = date;
+      card.querySelector("span.text-xs").textContent = time;
+      card.querySelector(".report-title").textContent = serviceType;
+      card.querySelector("p.text-sm").innerHTML = `<i class="fas fa-map-marker-alt mr-1"></i>${location}`;
+      card.querySelector(".report-desc").textContent = description;
+
+      const imgContainer = card.querySelector(".flex.-space-x-2");
+      imgContainer.innerHTML = finalImageLinks.slice(0, 3).map(src => `
+        <img src="${src}" class="w-8 h-8 rounded-full border-2 border-white object-cover" />
+      `).join("");
+    }
+
+    // Reset modal + form
+    modal.classList.add("hidden");
+    form.reset();
+    delete form.dataset.editingId;
+    delete form.dataset.editingRow;
+    uploadedImages = [];
+    uploadedImageFiles = [];
+    preview.innerHTML = "";
+    toggleDropzoneText();
+
+  } catch (err) {
+    console.error("Save failed:", err);
+    toastr.error("Error updating report: " + err.message);
+  }
+});
 
 
 

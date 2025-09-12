@@ -6,6 +6,10 @@
     <title>STI Northman Gaming - Data Manager</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+      <!-- Toastr (requires jQuery) -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
     <link rel="icon" type="image/jpeg" href="image/cancellationlogo.jpg">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/table.css">
@@ -130,6 +134,7 @@
                 logChange("LOGIN", "", null, "");
             } catch (err) {
                 console.error("Error fetching user profile:", err);
+                toastr.error("Failed to load user profile. Please try re-authenticating.");
             }
         }
 
@@ -158,6 +163,7 @@
                 }
             } catch (err) {
                 console.error("Error loading sheets:", err);
+                toastr.error("Failed to load sheets. Please try again.");
             }
         }
 
@@ -181,7 +187,8 @@
     // Hide other section if open
     if (otherButton.textContent.startsWith("❌")) {
         const otherLabel = otherButton.dataset.label;
-        otherButton.textContent = `📊 Show ${otherLabel}`;    
+        otherButton.textContent = `📊 Show ${otherLabel}`; 
+        toastr.info(`${otherLabel} hidden.`, "", { timeOut: 2000 });   
     }
 
     // Show/Hide current section
@@ -190,10 +197,12 @@
         tableCard.style.display = "none";
         iframe.src = src;
         button.textContent = `❌ Hide ${label}`;
+        toastr.info(`${label} loaded.`, "", { timeOut: 2000 });
     } else {
         container.style.display = "none";
         tableCard.style.display = "block";
         button.textContent = `📊 Show ${label}`;
+        toastr.info(`${label} hidden.`, "", { timeOut: 2000 });
     }
 };
 
@@ -231,6 +240,7 @@ document.getElementById("toggleAccomplishmentBtn").addEventListener("click", fun
 
                 if (res.status === 401) {
                     console.warn("Access token invalid, retrying with silent refresh...");
+                    toastr.warning("Session expired. Attempting to refresh...", "", { timeOut: 3000 });
                     const refreshed = await attemptSilentAuth();
                     if (!refreshed) {
                         showAuthModal();
@@ -245,6 +255,7 @@ document.getElementById("toggleAccomplishmentBtn").addEventListener("click", fun
 
                 if (!res.ok) {
                     console.error(`Failed to fetch sheet names: ${res.status} ${res.statusText}`);
+                    toastr.error("Failed to fetch sheet names. Please try again.");
                     return [];
                 }
 
@@ -253,6 +264,7 @@ document.getElementById("toggleAccomplishmentBtn").addEventListener("click", fun
                 return data.sheets.map(s => s.properties.title);
             } catch (err) {
                 console.error("Error fetching sheet names:", err);
+                toastr.error("Error fetching sheet names. Please check your connection.");
                 return [];
             } finally {
                 showLoader(false);
@@ -322,6 +334,7 @@ document.getElementById("toggleAccomplishmentBtn").addEventListener("click", fun
 
                 // Render table immediately (no styles yet)
                 renderTable(values, sheetName);
+                
 
                 // ✅ Load formatting in background (optional)
                 const urlFormat = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}?ranges=${encodeURIComponent(sheetName)}&fields=sheets.data.rowData.values.effectiveFormat.backgroundColor&includeGridData=true`;
@@ -337,6 +350,7 @@ document.getElementById("toggleAccomplishmentBtn").addEventListener("click", fun
                 applyCellFormatting();
             } catch (err) {
                 console.error("Error loading sheet:", err);
+                toastr.error("Failed to load sheet data. Please try again.");   
             } finally {
                 showLoader(false);
             }
@@ -382,6 +396,8 @@ document.getElementById("toggleAccomplishmentBtn").addEventListener("click", fun
                     actionBtns.forEach(btn => btn.disabled = false);
                 }
             }
+            toastr.info(`Filtered results for "${filter}".`, "", { timeOut: 2000 });
+
         });
 
 
@@ -502,6 +518,7 @@ document.getElementById("toggleAccomplishmentBtn").addEventListener("click", fun
 
             // Apply formatting
             applyCellFormatting();
+            toastr.info("Table loaded successfully.", "", { timeOut: 2000 });
         }
 
         // ---------------------------
@@ -601,6 +618,7 @@ document.getElementById("toggleAccomplishmentBtn").addEventListener("click", fun
   });
 
   document.getElementById("addModal").style.display="flex";
+    toastr.info("Fill out the form to add a new row.", "", { timeOut: 4000 });
 }
 
 function closeModal() { document.getElementById("addModal").style.display="none"; }
@@ -612,6 +630,7 @@ async function saveNewRow() {
   const data = await appendRow(addSheetName, newValues);
   renderTable(data, addSheetName);
   closeModal();
+    toastr.success("New row added successfully.", "", { timeOut: 2000 });
 }
 
 function editRow(primaryKey, tableRowIndex, sheetName) {
@@ -622,6 +641,7 @@ function editRow(primaryKey, tableRowIndex, sheetName) {
   const row = tbody.rows[tableRowIndex - 1]; // <-- map to tbody
   if (!row) {
     console.error("Row not found for editing:", tableRowIndex);
+    toastr.error("Failed to enter edit mode. Please try again.");
     return;
   }
 
@@ -696,6 +716,7 @@ function editRow(primaryKey, tableRowIndex, sheetName) {
       <button onclick="cancelEdit()">✖</button>
     </div>
   `;
+    toastr.info("You are now in edit mode. Make changes and click 💾 to save.", "", { timeOut: 4000 });
 }
 
 async function saveRow() {
@@ -733,6 +754,7 @@ async function saveRow() {
     }
   }).catch(err => {
     console.error("Save failed:", err);
+    toastr.error("Failed to save changes. Please try again.");
     // optionally show modal if auth expired
     showAuthModal();
   });
@@ -743,7 +765,7 @@ async function saveRow() {
       <button onclick="editRow(${primaryKey}, ${tableRowIndex}, '${sheetName}')">✏️</button>
       <button onclick="deleteRowHandler(${primaryKey}, '${sheetName}')">🗑️</button>
     </div>`;
-
+  toastr.success("Changes saved successfully.", "", { timeOut: 2000 });
   currentEdit = null;
 }
 
@@ -756,6 +778,7 @@ async function cancelEdit() {
   renderTable(data, currentEdit.sheetName);
   currentEdit = null;
   showLoader(false);
+  toastr.info("Edit cancelled.", "", { timeOut: 2000 });
 }
 
 
@@ -764,6 +787,7 @@ async function deleteRowHandler(primaryKey, sheetName) {
   showLoader(true);
   const data = await deleteRow(sheetName, primaryKey);
   renderTable(data, sheetName);
+  toastr.success("Row deleted successfully.", "", { timeOut: 2000 });
   showLoader(false);
 }
     </script>
