@@ -151,17 +151,26 @@ for (const row of rows) {
   ] = row;
 
   // Split imagePaths into array, trim whitespace
-  const images = imagePaths ? imagePaths.split(",").map(s => s.trim()) : [];
-  // ✅ Convert Google Drive links into embeddable thumbnail links
-  const finalImages = images.map(src => {
-    if (src.includes("drive.google.com")) {
-      const match = src.match(/[-\w]{25,}/); // extract FILE_ID
-      if (match) {
-        return `https://drive.google.com/thumbnail?id=${match[0]}&sz=w1000`;
-      }
+const images = imagePaths ? imagePaths.split(",").map(s => s.trim()) : [];
+
+// ✅ Normalize Google Drive links
+const finalImages = images.map(src => {
+  if (src.includes("drive.google.com")) {
+    // If already a thumbnail link -> keep it
+    if (src.includes("/thumbnail?id=")) {
+      return src;
     }
-    return src; // leave non-Drive links as-is
-  });
+
+    // Otherwise, try to extract FILE_ID and build thumbnail
+    const match = src.match(/[-\w]{25,}/); // Google Drive FILE_ID
+    if (match) {
+      return `https://drive.google.com/thumbnail?id=${match[0]}&sz=w1000`;
+    }
+  }
+
+  // Non-Drive links -> return as-is
+  return src;
+});
 
 
   // Create card element
