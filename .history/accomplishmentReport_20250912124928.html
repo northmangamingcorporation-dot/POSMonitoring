@@ -921,7 +921,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const card = anchor.closest('.group, .report-card, .bg-surface, [data-report-id]');
     if (!card) {
       console.warn('View Details clicked but could not find a parent card element. Make sure the link is inside the card container.');
-      toastr.error('Could not find card details. Please try again.');
+      toast.error('Could not find card details. Please try again.');
       return;
     }
 

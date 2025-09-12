@@ -11,9 +11,7 @@
     <script src="js/auth-modal.js" defer></script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-  <!-- In your <head> -->
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" rel="stylesheet"/>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+  
 </head>
 <body class="bg-gray-100 min-h-screen p-6">
 <h1 class="text-2xl font-bold text-center text-gray-800 mb-6">IT Accomplishment Reports</h1>
@@ -118,15 +116,18 @@
 // On page load: fetch sheet data and render cards
 // ---------------------------
 window.addEventListener("DOMContentLoaded", async () => {
+  console.log("DOM loaded, ensuring access token...");
   await ensureAccessToken();
 
   try {
+    console.log("Fetching sheet data...");
     const rows = await getSheetData("Accomplishment Report");
     if (!rows || rows.length === 0) {
       console.log("No rows found in sheet.");
-      toastr.error("No rows found in sheet.");
       return;
     }
+
+    console.log(`${rows.length} rows fetched from sheet.`);
 
 for (const row of rows) {
   const [
@@ -139,8 +140,12 @@ for (const row of rows) {
     imagePaths
   ] = row;
 
+  console.log(`Processing card ID: ${cardId}, ${serviceType} at ${date} ${time}`);
+
   // Split imagePaths into array, trim whitespace
   const images = imagePaths ? imagePaths.split(",").map(s => s.trim()) : [];
+  console.log(`Found ${images.length} images in sheet:`, images);
+
   // ✅ Convert Google Drive links into embeddable thumbnail links
   const finalImages = images.map(src => {
     if (src.includes("drive.google.com")) {
@@ -152,6 +157,7 @@ for (const row of rows) {
     return src; // leave non-Drive links as-is
   });
 
+  console.log(`Final image URLs for card ${cardId}:`, finalImages);
 
   // Create card element
   const card = document.createElement("div");
@@ -207,15 +213,12 @@ for (const row of rows) {
   `;
 
   console.log(`Rendering card ${cardId} on page.`);
-  toastr.success(`Rendering card ${cardId} on page.`);
   reportsGrid.prepend(card);
   attachCardEvents(card);
 }
     console.log("All cards loaded successfully.");
-    toastr.success("All cards loaded successfully.");
   } catch (err) {
     console.error("Error loading sheet data:", err);
-    toastr.error("Error loading sheet data. See console for details.");
   }
 });
 
@@ -458,7 +461,6 @@ async function saveReportToSheet(card) {
         driveUrls.push(url);
       } catch (err) {
         console.error("Error uploading image to Drive:", err);
-        toastr.error("Error uploading one of the images. See console for details.");
       }
     }
 
@@ -472,15 +474,14 @@ async function saveReportToSheet(card) {
     if (rowIndex !== -1) {
       // Update existing row
       await updateRow("Accomplishment Report", rowIndex + 1, values);
-      toastr.log("✏️ Updated existing row:", values);
+      console.log("✏️ Updated existing row:", values);
     } else {
       // Append new row
       await appendRow("Accomplishment Report", values);
-      toastr.log("✅ Added new row:", values);
+      console.log("✅ Added new row:", values);
     }
   } catch (err) {
     console.error("Error saving report to sheet:", err);
-    toastr.error("Error saving report to sheet:", err.message);
   }
 }
 
@@ -599,87 +600,6 @@ function attachCardEvents(card) {
   }
 }
 
-async function editReport(card) {
-
-
-  // ✅ Store editing context (cardId + rowIndex)
-  const cardId = card.dataset.id;
-  const rows = await getSheetData("Accomplishment Report");
-  const rowIndex = rows.findIndex(r => r[0] === cardId);
-  form.dataset.editingId = cardId;
-  form.dataset.editingRow = rowIndex !== -1 ? rowIndex + 1 : ""; // +1 for sheet row number
-
-  // ---------------------------
-  // Fill text fields
-  // ---------------------------
-  document.getElementById("date").value =
-    card.querySelector(".fa-calendar")?.nextSibling?.textContent.trim() || "";
-  document.getElementById("time").value =
-    card.querySelector("span.text-xs")?.textContent.trim() || "";
-  document.getElementById("serviceType").value =
-    card.querySelector(".report-title")?.textContent.trim() || "";
-  document.getElementById("location").value =
-    card.querySelector(".fa-map-marker-alt")?.parentElement?.innerText.replace(/^📍/, "").trim() || "";
-  document.getElementById("description").value =
-    card.querySelector(".report-desc")?.textContent.trim() || "";
-
-  // ---------------------------
-  // Restore images into uploader
-  // ---------------------------
-  uploadedImages = [];
-  uploadedImageFiles = [];
-  preview.innerHTML = "";
-
-  const imgs = card.querySelectorAll(".flex.-space-x-2 img");
-  imgs.forEach((imgEl) => {
-    const fileSrc = imgEl.src;
-    uploadedImages.push(fileSrc);
-
-    const wrapper = document.createElement("div");
-    wrapper.className = "relative";
-
-    const previewImg = document.createElement("img");
-    previewImg.src = fileSrc;
-    previewImg.className =
-      "w-full h-24 object-cover rounded border cursor-pointer";
-
-    // enlarge on click
-    previewImg.onclick = () => {
-      const modal = document.createElement("div");
-      modal.className =
-        "fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50";
-      modal.innerHTML = `
-        <div class="relative">
-          <img src="${fileSrc}" class="max-h-[90vh] max-w-[90vw] rounded shadow-lg">
-          <button class="absolute top-2 right-2 bg-white text-black rounded-full w-8 h-8 flex items-center justify-center">&times;</button>
-        </div>
-      `;
-      modal.querySelector("button").onclick = () => modal.remove();
-      modal.onclick = (ev) => { if (ev.target === modal) modal.remove(); };
-      document.body.appendChild(modal);
-    };
-
-    // delete button for each preview
-    const delBtn = document.createElement("button");
-    delBtn.innerHTML = "&times;";
-    delBtn.className =
-      "absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-600";
-    delBtn.onclick = () => {
-      wrapper.remove();
-      uploadedImages = uploadedImages.filter(src => src !== fileSrc);
-      toggleDropzoneText();
-    };
-
-    wrapper.appendChild(previewImg);
-    wrapper.appendChild(delBtn);
-    preview.appendChild(wrapper);
-  });
-
-  toggleDropzoneText();
-
-  // finally show modal
-  modal.classList.remove("hidden");
-}
 
 
 form.addEventListener("submit", async (e) => {
@@ -719,7 +639,7 @@ form.addEventListener("submit", async (e) => {
       // 2️⃣ Update row in sheet (rowIndex+1 because header is row 1)
       await updateRow(sheetName, rowIndex + 1, values);
 
-     
+      console.log("Row updated in sheet:", values);
 
       // 3️⃣ Update DOM card directly (optional optimization)
       const card = document.querySelector(`.report-card[data-id="${editingId}"]`);
@@ -749,7 +669,7 @@ form.addEventListener("submit", async (e) => {
     delete form.dataset.editingId;
   } catch (err) {
     console.error("Save failed:", err);
-    toastr.error("Error saving report.");
+    alert("Error saving report.");
   }
 });
 
@@ -762,7 +682,6 @@ async function deleteReport(card) {
     const sheetName = "Accomplishment Report";
     const cardId = card.dataset.id; // we set this when rendering
     console.log("Deleting report with ID:", cardId);
-    toastr.log("Deleting report with ID:", cardId);
 
     // 1️⃣ Get rows to find this card's rowIndex
     const rows = await getSheetData(sheetName);
@@ -781,10 +700,10 @@ async function deleteReport(card) {
     // 3️⃣ Remove the card from the DOM
     card.remove();
     console.log(`Report ${cardId} deleted from sheet and DOM.`);
-    toastr.success("Report deleted successfully.");
+    alert("Report deleted successfully.");
   } catch (err) {
     console.error("Failed to delete report:", err);
-    toastr.error("Error deleting report. :", err.message);
+    alert("Error deleting report. Check console for details.");
   }
 }
 
@@ -824,9 +743,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // show details modal for a card element — returns the created modal element
   function showCardDetails(card) {
-    if (!card) { console.error('showCardDetails: no card passed');
-    toastr.error('No card element provided');
-    return null; }
+    if (!card) { console.error('showCardDetails: no card passed'); return null; }
 
     // title (h3 or .title)
     const titleEl = card.querySelector('h3, .title, .report-title');
@@ -921,7 +838,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const card = anchor.closest('.group, .report-card, .bg-surface, [data-report-id]');
     if (!card) {
       console.warn('View Details clicked but could not find a parent card element. Make sure the link is inside the card container.');
-      toastr.error('Could not find card details. Please try again.');
       return;
     }
 

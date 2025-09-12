@@ -784,7 +784,7 @@ async function deleteReport(card) {
     toastr.success("Report deleted successfully.");
   } catch (err) {
     console.error("Failed to delete report:", err);
-    toastr.error("Error deleting report. :", err.message);
+    toast.error("Error deleting report. :", err.message);
   }
 }
 
@@ -825,7 +825,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // show details modal for a card element — returns the created modal element
   function showCardDetails(card) {
     if (!card) { console.error('showCardDetails: no card passed');
-    toastr.error('No card element provided');
+    toast.error('No card element provided');
     return null; }
 
     // title (h3 or .title)
@@ -921,7 +921,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const card = anchor.closest('.group, .report-card, .bg-surface, [data-report-id]');
     if (!card) {
       console.warn('View Details clicked but could not find a parent card element. Make sure the link is inside the card container.');
-      toastr.error('Could not find card details. Please try again.');
+      toast.error('Could not find card details. Please try again.');
       return;
     }
 

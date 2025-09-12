@@ -11,9 +11,7 @@
     <script src="js/auth-modal.js" defer></script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-  <!-- In your <head> -->
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" rel="stylesheet"/>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+  
 </head>
 <body class="bg-gray-100 min-h-screen p-6">
 <h1 class="text-2xl font-bold text-center text-gray-800 mb-6">IT Accomplishment Reports</h1>
@@ -124,7 +122,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     const rows = await getSheetData("Accomplishment Report");
     if (!rows || rows.length === 0) {
       console.log("No rows found in sheet.");
-      toastr.error("No rows found in sheet.");
+      toast.error("No rows found in sheet.");
       return;
     }
 
@@ -207,15 +205,15 @@ for (const row of rows) {
   `;
 
   console.log(`Rendering card ${cardId} on page.`);
-  toastr.success(`Rendering card ${cardId} on page.`);
+  toast.success(`Rendering card ${cardId} on page.`);
   reportsGrid.prepend(card);
   attachCardEvents(card);
 }
     console.log("All cards loaded successfully.");
-    toastr.success("All cards loaded successfully.");
+    toast.success("All cards loaded successfully.");
   } catch (err) {
     console.error("Error loading sheet data:", err);
-    toastr.error("Error loading sheet data. See console for details.");
+    toast.error("Error loading sheet data. See console for details.");
   }
 });
 
@@ -458,7 +456,7 @@ async function saveReportToSheet(card) {
         driveUrls.push(url);
       } catch (err) {
         console.error("Error uploading image to Drive:", err);
-        toastr.error("Error uploading one of the images. See console for details.");
+        toast.error("Error uploading one of the images. See console for details.");
       }
     }
 
@@ -472,15 +470,15 @@ async function saveReportToSheet(card) {
     if (rowIndex !== -1) {
       // Update existing row
       await updateRow("Accomplishment Report", rowIndex + 1, values);
-      toastr.log("✏️ Updated existing row:", values);
+      toast.log("✏️ Updated existing row:", values);
     } else {
       // Append new row
       await appendRow("Accomplishment Report", values);
-      toastr.log("✅ Added new row:", values);
+      toast.log("✅ Added new row:", values);
     }
   } catch (err) {
     console.error("Error saving report to sheet:", err);
-    toastr.error("Error saving report to sheet:", err.message);
+    toast.error("Error saving report to sheet. See console for details.");
   }
 }
 
@@ -749,7 +747,7 @@ form.addEventListener("submit", async (e) => {
     delete form.dataset.editingId;
   } catch (err) {
     console.error("Save failed:", err);
-    toastr.error("Error saving report.");
+    alert("Error saving report.");
   }
 });
 
@@ -762,7 +760,6 @@ async function deleteReport(card) {
     const sheetName = "Accomplishment Report";
     const cardId = card.dataset.id; // we set this when rendering
     console.log("Deleting report with ID:", cardId);
-    toastr.log("Deleting report with ID:", cardId);
 
     // 1️⃣ Get rows to find this card's rowIndex
     const rows = await getSheetData(sheetName);
@@ -781,10 +778,10 @@ async function deleteReport(card) {
     // 3️⃣ Remove the card from the DOM
     card.remove();
     console.log(`Report ${cardId} deleted from sheet and DOM.`);
-    toastr.success("Report deleted successfully.");
+    alert("Report deleted successfully.");
   } catch (err) {
     console.error("Failed to delete report:", err);
-    toastr.error("Error deleting report. :", err.message);
+    alert("Error deleting report. Check console for details.");
   }
 }
 
@@ -825,7 +822,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // show details modal for a card element — returns the created modal element
   function showCardDetails(card) {
     if (!card) { console.error('showCardDetails: no card passed');
-    toastr.error('No card element provided');
+    toa
     return null; }
 
     // title (h3 or .title)
@@ -921,7 +918,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const card = anchor.closest('.group, .report-card, .bg-surface, [data-report-id]');
     if (!card) {
       console.warn('View Details clicked but could not find a parent card element. Make sure the link is inside the card container.');
-      toastr.error('Could not find card details. Please try again.');
+      toast.error('Could not find card details. Please try again.');
       return;
     }
 
