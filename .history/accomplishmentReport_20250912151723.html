@@ -835,6 +835,7 @@ async function deleteReport(card) {
   }
 }
 
+
 // 🔍 SEARCH FUNCTION
 document.getElementById("searchInput").addEventListener("input", function () {
   const query = this.value.toLowerCase();
@@ -863,13 +864,11 @@ document.getElementById("sortSelect").addEventListener("change", function () {
 // View Details Modal
 document.addEventListener('DOMContentLoaded', () => {
 
-  // Show details modal for a card element
+  // show details modal for a card element — returns the created modal element
   function showCardDetails(card) {
-    if (!card) { 
-      console.error('showCardDetails: no card passed');
-      toastr.error('No card element provided');
-      return null;
-    }
+    if (!card) { console.error('showCardDetails: no card passed');
+    toastr.error('No card element provided');
+    return null; }
 
     // title (h3 or .title)
     const titleEl = card.querySelector('h3, .title, .report-title');
@@ -883,13 +882,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }, null);
     const description = descEl ? descEl.innerText.trim() : '';
 
-    // date/time
+    // date/time: search for date-like and time-like text among spans/time/small/divs
     let date = '', time = '';
     const candidates = Array.from(card.querySelectorAll('span, time, small, div'));
     for (const el of candidates) {
       const txt = (el.innerText || '').trim();
       if (!txt) continue;
       if (!date) {
+        // accepts YYYY-MM-DD or M/D/YYYY or M/D/YY
         const dmatch = txt.match(/\b\d{4}-\d{2}-\d{2}\b|(\b\d{1,2}\/\d{1,2}\/\d{2,4}\b)/);
         if (dmatch) date = dmatch[0];
       }
@@ -900,82 +900,77 @@ document.addEventListener('DOMContentLoaded', () => {
       if (date && time) break;
     }
 
-    // location
+    // location: look for map marker icon inside the card and get its parent text
     let location = '';
     const locIcon = card.querySelector('.fa-map-marker-alt, .fa-map-marker');
     if (locIcon && locIcon.parentElement) location = locIcon.parentElement.innerText.trim();
 
-    // images: collect all <img> srcs inside the card, skip the first (cover)
+    // images: collect all <img> srcs inside the card, but skip the first one
     const images = Array.from(card.querySelectorAll('img'))
-      .slice(1)
+      .slice(1) // ✅ skip the first image (cover/thumbnail)
       .map(img => img.src)
       .filter(Boolean);
 
+
+    // helper to escape HTML safely for injection
     function esc(s) {
       return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     }
 
-    // overlay
+    // build modal
     const overlay = document.createElement('div');
     overlay.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50';
     overlay.style.padding = '1rem';
+
+// modal content
 
     overlay.innerHTML = `
       <div class="bg-white rounded-lg shadow-lg w-full max-w-3xl p-6 relative overflow-auto" style="max-height:90vh;">
         <button type="button" class="close-modal" aria-label="Close" style="position:absolute;right:12px;top:8px;font-size:22px;border:none;background:none;cursor:pointer;">&times;</button>
         <h2 class="text-xl font-semibold mb-2">${esc(title)}</h2>
         <div class="text-sm text-gray-500 mb-3">
-          ${ date ? `<span style="margin-right:0.75rem;"><i class="fas fa-calendar mr-1"></i>${esc(date)}</span>` : '' }
-          ${ time ? `<span><i class="far fa-clock mr-1"></i>${esc(time)}</span>` : '' }
+          ${ date ? `<span style="margin-right:0.75rem;"><i class="fas fa-calendar" style="margin-right:6px;"></i>${esc(date)}</span>` : '' }
+          ${ time ? `<span><i class="far fa-clock" style="margin-right:6px;"></i>${esc(time)}</span>` : '' }
         </div>
-        ${ location ? `<div class="text-sm text-gray-600 mb-4"><i class="fas fa-map-marker-alt mr-1"></i>${esc(location)}</div>` : '' }
+        ${ location ? `<div class="text-sm text-gray-600 mb-4"><i class="fas fa-map-marker-alt" style="margin-right:6px;"></i>${esc(location)}</div>` : '' }
         <p class="text-gray-700 mb-4">${esc(description)}</p>
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-          ${ images.length ? images.map(src => `<img src="${esc(src)}" class="w-full h-40 object-cover rounded cursor-pointer photo-thumb">`).join('') : '<div class="text-sm text-gray-500">No images</div>' }
+          ${ images.length ? images.map(src => `<img src="${esc(src)}" class="w-full h-40 object-cover rounded">`).join('') : '<div class="text-sm text-gray-500">No images</div>' }
         </div>
       </div>
     `;
 
-    // close modal
+    // close handlers
     overlay.querySelector('.close-modal').addEventListener('click', () => overlay.remove());
     overlay.addEventListener('click', (ev) => { if (ev.target === overlay) overlay.remove(); });
-
-    // lightbox for photos
-    overlay.querySelectorAll('.photo-thumb').forEach(img => {
-      img.addEventListener('click', () => {
-        const fullOverlay = document.createElement('div');
-        fullOverlay.className = 'fixed inset-0 z-[60] flex items-center justify-center bg-black bg-opacity-80';
-        fullOverlay.innerHTML = `
-          <img src="${esc(img.src)}" class="max-h-[90vh] max-w-[90vw] rounded shadow-lg">
-        `;
-        fullOverlay.addEventListener('click', () => fullOverlay.remove());
-        document.body.appendChild(fullOverlay);
-      });
-    });
 
     document.body.appendChild(overlay);
     return overlay;
   }
 
-  // Handle clicks
+  // Delegated click handler — works even if you don't add a custom class
   document.addEventListener('click', (ev) => {
-    // check if clicked inside "View Details" link
-    const anchor = ev.target.closest('a.view-details-btn, a[data-action="view-details"]');
-    const card = ev.target.closest('.group, .report-card, .bg-surface, [data-report-id]');
+    // 1) prefer anchors with class or data attribute
+    const anchor = ev.target.closest('a.view-details-btn, a[data-action="view-details"]') 
+                 // 2) fallback: any <a> whose visible text starts with "View Details"
+                 || (ev.target.closest('a') && ev.target.closest('a').textContent.trim().startsWith('View Details') ? ev.target.closest('a') : null);
 
-    // open if either: view-details link OR card itself
-    if (anchor || (card && !ev.target.closest('button, a'))) {
-      ev.preventDefault();
-      if (!card) {
-        toastr.error('Could not find card details. Please try again.');
-        return;
-      }
-      showCardDetails(card);
+    if (!anchor) return; // not a view-details click
+
+    ev.preventDefault();
+
+    // find the card ancestor (tries several common classes)
+    const card = anchor.closest('.group, .report-card, .bg-surface, [data-report-id]');
+    if (!card) {
+      console.warn('View Details clicked but could not find a parent card element. Make sure the link is inside the card container.');
+      toastr.error('Could not find card details. Please try again.');
+      return;
     }
+
+    showCardDetails(card);
   });
 
 });
-
 
   </script>
 </body>
