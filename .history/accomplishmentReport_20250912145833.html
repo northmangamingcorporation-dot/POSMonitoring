@@ -360,20 +360,21 @@ form.addEventListener("submit", async (e) => {
           }
         }
 
+        // Upload new files
        // Upload new files
-        for (let i = 0; i < uploadedImageFiles.length; i++) {
-          const file = uploadedImageFiles[i];
-          toastr.info(`Uploading image ${i + 1} of ${uploadedImageFiles.length}...`);
-          const rawUrl = await uploadToDriveStandalone(file, `report_${editingId || Date.now()}_${i}.png`);
+for (let i = 0; i < uploadedImageFiles.length; i++) {
+  const file = uploadedImageFiles[i];
+  toastr.info(`Uploading image ${i + 1} of ${uploadedImageFiles.length}...`);
+  const rawUrl = await uploadToDriveStandalone(file, `report_${editingId || Date.now()}_${i}.png`);
 
-          // Extract FILE_ID and convert to uc?id= format
-          const match = rawUrl.match(/[-\w]{25,}/);
-          if (match) {
-            finalImageLinks.push(`https://drive.google.com/uc?id=${match[0]}`);
-          } else {
-            finalImageLinks.push(rawUrl); // fallback
-          }
-        }
+  // Extract FILE_ID and convert to uc?id= format
+  const match = rawUrl.match(/[-\w]{25,}/);
+  if (match) {
+    finalImageLinks.push(`https://drive.google.com/uc?id=${match[0]}`);
+  } else {
+    finalImageLinks.push(rawUrl); // fallback
+  }
+}
 
         const sheetName = "Accomplishment Report";
         toastr.info("Editing existing report...");
