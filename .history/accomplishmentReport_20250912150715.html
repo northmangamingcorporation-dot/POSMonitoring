@@ -175,9 +175,9 @@ for (const row of rows) {
            alt="Proof Image" class="w-full h-48 object-cover" />
       <div class="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition">
         <div class="flex space-x-2">
-          <!-- <button class="btn-edit w-8 h-8 bg-white rounded-full shadow flex items-center justify-center hover:bg-blue-600 hover:text-white">
+          <button class="btn-edit w-8 h-8 bg-white rounded-full shadow flex items-center justify-center hover:bg-blue-600 hover:text-white">
             <i class="fas fa-edit text-xs"></i>
-          </button> -->
+          </button>
           <button class="btn-delete w-8 h-8 bg-white rounded-full shadow flex items-center justify-center hover:bg-red-600 hover:text-white">
             <i class="fas fa-trash text-xs"></i>
           </button>
@@ -344,89 +344,7 @@ form.addEventListener("submit", async (e) => {
   const location = document.getElementById("location").value;
   const description = document.getElementById("description").value;
 
-  // Check if editing
-  if (form.dataset.editingId) {
-        console.log("Editing existing report with ID:", editingId);
-        toastr.info("Editing existing report with ID: " + editingId);
-
-        const finalImageLinks = [];
-
-        // Keep existing images
-        for (const img of uploadedImages) {
-          if (typeof img === "string") {
-            finalImageLinks.push(img);
-          } else if (img?.src) {
-            finalImageLinks.push(img.src);
-          }
-        }
-
-       // Upload new files
-        for (let i = 0; i < uploadedImageFiles.length; i++) {
-          const file = uploadedImageFiles[i];
-          toastr.info(`Uploading image ${i + 1} of ${uploadedImageFiles.length}...`);
-          const rawUrl = await uploadToDriveStandalone(file, `report_${editingId || Date.now()}_${i}.png`);
-
-          // Extract FILE_ID and convert to uc?id= format
-          const match = rawUrl.match(/[-\w]{25,}/);
-          if (match) {
-            finalImageLinks.push(`https://drive.google.com/uc?id=${match[0]}`);
-          } else {
-            finalImageLinks.push(rawUrl); // fallback
-          }
-        }
-
-        const sheetName = "Accomplishment Report";
-        toastr.info("Editing existing report...");
-          // EDIT EXISTING
-          const rows = await getSheetData(sheetName);
-          const rowIndex = rows.findIndex(r => r[0] === editingId);
-          if (rowIndex === -1) throw new Error("Row not found in sheet");
-
-          // Remove deleted images from Drive
-          const oldLinks = rows[rowIndex][6]?.split(",").map(s => s.trim()).filter(Boolean) || [];
-          const removed = oldLinks.filter(link => !finalImageLinks.includes(link));
-          for (const link of removed) {
-            const match = link.match(/id=([a-zA-Z0-9_-]+)/);
-            if (match) {
-              try {
-                await deleteFromDrive(match[1]);
-                toastr.warning("Removed old image from Drive", match[1]);
-              } catch (err) {
-                toastr.error("Failed to delete old image from Drive");
-                console.warn("Delete error:", err);
-              }
-            }
-          }
-
-          const values = [
-            editingId,
-            date,
-            time,
-            serviceType,
-            location,
-            description,
-            finalImageLinks.join(", ")
-          ];
-
-          await updateRow(sheetName, rowIndex + 1, values);
-          toastr.success("Report updated successfully!");
-
-          // Update DOM card
-          const card = document.querySelector(`.report-card[data-id="${editingId}"]`);
-          if (card) {
-            card.querySelector(".fa-calendar").nextSibling.textContent = date;
-            card.querySelector("span.text-xs").textContent = time;
-            card.querySelector(".report-title").textContent = serviceType;
-            card.querySelector("p.text-sm").innerHTML = `<i class="fas fa-map-marker-alt mr-1"></i>${location}`;
-            card.querySelector(".report-desc").textContent = description;
-
-            const imgContainer = card.querySelector(".flex.-space-x-2");
-            imgContainer.innerHTML = finalImageLinks.slice(0, 3).map(src => `
-              <img src="${src}" alt="Report proof image" class="w-8 h-8 rounded-full border-2 border-white object-cover" />
-            `).join("");
-          }
-        delete form.dataset.editingId; // clear edit mode
-  } else {
+  
     toastr.info("Adding new report...");
     // Create NEW card
     const card = document.createElement("div");
