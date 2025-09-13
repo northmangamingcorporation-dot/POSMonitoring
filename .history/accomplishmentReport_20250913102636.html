@@ -485,7 +485,6 @@ form.addEventListener("submit", async (e) => {
 
     reportsGrid.prepend(card);
     attachCardEvents(card);
-    modal.classList.add("hidden");
     await saveReportToSheet(card); // save to sheet
   }
 
