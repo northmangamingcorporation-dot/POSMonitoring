@@ -45,90 +45,105 @@ function renderStatusToolbar(
   toolbar.style.gap = "6px";
   toolbar.style.marginTop = "8px";
 
-  // --- Status badges row (use passed statusCounts) ---
+  // --- Status badges row ---
   const badgesRow = document.createElement("div");
   badgesRow.className = "status-info";
   Object.entries(statusCounts).forEach(([s, c]) => {
     const badge = document.createElement("span");
     badge.className = "badge";
     badge.textContent = `${s}: ${c}`;
+    badge.style.cursor = "pointer";
+
+    badge.addEventListener("click", () => {
+      const statusSelect = document.getElementById("statusFilter");
+      if (statusSelect) {
+        // toggle behavior: if already selected, reset to All
+        if (statusSelect.value === s) {
+          statusSelect.value = "";
+        } else {
+          statusSelect.value = s;
+        }
+        statusSelect.dispatchEvent(new Event("change")); // trigger filter
+      }
+    });
+
     badgesRow.appendChild(badge);
   });
   toolbar.appendChild(badgesRow);
 
-  // --- Status filter dropdown ---
+  // --- Combined filter row (one lane) ---
+  const filterRow = document.createElement("div");
+  filterRow.style.display = "flex";
+  filterRow.style.alignItems = "center";
+  filterRow.style.gap = "16px"; // space between filters
+
+  // Status filter
   if (statusIndex !== undefined && uniqueStatuses.length > 0) {
-    const filterRow = document.createElement("div");
-    filterRow.style.display = "flex";
-    filterRow.style.alignItems = "center";
-    filterRow.style.gap = "8px";
+    const statusLabel = document.createElement("span");
+    statusLabel.textContent = "Status:";
+    statusLabel.style.fontWeight = "bold";
 
-    const label = document.createElement("span");
-    label.textContent = "Filter by Status:";
-    label.style.fontWeight = "bold";
-    filterRow.appendChild(label);
+    const statusSelect = document.createElement("select");
+    statusSelect.id = "statusFilter";
+    statusSelect.onchange = () => filterByStatusAndOperator();
 
-    const select = document.createElement("select");
-    select.id = "statusFilter";
-    select.onchange = () => filterByStatusAndOperator();
-
-    const allOption = document.createElement("option");
-    allOption.value = "";
-    allOption.textContent = "All";
-    select.appendChild(allOption);
+    const allStatus = document.createElement("option");
+    allStatus.value = "";
+    allStatus.textContent = "All";
+    statusSelect.appendChild(allStatus);
 
     uniqueStatuses.forEach(s => {
       const opt = document.createElement("option");
       opt.value = s;
       opt.textContent = s;
-      select.appendChild(opt);
+      statusSelect.appendChild(opt);
     });
 
     // restore previous selection
-    select.value = prevStatusValue;
+    statusSelect.value = prevStatusValue;
 
-    filterRow.appendChild(select);
-    toolbar.appendChild(filterRow);
+    filterRow.appendChild(statusLabel);
+    filterRow.appendChild(statusSelect);
   }
 
-  // --- Operator filter dropdown ---
+  // Operator filter
   if (operatorIndex !== undefined && uniqueOperators.length > 0) {
-    const filterRow = document.createElement("div");
-    filterRow.style.display = "flex";
-    filterRow.style.alignItems = "center";
-    filterRow.style.gap = "8px";
+    const operatorLabel = document.createElement("span");
+    operatorLabel.textContent = "Operator:";
+    operatorLabel.style.fontWeight = "bold";
 
-    const label = document.createElement("span");
-    label.textContent = "Filter by Operator:";
-    label.style.fontWeight = "bold";
-    filterRow.appendChild(label);
+    const operatorSelect = document.createElement("select");
+    operatorSelect.id = "operatorFilter";
+    operatorSelect.onchange = () => filterByStatusAndOperator();
 
-    const select = document.createElement("select");
-    select.id = "operatorFilter";
-    select.onchange = () => filterByStatusAndOperator();
-
-    const allOption = document.createElement("option");
-    allOption.value = "";
-    allOption.textContent = "All";
-    select.appendChild(allOption);
+    const allOp = document.createElement("option");
+    allOp.value = "";
+    allOp.textContent = "All";
+    operatorSelect.appendChild(allOp);
 
     uniqueOperators.forEach(op => {
       const opt = document.createElement("option");
       opt.value = op;
       opt.textContent = op;
-      select.appendChild(opt);
+      operatorSelect.appendChild(opt);
     });
 
     // restore previous selection
-    select.value = prevOperatorValue;
+    operatorSelect.value = prevOperatorValue;
 
-    filterRow.appendChild(select);
+    filterRow.appendChild(operatorLabel);
+    filterRow.appendChild(operatorSelect);
+  }
+
+  // Only add filterRow if it has filters
+  if (filterRow.children.length > 0) {
     toolbar.appendChild(filterRow);
   }
 
   // Insert toolbar after the title
   sheetTitleEl.insertAdjacentElement("afterend", toolbar);
 }
+
 
 function filterByStatusAndOperator() {
   showLoader(true); // show loader

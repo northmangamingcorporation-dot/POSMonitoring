@@ -955,7 +955,8 @@ overlay.querySelectorAll('.photo-thumb').forEach(img => {
              style="transform: translate(0px,0px) scale(1);">
         <div class="mt-3 flex gap-3">
           <button class="zoom-in px-3 py-1 rounded bg-white text-black font-bold shadow">+</button>
-          <button class="zoom-out px-3 py-1 rounded bg-white text-black font-bold shadow">-</button>      
+          <button class="zoom-out px-3 py-1 rounded bg-white text-black font-bold shadow">-</button>
+          <button class="close-lightbox px-3 py-1 rounded bg-red-600 text-white shadow">&times;</button>
         </div>
       </div>
     `;
@@ -1016,7 +1017,7 @@ overlay.querySelectorAll('.photo-thumb').forEach(img => {
         imgEl.style.cursor = "grab";
       }
     });
-    fullOverlay.addEventListener('click', (ev) => { if (ev.target === fullOverlay) fullOverlay.remove(); });
+
 
     document.body.appendChild(fullOverlay);
   });

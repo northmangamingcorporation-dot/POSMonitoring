@@ -941,7 +941,7 @@ document.addEventListener('DOMContentLoaded', () => {
     overlay.querySelector('.close-modal').addEventListener('click', () => overlay.remove());
     overlay.addEventListener('click', (ev) => { if (ev.target === overlay) overlay.remove(); });
 
-  // lightbox for photos
+    // lightbox for photos
 overlay.querySelectorAll('.photo-thumb').forEach(img => {
   img.addEventListener('click', () => {
     const fullOverlay = document.createElement('div');
@@ -951,38 +951,40 @@ overlay.querySelectorAll('.photo-thumb').forEach(img => {
     fullOverlay.innerHTML = `
       <div class="relative flex flex-col items-center">
         <img src="${esc(img.src)}" 
-             class="max-h-[90vh] max-w-[90vw] rounded shadow-lg transition-transform duration-150 ease-in-out cursor-grab" 
-             style="transform: translate(0px,0px) scale(1);">
+             class="max-h-[90vh] max-w-[90vw] rounded shadow-lg transition-transform duration-200 ease-in-out" 
+             style="transform: scale(1);">
         <div class="mt-3 flex gap-3">
           <button class="zoom-in px-3 py-1 rounded bg-white text-black font-bold shadow">+</button>
-          <button class="zoom-out px-3 py-1 rounded bg-white text-black font-bold shadow">-</button>      
+          <button class="zoom-out px-3 py-1 rounded bg-white text-black font-bold shadow">-</button>
+          <button class="close-lightbox px-3 py-1 rounded bg-red-600 text-white shadow">&times;</button>
         </div>
       </div>
     `;
 
     const imgEl = fullOverlay.querySelector('img');
     let scale = 1;
-    let offsetX = 0, offsetY = 0;
-    let isDragging = false, startX = 0, startY = 0;
 
-    function applyTransform() {
-      imgEl.style.transform = `translate(${offsetX}px, ${offsetY}px) scale(${scale})`;
+    function applyZoom() {
+      imgEl.style.transform = `scale(${scale})`;
     }
 
-    // Zoom buttons
     fullOverlay.querySelector('.zoom-in').addEventListener('click', () => {
-      scale = Math.min(scale + 0.25, 5);
-      if (scale === 1) { offsetX = 0; offsetY = 0; }
-      applyTransform();
+      scale = Math.min(scale + 0.25, 5); // max 5x
+      applyZoom();
     });
 
     fullOverlay.querySelector('.zoom-out').addEventListener('click', () => {
-      scale = Math.max(scale - 0.25, 0.25);
-      if (scale === 1) { offsetX = 0; offsetY = 0; }
-      applyTransform();
+      scale = Math.max(scale - 0.25, 0.25); // min 0.25x
+      applyZoom();
     });
 
-    // Mouse wheel zoom
+  
+    // also allow click outside img to close
+    fullOverlay.addEventListener('click', (ev) => {
+      if (ev.target === fullOverlay) fullOverlay.remove();
+    });
+
+    // scroll wheel zoom
     imgEl.addEventListener('wheel', (e) => {
       e.preventDefault();
       if (e.deltaY < 0) {
@@ -990,38 +992,12 @@ overlay.querySelectorAll('.photo-thumb').forEach(img => {
       } else {
         scale = Math.max(scale - 0.1, 0.25);
       }
-      if (scale === 1) { offsetX = 0; offsetY = 0; }
-      applyTransform();
+      applyZoom();
     });
-
-    // Drag to move
-    imgEl.addEventListener('mousedown', (e) => {
-      if (scale <= 1) return;
-      isDragging = true;
-      imgEl.style.cursor = "grabbing";
-      startX = e.clientX - offsetX;
-      startY = e.clientY - offsetY;
-    });
-
-    document.addEventListener('mousemove', (e) => {
-      if (!isDragging) return;
-      offsetX = e.clientX - startX;
-      offsetY = e.clientY - startY;
-      applyTransform();
-    });
-
-    document.addEventListener('mouseup', () => {
-      if (isDragging) {
-        isDragging = false;
-        imgEl.style.cursor = "grab";
-      }
-    });
-    fullOverlay.addEventListener('click', (ev) => { if (ev.target === fullOverlay) fullOverlay.remove(); });
 
     document.body.appendChild(fullOverlay);
   });
 });
-
 
     document.body.appendChild(overlay);
     return overlay;

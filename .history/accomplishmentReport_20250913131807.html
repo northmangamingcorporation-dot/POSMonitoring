@@ -861,87 +861,7 @@ document.getElementById("sortSelect").addEventListener("change", function () {
   cards.forEach(card => grid.appendChild(card));
 });
 
-// View Details Modal
-document.addEventListener('DOMContentLoaded', () => {
-
-  // Show details modal for a card element
-  function showCardDetails(card) {
-    if (!card) { 
-      console.error('showCardDetails: no card passed');
-      toastr.error('No card element provided');
-      return null;
-    }
-
-    // title (h3 or .title)
-    const titleEl = card.querySelector('h3, .title, .report-title');
-    const title = titleEl ? titleEl.innerText.trim() : '';
-
-    // description => choose the longest <p>
-    const pEls = Array.from(card.querySelectorAll('p'));
-    const descEl = pEls.reduce((best, p) => {
-      if (!best) return p;
-      return (p.innerText.trim().length > best.innerText.trim().length) ? p : best;
-    }, null);
-    const description = descEl ? descEl.innerText.trim() : '';
-
-    // date/time
-    let date = '', time = '';
-    const candidates = Array.from(card.querySelectorAll('span, time, small, div'));
-    for (const el of candidates) {
-      const txt = (el.innerText || '').trim();
-      if (!txt) continue;
-      if (!date) {
-        const dmatch = txt.match(/\b\d{4}-\d{2}-\d{2}\b|(\b\d{1,2}\/\d{1,2}\/\d{2,4}\b)/);
-        if (dmatch) date = dmatch[0];
-      }
-      if (!time) {
-        const tmatch = txt.match(/\b\d{1,2}:\d{2}\s?(AM|PM|am|pm)?\b/);
-        if (tmatch) time = tmatch[0];
-      }
-      if (date && time) break;
-    }
-
-    // location
-    let location = '';
-    const locIcon = card.querySelector('.fa-map-marker-alt, .fa-map-marker');
-    if (locIcon && locIcon.parentElement) location = locIcon.parentElement.innerText.trim();
-
-    // images: collect all <img> srcs inside the card, skip the first (cover)
-    const images = Array.from(card.querySelectorAll('img'))
-      .slice(1)
-      .map(img => img.src)
-      .filter(Boolean);
-
-    function esc(s) {
-      return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    }
-
-    // overlay
-    const overlay = document.createElement('div');
-    overlay.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50';
-    overlay.style.padding = '1rem';
-
-    overlay.innerHTML = `
-      <div class="bg-white rounded-lg shadow-lg w-full max-w-3xl p-6 relative overflow-auto" style="max-height:90vh;">
-        <button type="button" class="close-modal" aria-label="Close" style="position:absolute;right:12px;top:8px;font-size:22px;border:none;background:none;cursor:pointer;">&times;</button>
-        <h2 class="text-xl font-semibold mb-2">${esc(title)}</h2>
-        <div class="text-sm text-gray-500 mb-3">
-          ${ date ? `<span style="margin-right:0.75rem;"><i class="fas fa-calendar mr-1"></i>${esc(date)}</span>` : '' }
-          ${ time ? `<span><i class="far fa-clock mr-1"></i>${esc(time)}</span>` : '' }
-        </div>
-        ${ location ? `<div class="text-sm text-gray-600 mb-4"><i class="fas fa-map-marker-alt mr-1"></i>${esc(location)}</div>` : '' }
-        <p class="text-gray-700 mb-4">${esc(description)}</p>
-        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-          ${ images.length ? images.map(src => `<img src="${esc(src)}" class="w-full h-40 object-cover rounded cursor-pointer photo-thumb">`).join('') : '<div class="text-sm text-gray-500">No images</div>' }
-        </div>
-      </div>
-    `;
-
-    // close modal
-    overlay.querySelector('.close-modal').addEventListener('click', () => overlay.remove());
-    overlay.addEventListener('click', (ev) => { if (ev.target === overlay) overlay.remove(); });
-
-  // lightbox for photos
+// lightbox for photos
 overlay.querySelectorAll('.photo-thumb').forEach(img => {
   img.addEventListener('click', () => {
     const fullOverlay = document.createElement('div');
@@ -951,38 +871,44 @@ overlay.querySelectorAll('.photo-thumb').forEach(img => {
     fullOverlay.innerHTML = `
       <div class="relative flex flex-col items-center">
         <img src="${esc(img.src)}" 
-             class="max-h-[90vh] max-w-[90vw] rounded shadow-lg transition-transform duration-150 ease-in-out cursor-grab" 
-             style="transform: translate(0px,0px) scale(1);">
+             class="max-h-[90vh] max-w-[90vw] rounded shadow-lg transition-transform duration-200 ease-in-out" 
+             style="transform: scale(1);">
         <div class="mt-3 flex gap-3">
           <button class="zoom-in px-3 py-1 rounded bg-white text-black font-bold shadow">+</button>
-          <button class="zoom-out px-3 py-1 rounded bg-white text-black font-bold shadow">-</button>      
+          <button class="zoom-out px-3 py-1 rounded bg-white text-black font-bold shadow">-</button>
+          <button class="close-lightbox px-3 py-1 rounded bg-red-600 text-white shadow">&times;</button>
         </div>
       </div>
     `;
 
     const imgEl = fullOverlay.querySelector('img');
     let scale = 1;
-    let offsetX = 0, offsetY = 0;
-    let isDragging = false, startX = 0, startY = 0;
 
-    function applyTransform() {
-      imgEl.style.transform = `translate(${offsetX}px, ${offsetY}px) scale(${scale})`;
+    function applyZoom() {
+      imgEl.style.transform = `scale(${scale})`;
     }
 
-    // Zoom buttons
     fullOverlay.querySelector('.zoom-in').addEventListener('click', () => {
-      scale = Math.min(scale + 0.25, 5);
-      if (scale === 1) { offsetX = 0; offsetY = 0; }
-      applyTransform();
+      scale = Math.min(scale + 0.25, 5); // max 5x
+      applyZoom();
     });
 
     fullOverlay.querySelector('.zoom-out').addEventListener('click', () => {
-      scale = Math.max(scale - 0.25, 0.25);
-      if (scale === 1) { offsetX = 0; offsetY = 0; }
-      applyTransform();
+      scale = Math.max(scale - 0.25, 0.25); // min 0.25x
+      applyZoom();
     });
 
-    // Mouse wheel zoom
+    // close button
+    fullOverlay.querySelector('.close-lightbox').addEventListener('click', () => {
+      fullOverlay.remove();
+    });
+
+    // also allow click outside img to close
+    fullOverlay.addEventListener('click', (ev) => {
+      if (ev.target === fullOverlay) fullOverlay.remove();
+    });
+
+    // scroll wheel zoom
     imgEl.addEventListener('wheel', (e) => {
       e.preventDefault();
       if (e.deltaY < 0) {
@@ -990,60 +916,11 @@ overlay.querySelectorAll('.photo-thumb').forEach(img => {
       } else {
         scale = Math.max(scale - 0.1, 0.25);
       }
-      if (scale === 1) { offsetX = 0; offsetY = 0; }
-      applyTransform();
+      applyZoom();
     });
-
-    // Drag to move
-    imgEl.addEventListener('mousedown', (e) => {
-      if (scale <= 1) return;
-      isDragging = true;
-      imgEl.style.cursor = "grabbing";
-      startX = e.clientX - offsetX;
-      startY = e.clientY - offsetY;
-    });
-
-    document.addEventListener('mousemove', (e) => {
-      if (!isDragging) return;
-      offsetX = e.clientX - startX;
-      offsetY = e.clientY - startY;
-      applyTransform();
-    });
-
-    document.addEventListener('mouseup', () => {
-      if (isDragging) {
-        isDragging = false;
-        imgEl.style.cursor = "grab";
-      }
-    });
-    fullOverlay.addEventListener('click', (ev) => { if (ev.target === fullOverlay) fullOverlay.remove(); });
 
     document.body.appendChild(fullOverlay);
   });
-});
-
-
-    document.body.appendChild(overlay);
-    return overlay;
-  }
-
-  // Handle clicks
-  document.addEventListener('click', (ev) => {
-    // check if clicked inside "View Details" link
-    const anchor = ev.target.closest('a.view-details-btn, a[data-action="view-details"]');
-    const card = ev.target.closest('.group, .report-card, .bg-surface, [data-report-id]');
-
-    // open if either: view-details link OR card itself
-    if (anchor || (card && !ev.target.closest('button, a'))) {
-      ev.preventDefault();
-      if (!card) {
-        toastr.error('Could not find card details. Please try again.');
-        return;
-      }
-      showCardDetails(card);
-    }
-  });
-
 });
 
 
