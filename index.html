@@ -23,7 +23,12 @@
 </head>
 
 <body onload='loadSheet("POS")'>
-    <div class="sidebar">
+  <!-- Topbar (hidden initially) -->
+  <div class="topbar" id="topbar" style="display: none;">
+      <img src="image/ITdeptDP.jpg" alt="Logo" class="logo">
+      <span class="title">STI Northman Gaming</span>
+  </div>
+    <div class="sidebar" id="sidebar">
         <h2>STI Northman Gaming</h2>
         <div class="menu" id="menu"></div>
         
@@ -60,7 +65,7 @@
 
     </div>
 
-    <div class="main">
+    <div class="main" id="main">
         <div class="loader" id="loader">
             <div class="spinner"></div>
         </div>
@@ -110,6 +115,29 @@
         let addSheetName = "";
         let sheetDataCache = {};
         let currentEdit = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const sidebar = document.getElementById('sidebar');
+            const topbar = document.getElementById('topbar');
+            const main = document.getElementById('main');
+
+            // Click outside sidebar to hide
+            document.addEventListener('click', (e) => {
+                if (!sidebar.contains(e.target) && !topbar.contains(e.target)) {
+                    sidebar.classList.add('hidden');
+                    topbar.style.display = 'flex';
+                    main.classList.add('full-width', 'topbar-visible');
+                }
+            });
+
+            // Click topbar to show sidebar
+            topbar.addEventListener('click', () => {
+                sidebar.classList.remove('hidden');
+                topbar.style.display = 'none';
+                main.classList.remove('full-width', 'topbar-visible');
+            });
+        });
+
 
         // ------------------- Init -------------------
         window.onload = () => {

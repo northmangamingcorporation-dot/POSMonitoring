@@ -1,0 +1,191 @@
+/* ================== GLOBAL ================== */
+body {
+  margin: 0;
+  font-family: "Segoe UI", Roboto, Arial, sans-serif;
+  background: #f4f6fb;
+  color: #2e2e2e;
+  height: 100vh;
+  overflow: hidden;
+  position: relative;
+}
+
+/* ================== SIDEBAR ================== */
+.sidebar {
+  position: absolute; /* overlay instead of flex space */
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 260px;
+  min-width: 260px;
+  background: linear-gradient(180deg, #1e293b, #0f172a);
+  color: #f1f5f9;
+  display: flex;
+  flex-direction: column;
+  padding: 24px;
+  box-shadow: 2px 0 12px rgba(0,0,0,0.15);
+  transition: transform 0.3s ease, opacity 0.3s ease;
+  z-index: 10;
+}
+
+.sidebar.hidden {
+  transform: translateX(-300px);
+  opacity: 0;
+}
+
+.sidebar h2 {
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 28px;
+  text-align: center;
+  letter-spacing: 0.5px;
+  color: #e2e8f0;
+  text-transform: uppercase;
+}
+
+.menu {
+  flex: 1;
+}
+
+.menu button {
+  background: transparent;
+  border: none;
+  color: #cbd5e1;
+  font-size: 15px;
+  padding: 12px 16px;
+  text-align: left;
+  width: 100%;
+  border-radius: 20px;
+  transition: all 0.25s ease;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  line-height: 1.4;
+  white-space: normal;
+  word-wrap: break-word;
+}
+
+.menu button:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  transform: translateX(6px);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+}
+
+.menu button.active {
+  background: rgba(37, 99, 235, 0.2);
+  color: #fff;
+  font-weight: 600;
+  border: 1px solid rgba(37, 99, 235, 0.5);
+  border-radius: 20px;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
+  transform: translateX(6px);
+}
+
+.menu button i {
+  font-size: 18px;
+  color: #93c5fd;
+}
+
+.menu button.active i {
+  color: #fff;
+}
+
+.sidebar-bottom {
+  margin-top: 24px;
+}
+
+/* ================== TOPBAR ================== */
+.topbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  background: linear-gradient(90deg, #1e293b, #0f172a);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 0 24px;
+  color: #f1f5f9;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.2);
+  z-index: 20;
+  cursor: pointer;
+  display: none; /* hidden initially */
+  transition: all 0.3s ease;
+}
+
+.topbar .logo {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+}
+
+.topbar .title {
+  font-weight: 600;
+  font-size: 18px;
+  letter-spacing: 0.5px;
+}
+
+/* ================== MAIN CONTENT ================== */
+.main {
+  flex: 1;
+  margin-left: 260px; /* reserve sidebar space */
+  width: calc(100% - 260px);
+  transition: margin-left 0.3s ease, width 0.3s ease, padding-top 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 28px;
+  overflow-y: auto;
+  background: #f8fafc;
+}
+
+.main.full-width {
+  margin-left: 0;
+  width: 100%;
+}
+
+.main.topbar-visible {
+  padding-top: 80px; /* account for topbar height */
+}
+
+/* ================== CARDS ================== */
+.main .card {
+  width: 100%;
+  max-width: 100%;
+  background: white;
+  padding: 22px;
+  border-radius: 14px;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+  transition: width 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 18px rgba(0,0,0,0.12);
+}
+
+/* ================== LOADER ================== */
+.loader {
+  display: none; /* hidden initially */
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 50;
+}
+
+.loader .spinner {
+  width: 44px;
+  height: 44px;
+  border: 5px solid #e5e7eb;
+  border-top: 5px solid #2563eb;
+  border-radius: 50%;
+  animation: spin 0.9s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
