@@ -24,10 +24,17 @@
 
 <body onload='loadSheet("POS")'>
   <!-- Topbar (hidden initially) -->
-  <div class="topbar" id="topbar" style="display: none;">
-      <img src="image/ITdeptDP.jpg" alt="Logo" class="logo">
-      <span class="title">STI Northman Gaming</span>
-  </div>
+  <div class="topbar" id="topbar">
+    <img src="image/ITdeptDP.jpg" alt="Logo" class="logo">
+    <span class="title">STI Northman Gaming</span>
+
+    <!-- Links -->
+<a id="linkAccomplishmentBtn" class="toggleBtn" data-label="Accomplishment Report">📄 Show Accomplishment Report</a>
+<a id="linkReportBtn" class="toggleBtn" data-label="Report Analyzer">📊 Show Report Analyzer</a>
+<a id="linkITMonitoringBtn" class="toggleBtn" data-label="IT Monitoring">📶 Go to IT Monitoring</a>
+
+</div>
+
     <div class="sidebar" id="sidebar">
         <h2>STI Northman Gaming</h2>
         <div class="menu" id="menu"></div>
@@ -50,16 +57,16 @@
         </div>
         
         <!-- ✅ Button to toggle report -->
-        <button id="toggleAccomplishmentBtn" style="margin-top: 12px; padding: 8px 16px; border: none; border-radius: 6px; background: #007bff; color: white; cursor: pointer; width: 100%;">
+        <button id="btnAccomplishmentBtn" class="toggleBtn" style="margin-top: 12px; padding: 8px 16px; border: none; border-radius: 6px; background: #007bff; color: white; cursor: pointer; width: 100%;">
             📄 Show Accomplishment Report
         </button>
 
         <!-- ✅ Button to toggle report -->
-        <button id="toggleReportBtn" style="margin-top: 12px; padding: 8px 16px; border: none; border-radius: 6px; background: #007bff; color: white; cursor: pointer; width: 100%;">
+        <button id="btnReportBtn" class="toggleBtn" style="margin-top: 12px; padding: 8px 16px; border: none; border-radius: 6px; background: #007bff; color: white; cursor: pointer; width: 100%;">
             📊 Show Report Analyzer
         </button>
         <!-- Redirect button -->
-        <button id="toggleITMonitoringBtn" style="margin-top: 16px; padding: 8px 16px; border: none; border-radius: 6px; background: #28a745; color: white; cursor: pointer; width: 100%;">
+        <button id="btnITMonitoringBtn" class="toggleBtn" style="margin-top: 16px; padding: 8px 16px; border: none; border-radius: 6px; background: #28a745; color: white; cursor: pointer; width: 100%;">
             📶 Go to IT Monitoring
             </button>
 
@@ -204,53 +211,60 @@
         // ---------------------------
         
 
-  const toggleContainer = (button, src, label) => {
-    const container = document.getElementById("reportCard");
-    const tableCard = document.getElementById("tableCard");
-    const iframe = document.getElementById("mainIframe");
-    const otherButton = [...document.querySelectorAll(".toggleBtn")].find(
-        btn => btn !== button
-    );
 
-    // Hide other section if open
-    if (otherButton.textContent.startsWith("❌")) {
-        const otherLabel = otherButton.dataset.label;
-        otherButton.textContent = `📊 Show ${otherLabel}`; 
-        toastr.info(`${otherLabel} hidden.`, "", { timeOut: 2000 });   
-    }
+document.addEventListener("DOMContentLoaded", () => {
+    // Main toggle function
+    const toggleContainer = (element, src, label) => {
+        const container = document.getElementById("reportCard");
+        const tableCard = document.getElementById("tableCard");
+        const iframe = document.getElementById("mainIframe");
 
-    // Show/Hide current section
-    if (container.style.display === "none" || container.style.display === "") {
-        container.style.display = "block";
-        tableCard.style.display = "none";
-        iframe.src = src;
-        button.textContent = `❌ Hide ${label}`;
-        toastr.info(`${label} loaded.`, "", { timeOut: 2000 });
-    } else {
-        container.style.display = "none";
-        tableCard.style.display = "block";
-        button.textContent = `📊 Show ${label}`;
-        toastr.info(`${label} hidden.`, "", { timeOut: 2000 });
-    }
-};
+        // Hide any other open section
+        [...document.querySelectorAll(".toggleBtn")]
+            .filter(el => el !== element)
+            .forEach(otherEl => {
+                if (otherEl.textContent.startsWith("❌")) {
+                    const otherLabel = otherEl.dataset.label;
+                    otherEl.textContent = `📊 Show ${otherLabel}`;
+                    toastr.info(`${otherLabel} hidden.`, "", { timeOut: 2000 });
+                }
+            });
 
-// Attach to buttons
-document.getElementById("toggleReportBtn").classList.add("toggleBtn");
-document.getElementById("toggleReportBtn").dataset.label = "Report Analyzer";
-document.getElementById("toggleReportBtn").addEventListener("click", function() {
-    toggleContainer(this, "reports.html", "Report Analyzer");
-});
+        // Toggle current section
+        if (!container.style.display || container.style.display === "none") {
+            container.style.display = "block";
+            tableCard.style.display = "none";
+            iframe.src = src;
+            element.textContent = `❌ Hide ${label}`;
+            toastr.info(`${label} loaded.`, "", { timeOut: 2000 });
+        } else {
+            container.style.display = "none";
+            tableCard.style.display = "block";
+            element.textContent = `📊 Show ${label}`;
+            toastr.info(`${label} hidden.`, "", { timeOut: 2000 });
+        }
+    };
 
-document.getElementById("toggleITMonitoringBtn").classList.add("toggleBtn");
-document.getElementById("toggleITMonitoringBtn").dataset.label = "IT Monitoring";
-document.getElementById("toggleITMonitoringBtn").addEventListener("click", function() {
-    toggleContainer(this, "itMonitor/index.html", "IT Monitoring");
-});
+    // List of toggle buttons
+            const toggleElements = [
+            { id: "linkAccomplishmentBtn", url: "accomplishmentReport.html", label: "Accomplishment Report" },
+            { id: "linkReportBtn", url: "reports.html", label: "Report Analyzer" },
+            { id: "linkITMonitoringBtn", url: "itMonitor/index.html", label: "IT Monitoring" },
+            { id: "btnAccomplishmentBtn", url: "accomplishmentReport.html", label: "Accomplishment Report" },
+            { id: "btnReportBtn", url: "reports.html", label: "Report Analyzer" },
+            { id: "btnITMonitoringBtn", url: "itMonitor/index.html", label: "IT Monitoring" }
+        ];
 
-document.getElementById("toggleAccomplishmentBtn").classList.add("toggleBtn");
-document.getElementById("toggleAccomplishmentBtn").dataset.label = "Accomplishment Report";
-document.getElementById("toggleAccomplishmentBtn").addEventListener("click", function() {
-    toggleContainer(this, "accomplishmentReport.html", "Accomplishment Report");
+
+    // Attach click listeners
+    toggleElements.forEach(item => {
+        const el = document.getElementById(item.id);
+        if (el) {
+            el.classList.add("toggleBtn");
+            el.dataset.label = item.label;
+            el.addEventListener("click", () => toggleContainer(el, item.url, item.label));
+        }
+    });
 });
 
         async function getSheetNames() {
@@ -337,7 +351,6 @@ document.getElementById("toggleAccomplishmentBtn").addEventListener("click", fun
             const tableCard = document.getElementById("tableCard");
             container.style.display = "none"; // hide report when loading new sheet
             tableCard.style.display = "block"; // show table card   
-            document.getElementById("toggleReportBtn").textContent = "📊 Show Report Analyzer";
             document.getElementById("sheetTitle").textContent = sheetName + " Data";
             sheetpage = sheetName;
             document.getElementById("tableContainer").innerHTML = "";

@@ -100,6 +100,7 @@ body {
 }
 
 /* ================== TOPBAR ================== */
+/* Topbar */
 .topbar {
   position: fixed;
   top: 0;
@@ -115,10 +116,11 @@ body {
   box-shadow: 0 4px 18px rgba(0,0,0,0.25);
   z-index: 20;
   cursor: pointer;
-  display: none; /* only for mobile or toggled */
   transition: all 0.3s ease;
+  display: none; /* Hidden initially */
 }
 
+/* Logo */
 .topbar .logo {
   width: 36px;
   height: 36px;
@@ -126,11 +128,27 @@ body {
   object-fit: cover;
 }
 
+/* Title */
 .topbar .title {
   font-weight: 700;
   font-size: 18px;
   letter-spacing: 0.5px;
 }
+
+/* Topbar Buttons */
+.topbar a.toggleBtn {
+  padding: 6px 12px;
+  border-radius: 4px;
+  text-decoration: none;
+  color: #f1f5f9;
+  background-color: rgba(255,255,255,0.05);
+  transition: background 0.2s ease;
+}
+
+.topbar a.toggleBtn:hover {
+  background-color: rgba(255,255,255,0.15);
+}
+
 
 /* ================== MAIN CONTENT ================== */
 .main {
